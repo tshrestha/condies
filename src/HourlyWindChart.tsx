@@ -40,8 +40,8 @@ export default function HourlyWindChart({ hourlyForecast }: { hourlyForecast: Ho
             title={'HOURLY WIND'}
             colorDomain={beaufortScale.map(({ force }) => force)}
             colorRange={[
-                '#ADD8E6',
-                '#ADD8E6',
+                '#00bbf0',
+                '#00bbf0',
                 '#6b8e6b', // 0 mph - sage green (calm)
                 '#5a9178', // 10 mph
                 '#4a9485', // 20 mph
