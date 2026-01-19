@@ -34,7 +34,6 @@ export default function HourlyWindChart({ hourlyForecast }: { hourlyForecast: Ho
     } else {
         periods = [hourlyForecast.periods]
     }
-    console.log(periods)
     return (
         <ForecastChart
             title={'HOURLY WIND'}

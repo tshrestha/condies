@@ -27,7 +27,7 @@ const getData = query(async (lat, lon) => {
     const timeRegex = /(\d+):(\d+)\s(AM|PM)/
 
     const periods = hourlyForecastResult.properties.periods
-        .filter((p) => p.number >= 1 && p.number <= 9)
+        .filter((p) => p.number >= 1 && p.number <= 10)
         .map((p) => {
             const d = new Date(p.startTime)
             const timeString = d.toLocaleTimeString('en-US', { hour12: true, timeStyle: 'short' })
