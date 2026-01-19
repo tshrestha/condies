@@ -22,23 +22,12 @@ export interface ForecastProps {
 
 const getData = query(async (lat, lon) => {
     const point: Point = await getPoint(lat, lon)
-    const forecast: ForecastResult = await getForecast(point.properties.forecast)
-    const hourlyForecastResult: ForecastResult = await getForecast(point.properties.forecastHourly)
-
-    const date = new Date()
-    const currentDate = date.getDate()
-    const currentHour = date.getHours()
+    const forecast: ForecastResult = (await getForecast(point.properties.forecast)) as ForecastResult
+    const hourlyForecastResult: ForecastResult = (await getForecast(point.properties.forecastHourly)) as ForecastResult
     const timeRegex = /(\d+):(\d+)\s(AM|PM)/
 
     const periods = hourlyForecastResult.properties.periods
-        .filter((p) => {
-            const startTime = new Date(p.startTime)
-            return (
-                (startTime.getDate() === currentDate && startTime.getHours() >= currentHour) ||
-                startTime.getDate() === currentDate + 1
-            )
-        })
-        .filter((_, i) => i < 12)
+        .filter((p) => p.number >= 1 && p.number <= 9)
         .map((p) => {
             const d = new Date(p.startTime)
             const timeString = d.toLocaleTimeString('en-US', { hour12: true, timeStyle: 'short' })

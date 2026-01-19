@@ -1,5 +1,5 @@
 import { onCleanup, onMount } from 'solid-js'
-import { area, curveLinear, line, scaleLinear, scalePoint, select } from 'd3'
+import { area, curveCatmullRom, line, scaleLinear, scalePoint, select } from 'd3'
 
 import type { Period } from './lib/nws.ts'
 
@@ -13,6 +13,7 @@ export interface ForecastChartProps {
     getXLabel: (p: Period) => string
     getY?: (p: Period) => number
     getForecastLabel: (p: Period) => string
+    getColorValue: (p: Period) => number
 }
 
 export default function ForecastChart({
@@ -22,7 +23,8 @@ export default function ForecastChart({
     periods,
     getX,
     getXLabel,
-    getForecastLabel
+    getForecastLabel,
+    getColorValue
 }: ForecastChartProps) {
     let containerRef!: HTMLDivElement
 
@@ -35,13 +37,14 @@ export default function ForecastChart({
         const margin = { top: 20, left: 50, right: parseInt(paddingRight), bottom: 20 }
         const width = containerRef.clientWidth - margin.left - margin.right
         const height = periods.length * 40
+        const curve = curveCatmullRom.alpha(1)
 
         const xMin = Math.min(...periods.map((p) => getX(p)))
         const xMax = Math.max(...periods.map((p) => getX(p)))
         const relativeMinX = xMin - (xMax - xMin)
-        const dataPointCircleRadius = 5
+        const dataPointCircleRadius = 6
         const timeLabelPadding = 10
-        const dataPointLabelPadding = dataPointCircleRadius * 2
+        const dataPointLabelPadding = dataPointCircleRadius + dataPointCircleRadius / 2
 
         // data-value to color scale
         const tempColorScale = scaleLinear<string>().domain(colorDomain).range(colorRange).clamp(true)
@@ -91,8 +94,9 @@ export default function ForecastChart({
             .attr('dy', '0.35em')
             .attr('text-anchor', 'start')
             .attr('font-size', '14px')
-            .attr('font-weight', 'bold')
-            .attr('fill', (d) => tempColorScale(getX(d)).replace('0.6)', '1)'))
+            // .attr('font-weight', 'bold')
+            .attr('fill', 'var(--bs-body-color)')
+            // .attr('fill-opacity', '0.75')
             .text((d) => `${getXLabel(d)}`)
 
         const dataPoinLabelWidths = dataPointLabels.nodes().map((n) => n.scrollWidth)
@@ -123,7 +127,7 @@ export default function ForecastChart({
             .x0(xScale(relativeMinX))
             .x1((d) => xScale(getX(d)))
             .y((_, i) => yScale(i) ?? 0)
-            .curve(curveLinear)
+            .curve(curve)
 
         // Create defs for gradients and filters
         const defs = svg.append('defs')
@@ -143,7 +147,7 @@ export default function ForecastChart({
             gradient
                 .append('stop')
                 .attr('offset', `${offset}%`)
-                .attr('stop-color', tempColorScale(getX(period)))
+                .attr('stop-color', tempColorScale(getColorValue(period)))
         })
 
         // Draw the area
@@ -156,7 +160,7 @@ export default function ForecastChart({
         const lineGenerator = line<Period>()
             .x((d) => xScale(getX(d)))
             .y((_, i) => yScale(i) ?? 0)
-            .curve(curveLinear)
+            .curve(curve)
 
         // Create gradient for the line stroke
         const lineGradient = defs
@@ -172,14 +176,14 @@ export default function ForecastChart({
             lineGradient
                 .append('stop')
                 .attr('offset', `${offset}%`)
-                .attr('stop-color', tempColorScale(getX(period)).replace('0.6)', '1)'))
+                .attr('stop-color', tempColorScale(getColorValue(period)).replace('0.6)', '1)'))
         })
 
         svg.append('path')
             .datum(periods)
             .attr('fill', 'none')
             .attr('stroke', 'url(#line-gradient)')
-            .attr('stroke-width', 4)
+            .attr('stroke-width', 5)
             .attr('d', lineGenerator)
 
         // Add short forecast description (only when different from previous hour)
@@ -227,7 +231,8 @@ export default function ForecastChart({
             .attr('y1', (_, i) => yScale(i) ?? 0)
             .attr('x2', (d) => xScale(getX(d)))
             .attr('y2', (_, i) => yScale(i) ?? 0)
-            .attr('stroke', 'var(--bs-border-color)')
+            .attr('stroke', (d) => tempColorScale(getColorValue(d)).replace('0.6)', '1)'))
+            // .attr('stroke-opacity', '0.5')
             .attr('stroke-width', 1)
             .attr('stroke-dasharray', '2,2')
 
@@ -239,10 +244,12 @@ export default function ForecastChart({
             .attr('class', 'data-point')
             .attr('cx', (d) => xScale(getX(d)))
             .attr('cy', (_, i) => yScale(i) ?? 0)
-            .attr('r', 5)
-            .attr('fill', (d) => tempColorScale(getX(d)).replace('0.6)', '1)'))
+            .attr('r', dataPointCircleRadius)
+            .attr('fill', (d) => tempColorScale(getColorValue(d)).replace('0.6)', '1)'))
             .attr('stroke', 'white')
             .attr('stroke-width', 2)
+
+        dataPointLabels.raise()
 
         onCleanup(() => {
             select(containerRef).selectAll('*').remove()

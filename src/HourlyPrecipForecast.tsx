@@ -23,6 +23,7 @@ export default function HourlyPrecipChart({ hourlyForecast }: { hourlyForecast: 
             getX={(p: Period) => p.probabilityOfPrecipitation.value}
             getXLabel={(p: Period) => `${p.probabilityOfPrecipitation.value}%`}
             getForecastLabel={(p) => p.shortForecast}
+            getColorValue={(p) => p.probabilityOfPrecipitation.value}
         />
     )
 }

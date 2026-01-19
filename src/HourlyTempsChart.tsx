@@ -23,6 +23,7 @@ export default function HourlyTempsChart({ hourlyForecast }: { hourlyForecast: H
             getX={(p: Period) => p.temperature}
             getXLabel={(p: Period) => `${p.temperature}º`}
             getForecastLabel={(p) => p.shortForecast}
+            getColorValue={(p) => p.temperature}
         />
     )
 }

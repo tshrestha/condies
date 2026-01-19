@@ -50,3 +50,9 @@ export function getMinMaxTemp(forecastPeriods: Period[]) {
     const max = forecastPeriods.sort((a, b) => b.temperature - a.temperature)[0]
     return [min.temperature, max.temperature]
 }
+
+export function getRangeStep({ min, max, desiredStep }: Record<string, number>) {
+    // step = ((max - min) / (desiredStep / 100)) / 100
+    const diff = max - min
+    return Math.round(diff / (desiredStep / 100) / 100)
+}

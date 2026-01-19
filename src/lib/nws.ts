@@ -5,35 +5,13 @@ export const denver = {
     lon: '-105.019559'
 }
 
-/**
- * {
- *     "number": 1,
- *     "name": "",
- *     "startTime": "2026-01-11T09:00:00-07:00",
- *     "endTime": "2026-01-11T10:00:00-07:00",
- *     "isDaytime": true,
- *     "temperature": 35,
- *     "temperatureUnit": "F",
- *     "temperatureTrend": null,
- *     "probabilityOfPrecipitation": {
- *         "unitCode": "wmoUnit:percent",
- *         "value": 0
- *     },
- *     "dewpoint": {
- *         "unitCode": "wmoUnit:degC",
- *         "value": -8.333333333333334
- *     },
- *     "relativeHumidity": {
- *         "unitCode": "wmoUnit:percent",
- *         "value": 47
- *     },
- *     "windSpeed": "6 mph",
- *     "windDirection": "SSW",
- *     "icon": "https://api.weather.gov/icons/land/day/sct?size=small",
- *     "shortForecast": "Mostly Sunny",
- *     "detailedForecast": ""
- * }
- */
+export interface QuantitativeValue {
+    value?: number
+    minValue?: number
+    maxValue?: number
+    unitCode: string
+}
+
 export interface Period {
     number: number
     name: string
@@ -53,7 +31,8 @@ export interface Period {
         unitCode: string
         value: number
     }
-    windSpeed: string
+    windSpeed: QuantitativeValue
+    windGust?: QuantitativeValue
     windDirection: string
     shortForecast: string
     detailedForecast: string
@@ -105,12 +84,60 @@ export interface LatestObservations {
     }
 }
 
+export interface BeaufortScale {
+    force: number
+    mphMin: number
+    mphMax: number
+    description: string
+}
+
 const headers = {
     'User-Agent': 'Elevation Code Works LLC'
 }
 
+export const beaufortScale: BeaufortScale[] = [
+    { force: 0, mphMin: 0, mphMax: 1, description: 'Calm' },
+    { force: 1, mphMin: 1, mphMax: 3, description: 'Light Air' },
+    { force: 2, mphMin: 4, mphMax: 7, description: 'Light Breeze' },
+    { force: 3, mphMin: 8, mphMax: 12, description: 'Gentle Breeze' },
+    {
+        force: 4,
+        mphMin: 13,
+        mphMax: 18,
+        description: 'Moderate Breeze'
+    },
+    {
+        force: 5,
+        mphMin: 19,
+        mphMax: 24,
+        description: 'Fresh Breeze'
+    },
+    { force: 6, mphMin: 25, mphMax: 31, description: 'Strong Breeze' },
+    { force: 7, mphMin: 32, mphMax: 38, description: 'Near Gale' },
+    { force: 8, mphMin: 39, mphMax: 46, description: 'Gale' },
+    { force: 9, mphMin: 47, mphMax: 54, description: 'Severe Gale' },
+    { force: 10, mphMin: 55, mphMax: 63, description: 'Storm' },
+    { force: 11, mphMin: 64, mphMax: 72, description: 'Violent Storm' },
+    { force: 12, mphMin: 72, mphMax: 83, description: 'Hurricane' }
+]
+
+export function toBeaufortForce(windSpeed: number): number {
+    if (windSpeed > 83) {
+        return 12
+    }
+    if (windSpeed < 0) {
+        return 0
+    }
+    let beauf = beaufortScale.find(({ mphMin, mphMax }) => windSpeed >= mphMin && windSpeed <= mphMax)
+    return beauf!.force
+}
+
 export function toF(temp: number) {
     return Math.round((temp * 9) / 5 + 32)
+}
+
+export function toMph(speed: number) {
+    return Math.round(speed * 0.621371)
 }
 
 export async function getPoint(lat: string, lon: string) {
@@ -151,8 +178,8 @@ export async function getLatestObservations(stationID: string) {
 export async function getForecast(forecastURL: string) {
     const response = await fetch(`${forecastURL}?units=us`, {
         headers: {
-            ...headers
-            // 'Feature-Flags': 'forecast_temperature_qv,forecast_wind_speed_qv'
+            ...headers,
+            'Feature-Flags': 'forecast_wind_speed_qv'
         }
     })
     if (!response.ok) {
@@ -160,5 +187,21 @@ export async function getForecast(forecastURL: string) {
         return null
     }
 
-    return await response.json()
+    const result: ForecastResult = await response.json()
+    result.properties.periods.forEach((p) => {
+        if (p.windSpeed && p.windSpeed.unitCode.includes('km_h')) {
+            p.windSpeed.value = typeof p.windSpeed.value === 'number' ? toMph(p.windSpeed.value) : p.windSpeed.value
+            p.windSpeed.minValue =
+                typeof p.windSpeed.minValue === 'number' ? toMph(p.windSpeed.minValue) : p.windSpeed.minValue
+            p.windSpeed.maxValue =
+                typeof p.windSpeed.maxValue === 'number' ? toMph(p.windSpeed.maxValue) : p.windSpeed.maxValue
+            p.windSpeed.unitCode = 'mph'
+        }
+        if (p.windGust && p.windGust.unitCode.includes('km_h')) {
+            p.windGust.value = typeof p.windGust.value === 'number' ? toMph(p.windGust.value) : p.windGust.value
+            p.windGust.unitCode = 'mph'
+        }
+    })
+
+    return result
 }

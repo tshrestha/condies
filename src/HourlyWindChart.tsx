@@ -1,10 +1,5 @@
-import type { HourlyForecast, Period } from './lib/nws.ts'
+import { beaufortScale, type HourlyForecast, type Period, toBeaufortForce } from './lib/nws.ts'
 import ForecastChart from './ForecastChart.tsx'
-
-function parseWindSpeed(windSpeed: string): number {
-    const match = windSpeed.match(/(\d+)/)
-    return match ? parseInt(match[1], 10) : 0
-}
 
 // Maps wind direction to arrow showing where wind is blowing TO
 function getWindArrow(direction: string): string {
@@ -30,11 +25,23 @@ function getWindArrow(direction: string): string {
 }
 
 export default function HourlyWindChart({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
+    let periods
+    if (hourlyForecast.periods.every((p) => p.windGust)) {
+        periods = [
+            hourlyForecast.periods,
+            hourlyForecast.periods.map((p) => ({ ...p, windSpeed: p.windGust }) as Period)
+        ]
+    } else {
+        periods = [hourlyForecast.periods]
+    }
+    console.log(periods)
     return (
         <ForecastChart
             title={'HOURLY WIND'}
-            colorDomain={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90]}
+            colorDomain={beaufortScale.map(({ force }) => force)}
             colorRange={[
+                '#ADD8E6',
+                '#ADD8E6',
                 '#6b8e6b', // 0 mph - sage green (calm)
                 '#5a9178', // 10 mph
                 '#4a9485', // 20 mph
@@ -46,11 +53,12 @@ export default function HourlyWindChart({ hourlyForecast }: { hourlyForecast: Ho
                 '#8b1a1a', // 80 mph
                 '#5c1a5c' // 90+ mph - deep purple (extreme)
             ]}
-            classList={['condies-bg-light-sage']}
-            periods={hourlyForecast.periods}
-            getX={(p: Period) => parseWindSpeed(p.windSpeed)}
-            getXLabel={(p: Period) => p.windSpeed}
+            classList={['wind-forecast-chart']}
+            periods={periods[0]}
+            getX={(p: Period) => p.windSpeed.value as number}
+            getXLabel={(p: Period) => (p.windSpeed.value as number).toString() + ' mph'}
             getForecastLabel={(p) => `${getWindArrow(p.windDirection)} ${p.windDirection}`}
+            getColorValue={(p) => toBeaufortForce(p.windSpeed.value as number)}
         />
     )
 }

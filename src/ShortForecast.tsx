@@ -1,26 +1,20 @@
 import { Match, Switch } from 'solid-js'
 
 import { getIcon } from './lib/wicons.ts'
-import type { ForecastResult, Period } from './lib/nws.ts'
+import type { ForecastResult, Period, QuantitativeValue } from './lib/nws.ts'
+import WindSpeed from './WindSpeed.tsx'
 import windIcon from './assets/weather-icons-master/production/fill/all/wind.svg'
 
-function tooWindy(windSpeed: string, threshold = 15) {
-    const minMaxWind = (windSpeed as string).match(/(\d)+/g)
-    if (minMaxWind && minMaxWind.length) {
-        if (minMaxWind.length === 1 && parseInt(minMaxWind[0], 10) > threshold) {
-            return true
-        }
-
-        if (parseInt(minMaxWind[1], 10) > threshold) {
-            return true
-        }
+function tooWindy(windSpeed: QuantitativeValue, threshold = 10) {
+    if (windSpeed.maxValue && windSpeed.maxValue > threshold) {
+        return true
     }
 
-    return false
+    return !!(windSpeed.value && windSpeed.value > threshold)
 }
 
 function isPrimo(condies: Period) {
-    const { shortForecast, isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
+    const { shortForecast, isDaytime, windSpeed, windGust, temperature, probabilityOfPrecipitation } = condies
     if (!isDaytime) {
         return false
     }
@@ -28,6 +22,9 @@ function isPrimo(condies: Period) {
         return false
     }
     if (temperature < 55 || temperature > 75) {
+        return false
+    }
+    if (windGust) {
         return false
     }
     if (tooWindy(windSpeed)) {
@@ -76,7 +73,7 @@ export default function ShortForecast({ forecastResult }: { forecastResult: Fore
                                 class={'col-3 fw-medium'}
                             >{`${new Date(p.startTime).toLocaleDateString('en-US', { weekday: 'short' })}${p.isDaytime ? '' : ' night'}`}</div>
                         )}
-                        <div class={'col-1 text-start'}>
+                        <div class={'col-1 text-start me-2'}>
                             <img
                                 src={getIcon({ keyword: p.shortForecast, isDay: p.isDaytime, isNight: !p.isDaytime })}
                                 alt={p.shortForecast}
@@ -87,9 +84,9 @@ export default function ShortForecast({ forecastResult }: { forecastResult: Fore
                             <img src={windIcon} alt='clear day' class='img-fluid' />
                         </div>
                         <div class={'col-3 text-start'}>
-                            <small>{p.windSpeed.replace('to', '-')}</small>
+                            <WindSpeed windSpeed={p.windSpeed} />
                         </div>
-                        <div class={'col-auto text-end fw-medium'}>{p.temperature}º</div>
+                        <div class={'col-2 text-end fw-medium'}>{p.temperature}º</div>
                     </div>
                     <Switch>
                         <Match when={isPrimo(p)}>

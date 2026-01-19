@@ -4,6 +4,7 @@ import { getPrecipType } from './lib/util.ts'
 import windIcon from './assets/weather-icons-master/production/fill/all/wind.svg'
 import raindropIcon from './assets/weather-icons-master/production/fill/all/raindrop.svg'
 import snowflakeIcon from './assets/weather-icons-master/production/fill/all/snowflake.svg'
+import WindSpeed from './WindSpeed.tsx'
 
 export default function DetailedForecast({ forecastResult }: { forecastResult?: ForecastResult }) {
     return (
@@ -33,7 +34,7 @@ export default function DetailedForecast({ forecastResult }: { forecastResult?: 
                                     <img src={windIcon} alt='wind icon' class='img-fluid' />
                                 </div>
                                 <div class={'col-3 text-start'}>
-                                    <small>{p.windSpeed.replace('to', '-')}</small>
+                                    <WindSpeed windSpeed={p.windSpeed} />
                                 </div>
                                 <div class={'col-1 text-end'}>
                                     {precipType === 'snow' && (
@@ -44,10 +45,7 @@ export default function DetailedForecast({ forecastResult }: { forecastResult?: 
                                     )}
                                 </div>
                                 <div class={'col-2 text-start'}>
-                                    <small>{
-                                        // @ts-ignore
-                                        `${p.probabilityOfPrecipitation['value']}%`
-                                    }</small>
+                                    <small>{`${p.probabilityOfPrecipitation['value']}%`}</small>
                                 </div>
                                 <div class={'col-auto text-end fw-medium'}>{p.temperature}º</div>
                             </div>
