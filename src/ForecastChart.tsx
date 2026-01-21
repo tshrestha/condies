@@ -106,7 +106,7 @@ export default function ForecastChart({
 
         const dataPointLabelDim = dataPointLabels.nodes().map((n) => ({ width: n.scrollWidth, height: n.scrollHeight }))
         const maxDataPointLabelWidth = Math.max(...dataPointLabelDim.map((d) => d.width))
-        const dataPointLabelHeight = dataPointLabelDim[0].height + dataPointLabelDim[0].height * 0.25
+        const dataPointLabelBgHeight = dataPointLabelDim[0].height + dataPointLabelDim[0].height * 0.25
         const dataPointLabelBgWidth = maxDataPointLabelWidth * 1.618
         const dataPointLabelBgStrokeWidth = 2.5
 
@@ -125,9 +125,9 @@ export default function ForecastChart({
             ])
 
         dataPointLabelBg
-            .attr('height', dataPointLabelHeight)
+            .attr('height', dataPointLabelBgHeight)
             .attr('width', dataPointLabelBgWidth)
-            .attr('rx', dataPointLabelHeight / 2)
+            .attr('rx', dataPointLabelBgHeight / 2)
             .attr('fill', (d) => tempColorScale(getColorValue(d)).replace('0.6)', '1)'))
             .attr('stroke', '#e9ecef')
             .attr('stroke-width', dataPointLabelBgStrokeWidth)
@@ -135,11 +135,11 @@ export default function ForecastChart({
         dataPointLabelGroup.attr(
             'transform',
             (d, i) =>
-                `translate(${xScale(getX(d)) - dataPointLabelBgWidth / 2}, ${(yScale(i) ?? 0) - dataPointLabelHeight / 2})`
+                `translate(${xScale(getX(d)) - dataPointLabelBgWidth / 2}, ${(yScale(i) ?? 0) - dataPointLabelBgHeight / 2})`
         )
         dataPointLabels
-            .attr('dy', dataPointLabelHeight * 0.5 + dataPointLabelHeight * 0.25 - dataPointLabelBgStrokeWidth / 2)
-            .attr('dx', maxDataPointLabelWidth * 0.25 + dataPointLabelBgStrokeWidth / 2)
+            .attr('dy', (_, i) => dataPointLabelBgHeight / 2 + dataPointLabelDim[i].height * 0.25)
+            .attr('dx', (_, i) => dataPointLabelBgWidth / 2 - dataPointLabelDim[i].width / 2)
             .attr('fill', 'white')
 
         // Create the area generator for vertical orientation
