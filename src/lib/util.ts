@@ -56,3 +56,26 @@ export function getRangeStep({ min, max, desiredStep }: Record<string, number>) 
     const diff = max - min
     return Math.round(diff / (desiredStep / 100) / 100)
 }
+
+// Maps wind direction to arrow showing where wind is blowing TO
+export function getWindArrow(direction: string): string {
+    const arrows: Record<string, string> = {
+        N: '↓',
+        S: '↑',
+        E: '←',
+        W: '→',
+        NE: '↙',
+        NW: '↘',
+        SE: '↖',
+        SW: '↗',
+        NNE: '↙',
+        NNW: '↘',
+        SSE: '↖',
+        SSW: '↗',
+        ENE: '↙',
+        ESE: '↖',
+        WNW: '↘',
+        WSW: '↗'
+    }
+    return arrows[direction] || '○'
+}

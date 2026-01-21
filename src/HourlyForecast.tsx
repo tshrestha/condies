@@ -4,6 +4,7 @@ import type { HourlyForecast } from './lib/nws.ts'
 import HourlyTempsChart from './HourlyTempsChart.tsx'
 import HourlyPrecipChart from './HourlyPrecipForecast.tsx'
 import HourlyWindChart from './HourlyWindChart.tsx'
+import HourlyWindGustChart from './HourlyWindGustChart.tsx'
 
 export interface ForecastType {
     name: string
@@ -12,11 +13,16 @@ export interface ForecastType {
 }
 
 export default function HourlyForecast({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
-    const [forecastType, setForecastType] = createSignal<ForecastType[]>([
+    const forecastTypes = [
         { name: 'TEMP', id: 'forecast-temp', isSelected: true },
         { name: 'PRECIP %', id: 'forecast-precip', isSelected: false },
-        { name: 'WIND', id: 'forecast-wind', isSelected: false }
-    ])
+        { name: 'WIND', id: 'forecast-wind', isSelected: false },
+    ]
+
+    if (hourlyForecast.periods.every(p => p.windGust)) {
+        forecastTypes.push({ name: 'WIND GUST', id: 'forecast-wind-gust', isSelected: false })
+    }
+    const [forecastType, setForecastType] = createSignal<ForecastType[]>(forecastTypes)
 
     const onClick = (type: ForecastType) => {
         const types = [...forecastType()]
@@ -37,6 +43,9 @@ export default function HourlyForecast({ hourlyForecast }: { hourlyForecast: Hou
                 </Match>
                 <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-wind'}>
                     <HourlyWindChart hourlyForecast={hourlyForecast} />
+                </Match>
+                <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-wind-gust'}>
+                    <HourlyWindGustChart hourlyForecast={hourlyForecast} />
                 </Match>
             </Switch>
             <div class='btn-group mt-1 mb-4 bg-body' role='group' aria-label='Forecast type selector'>

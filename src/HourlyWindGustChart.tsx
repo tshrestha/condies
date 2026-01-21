@@ -2,10 +2,10 @@ import { beaufortScale, type HourlyForecast, type Period, toBeaufortForce } from
 import ForecastChart from './ForecastChart.tsx'
 import { getWindArrow } from './lib/util.ts'
 
-export default function HourlyWindChart({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
+export default function HourlyWindGustChart({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
     return (
         <ForecastChart
-            title={'HOURLY WIND'}
+            title={'HOURLY WIND GUST'}
             colorDomain={beaufortScale.map(({ force }) => force)}
             colorRange={[
                 '#00bbf0',
@@ -21,12 +21,12 @@ export default function HourlyWindChart({ hourlyForecast }: { hourlyForecast: Ho
                 '#8b1a1a', // 80 mph
                 '#5c1a5c' // 90+ mph - deep purple (extreme)
             ]}
-            classList={['wind-forecast-chart']}
+            classList={['wind-gust-forecast-chart']}
             periods={hourlyForecast.periods}
-            getX={(p: Period) => p.windSpeed.value as number}
-            getXLabel={(p: Period) => (p.windSpeed.value as number).toString() + ' mph'}
+            getX={(p: Period) => p.windGust!.value as number}
+            getXLabel={(p: Period) => (p.windGust!.value as number).toString() + ' mph'}
             getForecastLabel={(p) => `${getWindArrow(p.windDirection)} ${p.windDirection}`}
-            getColorValue={(p) => toBeaufortForce(p.windSpeed.value as number)}
+            getColorValue={(p) => toBeaufortForce(p.windGust!.value as number)}
         />
     )
 }
