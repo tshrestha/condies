@@ -138,8 +138,8 @@ export default function ForecastChart({
                 `translate(${xScale(getX(d)) - dataPointLabelBgWidth / 2}, ${(yScale(i) ?? 0) - dataPointLabelHeight / 2})`
         )
         dataPointLabels
-            .attr('dy', dataPointLabelHeight * 0.5 + dataPointLabelHeight * 0.25)
-            .attr('dx', dataPointLabelBgWidth * 0.25 - maxDataPointLabelWidth * 0.125)
+            .attr('dy', dataPointLabelHeight * 0.5 + dataPointLabelHeight * 0.25 - dataPointLabelBgStrokeWidth / 2)
+            .attr('dx', maxDataPointLabelWidth * 0.25 + dataPointLabelBgStrokeWidth / 2)
             .attr('fill', 'white')
 
         // Create the area generator for vertical orientation
