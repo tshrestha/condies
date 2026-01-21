@@ -108,7 +108,7 @@ export default function ForecastChart({
         const maxDataPointLabelWidth = Math.max(...dataPointLabelDim.map((d) => d.width))
         const dataPointLabelHeight = dataPointLabelDim[0].height
         const dataPointLabelBgWidth = maxDataPointLabelWidth * 1.618
-        const dataPointLabelBgStrokeWidth = 2
+        const dataPointLabelBgStrokeWidth = 2.5
 
         // X scale for data point (horizontal)
         const xScale = scaleLinear()
@@ -129,7 +129,7 @@ export default function ForecastChart({
             .attr('width', dataPointLabelBgWidth)
             .attr('rx', dataPointLabelHeight / 2)
             .attr('fill', (d) => tempColorScale(getColorValue(d)).replace('0.6)', '1)'))
-            .attr('stroke', 'white')
+            .attr('stroke', '#e9ecef')
             .attr('stroke-width', dataPointLabelBgStrokeWidth)
 
         dataPointLabelGroup.attr(
@@ -139,7 +139,7 @@ export default function ForecastChart({
         )
         dataPointLabels
             .attr('dy', dataPointLabelHeight * 0.5 + dataPointLabelHeight * 0.25)
-            .attr('dx', maxDataPointLabelWidth * 0.25 + dataPointLabelBgStrokeWidth)
+            .attr('dx', dataPointLabelBgWidth * 0.25 - maxDataPointLabelWidth * 0.125)
             .attr('fill', 'white')
 
         // Create the area generator for vertical orientation
