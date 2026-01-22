@@ -107,7 +107,8 @@ export default function ForecastChart({
         const dataPointLabelDim = dataPointLabels.nodes().map((n) => ({ width: n.scrollWidth, height: n.scrollHeight }))
         const maxDataPointLabelWidth = Math.max(...dataPointLabelDim.map((d) => d.width))
         const dataPointLabelBgHeight = dataPointLabelDim[0].height + dataPointLabelDim[0].height * 0.25
-        const dataPointLabelBgWidth = maxDataPointLabelWidth * 1.618
+        const golden = 1.618
+        const dataPointLabelBgWidth = maxDataPointLabelWidth + (dataPointLabelBgHeight * golden * 0.5)
         const dataPointLabelBgStrokeWidth = 2.5
 
         // X scale for data point (horizontal)
