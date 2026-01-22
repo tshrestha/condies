@@ -104,11 +104,13 @@ export default function ForecastChart({
             .attr('fill', 'var(--bs-body-color)')
             .text((d) => `${getXLabel(d)}`)
 
+        const golden = 1.618
+        const half = 0.5
+        const quarter = 0.25
         const dataPointLabelDim = dataPointLabels.nodes().map((n) => ({ width: n.scrollWidth, height: n.scrollHeight }))
         const maxDataPointLabelWidth = Math.max(...dataPointLabelDim.map((d) => d.width))
-        const dataPointLabelBgHeight = dataPointLabelDim[0].height + dataPointLabelDim[0].height * 0.25
-        const golden = 1.618
-        const dataPointLabelBgWidth = maxDataPointLabelWidth + (dataPointLabelBgHeight * golden * 0.5)
+        const dataPointLabelBgHeight = dataPointLabelDim[0].height + dataPointLabelDim[0].height * quarter
+        const dataPointLabelBgWidth = maxDataPointLabelWidth + dataPointLabelBgHeight * golden * half
         const dataPointLabelBgStrokeWidth = 2.5
 
         // X scale for data point (horizontal)
@@ -121,14 +123,14 @@ export default function ForecastChart({
                     margin.right -
                     maxTimeLabelWidth -
                     timeLabelPadding -
-                    dataPointLabelBgWidth / 2 -
+                    dataPointLabelBgWidth * half -
                     dataPointLabelBgStrokeWidth
             ])
 
         dataPointLabelBg
             .attr('height', dataPointLabelBgHeight)
             .attr('width', dataPointLabelBgWidth)
-            .attr('rx', dataPointLabelBgHeight / 2)
+            .attr('rx', dataPointLabelBgHeight * half)
             .attr('fill', (d) => tempColorScale(getColorValue(d)).replace('0.6)', '1)'))
             .attr('stroke', '#e9ecef')
             .attr('stroke-width', dataPointLabelBgStrokeWidth)
@@ -137,11 +139,11 @@ export default function ForecastChart({
         dataPointLabelGroup.attr(
             'transform',
             (d, i) =>
-                `translate(${xScale(getX(d)) - dataPointLabelBgWidth / 2}, ${(yScale(i) ?? 0) - dataPointLabelBgHeight / 2})`
+                `translate(${xScale(getX(d)) - dataPointLabelBgWidth * half}, ${(yScale(i) ?? 0) - dataPointLabelBgHeight * half})`
         )
         dataPointLabels
-            .attr('dy', (_, i) => dataPointLabelBgHeight / 2 + dataPointLabelDim[i].height * 0.25)
-            .attr('dx', (_, i) => dataPointLabelBgWidth / 2 - dataPointLabelDim[i].width / 2)
+            .attr('dy', (_, i) => dataPointLabelBgHeight * half + dataPointLabelDim[i].height * quarter)
+            .attr('dx', (_, i) => dataPointLabelBgWidth * half - dataPointLabelDim[i].width * half)
             .attr('fill', 'white')
 
         // Create the area generator for vertical orientation

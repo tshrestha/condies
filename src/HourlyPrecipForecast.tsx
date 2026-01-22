@@ -1,7 +1,7 @@
-import type { HourlyForecast, Period } from './lib/nws.ts'
+import type { Period } from './lib/nws.ts'
 import ForecastChart from './ForecastChart.tsx'
 
-export default function HourlyPrecipChart({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
+export default function HourlyPrecipChart({ periods }: { periods: Period[] }) {
     return (
         <ForecastChart
             title={'HOURLY PRECIPITATION'}
@@ -19,7 +19,7 @@ export default function HourlyPrecipChart({ hourlyForecast }: { hourlyForecast: 
                 '#1a2f5a', // 90%
                 '#172554' // 100% - deep navy
             ]}
-            periods={hourlyForecast.periods}
+            periods={periods}
             getX={(p: Period) => p.probabilityOfPrecipitation.value}
             getXLabel={(p: Period) => `${p.probabilityOfPrecipitation.value}%`}
             getForecastLabel={(p) => p.shortForecast}

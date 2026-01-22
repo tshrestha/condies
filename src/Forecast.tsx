@@ -11,7 +11,6 @@ import ForecastPlaceholder from './ForecastPlaceholder.tsx'
 import HomeButton from './HomeButton.tsx'
 import LatestObservationsPlaceholder from './LatestObservationsPlaceholder.tsx'
 import SunRiseSet from './SunRiseSet.tsx'
-import { getMinMaxTemp } from './lib/util'
 
 export interface ForecastProps {
     point?: {
@@ -35,8 +34,7 @@ const getData = query(async (lat, lon) => {
             p.hourString = `${match![1]} ${match![3]}`
             return { ...p, hourString: `${match![1]} ${match![3]}` }
         })
-    const [minTemp, maxTemp] = getMinMaxTemp([...periods])
-    const hourlyForecast = { minTemp, maxTemp, periods }
+    const hourlyForecast = { periods }
     return { point, forecast, hourlyForecast }
 }, 'forecast')
 
@@ -66,9 +64,9 @@ export default function Forecast(props: ForecastProps | RouteSectionProps) {
             <SunRiseSet lat={lat} lon={lon} />
             <Suspense fallback={<ForecastPlaceholder />}>
                 <Show when={data()}>
-                    <HourlyForecast hourlyForecast={data()!.hourlyForecast} />
-                    <ShortForecast forecastResult={data()!.forecast} />
-                    <DetailedForecast forecastResult={data()!.forecast} />
+                    <HourlyForecast periods={data()!.hourlyForecast.periods} />
+                    <ShortForecast periods={data()!.forecast.properties.periods} />
+                    <DetailedForecast periods={data()!.forecast.properties.periods} />
                 </Show>
             </Suspense>
             <Show when={location.pathname !== '/'}>

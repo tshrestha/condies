@@ -1,4 +1,4 @@
-import type { Period } from './nws.ts'
+import type { Period, QuantitativeValue } from './nws.ts'
 
 export function getLatLon(path: string) {
     const segments = path.split('/')
@@ -78,4 +78,60 @@ export function getWindArrow(direction: string): string {
         WSW: '↗'
     }
     return arrows[direction] || '○'
+}
+
+export function tooWindy(windSpeed: QuantitativeValue, threshold = 10) {
+    if (windSpeed.maxValue && windSpeed.maxValue > threshold) {
+        return true
+    }
+
+    return !!(windSpeed.value && windSpeed.value > threshold)
+}
+
+export function isPrimo(condies: Period) {
+    const { shortForecast, isDaytime, windSpeed, windGust, temperature, probabilityOfPrecipitation } = condies
+    if (!isDaytime) {
+        return false
+    }
+    if (probabilityOfPrecipitation.value > 10) {
+        return false
+    }
+    if (temperature < 55 || temperature > 75) {
+        return false
+    }
+    if (windGust) {
+        return false
+    }
+    if (tooWindy(windSpeed)) {
+        return false
+    }
+
+    const p = /(mostly\s)?sunny/g
+    return p.test(shortForecast.toLowerCase())
+}
+
+export function isPowDay(condies: Period, ignoreIsDaytime = false, ignoreTemp = false) {
+    const { detailedForecast, isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
+    const snowForecastRegex = /(snow)(\saccumulation)?/gi
+    const snowDepthRegex = /(\d+)\s(inches)/
+
+    if (!isDaytime && !ignoreIsDaytime) {
+        return false
+    }
+    if (temperature > 32 && !ignoreTemp) {
+        return false
+    }
+    if (tooWindy(windSpeed, 20)) {
+        return false
+    }
+    if (probabilityOfPrecipitation.value < 70) {
+        return false
+    }
+    if (snowForecastRegex.test(detailedForecast)) {
+        const match = detailedForecast.match(snowDepthRegex)
+        if (!match) {
+            return false
+        }
+        return parseInt(match[1], 10) >= 6
+    }
 }

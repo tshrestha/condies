@@ -1,7 +1,7 @@
-import type { HourlyForecast, Period } from './lib/nws.ts'
+import type { Period } from './lib/nws.ts'
 import ForecastChart from './ForecastChart.tsx'
 
-export default function HourlyTempsChart({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
+export default function HourlyTempsChart({ periods }: { periods: Period[] }) {
     return (
         <ForecastChart
             title={'HOURLY TEMPS'}
@@ -19,7 +19,7 @@ export default function HourlyTempsChart({ hourlyForecast }: { hourlyForecast: H
                 '#ef4444', // 90°F - red
                 '#b91c1c' // 100°F - deep red (extreme heat)
             ]}
-            periods={hourlyForecast.periods}
+            periods={periods}
             getX={(p: Period) => p.temperature}
             getXLabel={(p: Period) => `${p.temperature}º`}
             getForecastLabel={(p) => p.shortForecast}

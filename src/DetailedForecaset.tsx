@@ -1,4 +1,4 @@
-import type { ForecastResult, Period } from './lib/nws.ts'
+import type { Period } from './lib/nws.ts'
 import { getIcon } from './lib/wicons.ts'
 import { getPrecipType } from './lib/util.ts'
 import windIcon from './assets/weather-icons-master/production/fill/all/wind.svg'
@@ -6,12 +6,12 @@ import raindropIcon from './assets/weather-icons-master/production/fill/all/rain
 import snowflakeIcon from './assets/weather-icons-master/production/fill/all/snowflake.svg'
 import WindSpeed from './WindSpeed.tsx'
 
-export default function DetailedForecast({ forecastResult }: { forecastResult?: ForecastResult }) {
+export default function DetailedForecast({ periods }: { periods: Period[] }) {
     return (
         <div class='card rounded rounded-4 shadow-sm mt-4 mb-4'>
             <div class='card-header'>Detailed Forecast</div>
             <div class='list-group list-group-flush rounded-4'>
-                {forecastResult?.properties.periods.map((p: Period) => {
+                {periods.map((p: Period) => {
                     const precipType = getPrecipType(p.detailedForecast)
                     return (
                         <div class={'list-group-item'}>

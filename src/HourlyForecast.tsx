@@ -1,6 +1,6 @@
 import { createSignal, For, Match, Switch } from 'solid-js'
 
-import type { HourlyForecast } from './lib/nws.ts'
+import type { Period } from './lib/nws.ts'
 import HourlyTempsChart from './HourlyTempsChart.tsx'
 import HourlyPrecipChart from './HourlyPrecipForecast.tsx'
 import HourlyWindChart from './HourlyWindChart.tsx'
@@ -12,14 +12,14 @@ export interface ForecastType {
     isSelected: boolean
 }
 
-export default function HourlyForecast({ hourlyForecast }: { hourlyForecast: HourlyForecast }) {
+export default function HourlyForecast({ periods }: { periods: Period[] }) {
     const forecastTypes = [
         { name: 'TEMP', id: 'forecast-temp', isSelected: true },
         { name: 'PRECIP %', id: 'forecast-precip', isSelected: false },
-        { name: 'WIND', id: 'forecast-wind', isSelected: false },
+        { name: 'WIND', id: 'forecast-wind', isSelected: false }
     ]
 
-    if (hourlyForecast.periods.every(p => p.windGust)) {
+    if (periods.every((p) => p.windGust)) {
         forecastTypes.push({ name: 'WIND GUST', id: 'forecast-wind-gust', isSelected: false })
     }
     const [forecastType, setForecastType] = createSignal<ForecastType[]>(forecastTypes)
@@ -36,16 +36,16 @@ export default function HourlyForecast({ hourlyForecast }: { hourlyForecast: Hou
         <>
             <Switch>
                 <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-temp'}>
-                    <HourlyTempsChart hourlyForecast={hourlyForecast} />
+                    <HourlyTempsChart periods={periods} />
                 </Match>
                 <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-precip'}>
-                    <HourlyPrecipChart hourlyForecast={hourlyForecast} />
+                    <HourlyPrecipChart periods={periods} />
                 </Match>
                 <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-wind'}>
-                    <HourlyWindChart hourlyForecast={hourlyForecast} />
+                    <HourlyWindChart periods={periods} />
                 </Match>
                 <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-wind-gust'}>
-                    <HourlyWindGustChart hourlyForecast={hourlyForecast} />
+                    <HourlyWindGustChart periods={periods} />
                 </Match>
             </Switch>
             <div class='btn-group btn-group-sm mb-4 bg-body' role='group' aria-label='Forecast type selector'>
