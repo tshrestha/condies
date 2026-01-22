@@ -1,54 +1,54 @@
 .morning {
-  background-color: #f4c2c2 !important;
+    background-color: #f4c2c2 !important;
 }
 
 .day {
-  background-color: #87ceeb !important;
+    background-color: #87ceeb !important;
 }
 
 .evening {
-  background-color: #ff8c42 !important;
+    background-color: #ff8c42 !important;
 }
 
 .night {
-  background-color: #1a2238 !important;
+    background-color: #1a2238 !important;
 }
 
 .container {
-  max-width: 540px !important;
+    max-width: 540px !important;
 }
 
 .latest-observations span.badge.text-bg-secondary {
-  background-color: transparent !important;
-  color: var(--bs-dark-text-emphasis) !important;
-  border: 1px solid;
-  border-color: var(--bs-dark-border-color);
+    background-color: transparent !important;
+    color: var(--bs-dark-text-emphasis) !important;
+    border: 1px solid;
+    border-color: var(--bs-dark-border-color);
 }
 
 .hourly-forecast .list-group-item:first-child {
-  padding-top: 10px !important;
+    padding-top: 10px !important;
 }
 
 .hourly-forecast .list-group-item:last-child {
-  padding-bottom: 10px !important;
+    padding-bottom: 10px !important;
 }
 
 .btn.btn-light.btn-lg {
-  border: 3px solid rgba(0, 0, 0, 0.4) !important;
+    border: 3px solid rgba(0, 0, 0, 0.4) !important;
 }
 
 .forecast-chart text {
-  font-family: var(--bs-font-sans-serif);
+    font-family: var(--bs-font-sans-serif);
 }
 
 .wind-forecast-chart text.data-point-label:first-child {
-  display: none;
+    display: none;
 }
 .wind-forecast-chart text.data-point-label:last-child {
-  display: none;
+    display: none;
 }
 
 #map {
-  height: 100svh !important;
-  width: 100vw;
+    height: 100svh !important;
+    width: 100vw;
 }

@@ -9,9 +9,10 @@
     "markdown": {
     },
     "malva": {
-      "indentWidth": 4
+        "indentWidth": 4
     },
     "markup": {
+        "indentWidth": 4
     },
     "yaml": {
     },
