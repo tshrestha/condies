@@ -131,6 +131,7 @@ export default function ForecastChart({
             .attr('fill', (d) => tempColorScale(getColorValue(d)).replace('0.6)', '1)'))
             .attr('stroke', '#e9ecef')
             .attr('stroke-width', dataPointLabelBgStrokeWidth)
+            .style('filter', 'drop-shadow(0px 1px 2px rgba(0, 0, 0, .3))')
 
         dataPointLabelGroup.attr(
             'transform',
