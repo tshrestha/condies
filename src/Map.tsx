@@ -1,27 +1,27 @@
-import 'maplibre-gl/dist/maplibre-gl.css'
+import "maplibre-gl/dist/maplibre-gl.css"
 
-import maplibregl from 'maplibre-gl'
-import { createEffect } from 'solid-js'
-import { createAsync, query } from '@solidjs/router'
+import { createAsync, query } from "@solidjs/router"
+import maplibregl from "maplibre-gl"
+import { createEffect } from "solid-js"
 
-import { denver } from './lib/nws.ts'
-import { getLocation } from './lib/util.ts'
-import { reverse } from './lib/geocoding.ts'
+import { reverse } from "./lib/geocoding.ts"
+import { denver } from "./lib/nws.ts"
+import { getLocation } from "./lib/util.ts"
 
-import HomeButton from './HomeButton.tsx'
+import HomeButton from "./HomeButton.tsx"
 
 const getData = query(async () => {
     try {
         const {
             // @ts-ignore
-            coords: { latitude, longitude }
+            coords: { latitude, longitude },
         } = await getLocation()
         return { lat: latitude.toFixed(4), lon: longitude.toFixed(4) }
     } catch (e) {
         console.error((e as Error).message)
         return { lat: denver.lat, lon: denver.lon }
     }
-}, 'mapGeoLocation')
+}, "mapGeoLocation")
 
 export default function Map() {
     let mapContainerRef!: HTMLDivElement
@@ -33,29 +33,29 @@ export default function Map() {
         if (mapContainerRef.isConnected && latlon()) {
             mapRef = new maplibregl.Map({
                 container: mapContainerRef,
-                style: 'https://tiles.openfreemap.org/styles/bright',
+                style: "https://tiles.openfreemap.org/styles/bright",
                 center: [latlon()!.lon, latlon()!.lat],
                 zoom: 9,
-                attributionControl: false
+                attributionControl: false,
             })
 
-            mapRef.addControl(new maplibregl.AttributionControl({ compact: true }), 'top-left')
+            mapRef.addControl(new maplibregl.AttributionControl({ compact: true }), "top-left")
 
             mapRef.addControl(
                 new maplibregl.NavigationControl({
-                    showCompass: true
+                    showCompass: true,
                 }),
-                'bottom-right'
+                "bottom-right",
             )
 
             mapRef.addControl(
                 new maplibregl.GeolocateControl({
                     positionOptions: {
-                        enableHighAccuracy: true
+                        enableHighAccuracy: true,
                     },
-                    showAccuracyCircle: true
+                    showAccuracyCircle: true,
                 }),
-                'bottom-right'
+                "bottom-right",
             )
 
             const handleClick = (e: maplibregl.MapMouseEvent) => {
@@ -68,10 +68,10 @@ export default function Map() {
                 })
             }
 
-            mapRef.on('click', handleClick)
+            mapRef.on("click", handleClick)
 
             return () => {
-                mapRef?.off('click', handleClick)
+                mapRef?.off("click", handleClick)
                 mapRef?.remove()
             }
         }
@@ -79,8 +79,8 @@ export default function Map() {
 
     return (
         <>
-            <div id={'map'} class={'position-fixed top-0 start-0 z-2'} ref={mapContainerRef}></div>
-            <div class={'position-fixed bottom-0 start-0 mb-3 mx-3 z-3'}>
+            <div id={"map"} class={"position-fixed top-0 start-0 z-2"} ref={mapContainerRef}></div>
+            <div class={"position-fixed bottom-0 start-0 mb-3 mx-3 z-3"}>
                 <HomeButton />
             </div>
         </>

@@ -1,33 +1,33 @@
-import Fuse, { type FuseResult } from 'fuse.js'
+import Fuse, { type FuseResult } from "fuse.js"
 
-import ClearDay from '../assets/weather-icons-master/production/fill/all/clear-day.svg'
-import ClearNight from '../assets/weather-icons-master/production/fill/all/clear-night.svg'
-import Cloudy from '../assets/weather-icons-master/production/fill/all/cloudy.svg'
-import Overcast from '../assets/weather-icons-master/production/fill/all/overcast.svg'
-import OvercastDay from '../assets/weather-icons-master/production/fill/all/overcast-day.svg'
-import OvercastNight from '../assets/weather-icons-master/production/fill/all/overcast-night.svg'
-import Drizzle from '../assets/weather-icons-master/production/fill/all/drizzle.svg'
-import Rain from '../assets/weather-icons-master/production/fill/all/rain.svg'
-import PartlyCloudyDayRain from '../assets/weather-icons-master/production/fill/all/partly-cloudy-day-rain.svg'
-import PartlyCloudyNightRain from '../assets/weather-icons-master/production/fill/all/partly-cloudy-night-rain.svg'
-import Sleet from '../assets/weather-icons-master/production/fill/all/sleet.svg'
-import PartlyCloudyDay from '../assets/weather-icons-master/production/fill/all/partly-cloudy-day.svg'
-import PartlyCloudyNight from '../assets/weather-icons-master/production/fill/all/partly-cloudy-night.svg'
-import Mist from '../assets/weather-icons-master/production/fill/all/mist.svg'
-import Thunderstorms from '../assets/weather-icons-master/production/fill/all/thunderstorms.svg'
-import ThunderstormsDay from '../assets/weather-icons-master/production/fill/all/thunderstorms-day.svg'
-import ThunderstormsNight from '../assets/weather-icons-master/production/fill/all/thunderstorms-night.svg'
-import ThunderstormsDayRain from '../assets/weather-icons-master/production/fill/all/thunderstorms-day-rain.svg'
-import ThunderstormsNightRain from '../assets/weather-icons-master/production/fill/all/thunderstorms-night-rain.svg'
-import ThunderstormsSnow from '../assets/weather-icons-master/production/fill/all/thunderstorms-snow.svg'
-import Fog from '../assets/weather-icons-master/production/fill/all/fog.svg'
-import FogDay from '../assets/weather-icons-master/production/fill/all/fog-day.svg'
-import FogNight from '../assets/weather-icons-master/production/fill/all/fog-night.svg'
-import Snow from '../assets/weather-icons-master/production/fill/all/snow.svg'
-import PartlyCloudyDaySnow from '../assets/weather-icons-master/production/fill/all/partly-cloudy-day-snow.svg'
-import PartlyCloudyNightSnow from '../assets/weather-icons-master/production/fill/all/partly-cloudy-night-snow.svg'
+import ClearDay from "../assets/weather-icons-master/production/fill/all/clear-day.svg"
+import ClearNight from "../assets/weather-icons-master/production/fill/all/clear-night.svg"
+import Cloudy from "../assets/weather-icons-master/production/fill/all/cloudy.svg"
+import Drizzle from "../assets/weather-icons-master/production/fill/all/drizzle.svg"
+import FogDay from "../assets/weather-icons-master/production/fill/all/fog-day.svg"
+import FogNight from "../assets/weather-icons-master/production/fill/all/fog-night.svg"
+import Fog from "../assets/weather-icons-master/production/fill/all/fog.svg"
+import Mist from "../assets/weather-icons-master/production/fill/all/mist.svg"
+import OvercastDay from "../assets/weather-icons-master/production/fill/all/overcast-day.svg"
+import OvercastNight from "../assets/weather-icons-master/production/fill/all/overcast-night.svg"
+import Overcast from "../assets/weather-icons-master/production/fill/all/overcast.svg"
+import PartlyCloudyDayRain from "../assets/weather-icons-master/production/fill/all/partly-cloudy-day-rain.svg"
+import PartlyCloudyDaySnow from "../assets/weather-icons-master/production/fill/all/partly-cloudy-day-snow.svg"
+import PartlyCloudyDay from "../assets/weather-icons-master/production/fill/all/partly-cloudy-day.svg"
+import PartlyCloudyNightRain from "../assets/weather-icons-master/production/fill/all/partly-cloudy-night-rain.svg"
+import PartlyCloudyNightSnow from "../assets/weather-icons-master/production/fill/all/partly-cloudy-night-snow.svg"
+import PartlyCloudyNight from "../assets/weather-icons-master/production/fill/all/partly-cloudy-night.svg"
+import Rain from "../assets/weather-icons-master/production/fill/all/rain.svg"
+import Sleet from "../assets/weather-icons-master/production/fill/all/sleet.svg"
+import Snow from "../assets/weather-icons-master/production/fill/all/snow.svg"
+import ThunderstormsDayRain from "../assets/weather-icons-master/production/fill/all/thunderstorms-day-rain.svg"
+import ThunderstormsDay from "../assets/weather-icons-master/production/fill/all/thunderstorms-day.svg"
+import ThunderstormsNightRain from "../assets/weather-icons-master/production/fill/all/thunderstorms-night-rain.svg"
+import ThunderstormsNight from "../assets/weather-icons-master/production/fill/all/thunderstorms-night.svg"
+import ThunderstormsSnow from "../assets/weather-icons-master/production/fill/all/thunderstorms-snow.svg"
+import Thunderstorms from "../assets/weather-icons-master/production/fill/all/thunderstorms.svg"
 
-import iconIndexJson from '../assets/icon.index.json'
+import iconIndexJson from "../assets/icon.index.json"
 
 export interface Icon {
     path: string
@@ -39,229 +39,229 @@ export interface Icon {
 
 export const icons = [
     {
-        path: './assets/weather-icons-master/production/fill/all/clear-day.svg',
-        keywords: ['sunny', 'mostly sunny'],
+        path: "./assets/weather-icons-master/production/fill/all/clear-day.svg",
+        keywords: ["sunny", "mostly sunny"],
         day: true,
         night: false,
-        icon: ClearDay
+        icon: ClearDay,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/clear-night.svg',
-        keywords: ['clear', 'mostly clear'],
+        path: "./assets/weather-icons-master/production/fill/all/clear-night.svg",
+        keywords: ["clear", "mostly clear"],
         day: false,
         night: true,
-        icon: ClearNight
+        icon: ClearNight,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/cloudy.svg',
-        keywords: ['cloudy'],
+        path: "./assets/weather-icons-master/production/fill/all/cloudy.svg",
+        keywords: ["cloudy"],
         day: true,
         night: true,
-        icon: Cloudy
+        icon: Cloudy,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/cloudy.svg',
-        keywords: ['cloudy'],
+        path: "./assets/weather-icons-master/production/fill/all/cloudy.svg",
+        keywords: ["cloudy"],
         day: true,
         night: false,
-        icon: Cloudy
+        icon: Cloudy,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/cloudy.svg',
-        keywords: ['cloudy'],
+        path: "./assets/weather-icons-master/production/fill/all/cloudy.svg",
+        keywords: ["cloudy"],
         day: false,
         night: true,
-        icon: Cloudy
+        icon: Cloudy,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/overcast.svg',
-        keywords: ['overcast'],
+        path: "./assets/weather-icons-master/production/fill/all/overcast.svg",
+        keywords: ["overcast"],
         day: true,
         night: true,
-        icon: Overcast
+        icon: Overcast,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/overcast-day.svg',
-        keywords: ['overcast'],
+        path: "./assets/weather-icons-master/production/fill/all/overcast-day.svg",
+        keywords: ["overcast"],
         day: true,
         night: false,
-        icon: OvercastDay
+        icon: OvercastDay,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/overcast-night.svg',
-        keywords: ['overcast'],
+        path: "./assets/weather-icons-master/production/fill/all/overcast-night.svg",
+        keywords: ["overcast"],
         day: false,
         night: true,
-        icon: OvercastNight
+        icon: OvercastNight,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/drizzle.svg',
-        keywords: ['drizzle', 'light rain'],
+        path: "./assets/weather-icons-master/production/fill/all/drizzle.svg",
+        keywords: ["drizzle", "light rain"],
         day: true,
         night: true,
-        icon: Drizzle
+        icon: Drizzle,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/rain.svg',
-        keywords: ['rain', 'moderate rain', 'rain showers', 'showers likely'],
+        path: "./assets/weather-icons-master/production/fill/all/rain.svg",
+        keywords: ["rain", "moderate rain", "rain showers", "showers likely"],
         day: true,
         night: true,
-        icon: Rain
+        icon: Rain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/rain.svg',
-        keywords: ['rain', 'moderate rain', 'rain showers', 'showers likely'],
+        path: "./assets/weather-icons-master/production/fill/all/rain.svg",
+        keywords: ["rain", "moderate rain", "rain showers", "showers likely"],
         day: true,
         night: false,
-        icon: Rain
+        icon: Rain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/rain.svg',
-        keywords: ['rain', 'moderate rain', 'rain showers', 'showers likely'],
+        path: "./assets/weather-icons-master/production/fill/all/rain.svg",
+        keywords: ["rain", "moderate rain", "rain showers", "showers likely"],
         day: false,
         night: true,
-        icon: Rain
+        icon: Rain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/partly-cloudy-day-rain.svg',
-        keywords: ['light rain'],
+        path: "./assets/weather-icons-master/production/fill/all/partly-cloudy-day-rain.svg",
+        keywords: ["light rain"],
         day: true,
         night: false,
-        icon: PartlyCloudyDayRain
+        icon: PartlyCloudyDayRain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/partly-cloudy-night-rain.svg',
-        keywords: ['light rain'],
+        path: "./assets/weather-icons-master/production/fill/all/partly-cloudy-night-rain.svg",
+        keywords: ["light rain"],
         day: false,
         night: true,
-        icon: PartlyCloudyNightRain
+        icon: PartlyCloudyNightRain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/sleet.svg',
-        keywords: ['sleet', 'freezing rain'],
+        path: "./assets/weather-icons-master/production/fill/all/sleet.svg",
+        keywords: ["sleet", "freezing rain"],
         day: true,
         night: true,
-        icon: Sleet
+        icon: Sleet,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/partly-cloudy-day.svg',
-        keywords: ['partly cloudy', 'mostly cloudy', 'partly sunny'],
+        path: "./assets/weather-icons-master/production/fill/all/partly-cloudy-day.svg",
+        keywords: ["partly cloudy", "mostly cloudy", "partly sunny"],
         day: true,
         night: false,
-        icon: PartlyCloudyDay
+        icon: PartlyCloudyDay,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/partly-cloudy-night.svg',
-        keywords: ['partly cloudy', 'mostly cloudy'],
+        path: "./assets/weather-icons-master/production/fill/all/partly-cloudy-night.svg",
+        keywords: ["partly cloudy", "mostly cloudy"],
         day: false,
         night: true,
-        icon: PartlyCloudyNight
+        icon: PartlyCloudyNight,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/mist.svg',
-        keywords: ['mist'],
+        path: "./assets/weather-icons-master/production/fill/all/mist.svg",
+        keywords: ["mist"],
         day: true,
         night: true,
-        icon: Mist
+        icon: Mist,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/thunderstorms.svg',
-        keywords: ['thunder', 'thunderstorms', 'thunder storms'],
+        path: "./assets/weather-icons-master/production/fill/all/thunderstorms.svg",
+        keywords: ["thunder", "thunderstorms", "thunder storms"],
         day: true,
         night: true,
-        icon: Thunderstorms
+        icon: Thunderstorms,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/thunderstorms-day.svg',
-        keywords: ['thunder', 'thunderstorms', 'thunder storms'],
+        path: "./assets/weather-icons-master/production/fill/all/thunderstorms-day.svg",
+        keywords: ["thunder", "thunderstorms", "thunder storms"],
         day: true,
         night: false,
-        icon: ThunderstormsDay
+        icon: ThunderstormsDay,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/thunderstorms-night.svg',
-        keywords: ['thunder', 'thunderstorms', 'thunder storms'],
+        path: "./assets/weather-icons-master/production/fill/all/thunderstorms-night.svg",
+        keywords: ["thunder", "thunderstorms", "thunder storms"],
         day: false,
         night: true,
-        icon: ThunderstormsNight
+        icon: ThunderstormsNight,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/thunderstorms-day-rain.svg',
-        keywords: ['thunder', 'thunderstorms', 'thunder storms'],
+        path: "./assets/weather-icons-master/production/fill/all/thunderstorms-day-rain.svg",
+        keywords: ["thunder", "thunderstorms", "thunder storms"],
         day: true,
         nigh: false,
-        icon: ThunderstormsDayRain
+        icon: ThunderstormsDayRain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/thunderstorms-night-rain.svg',
-        keywords: ['thunder', 'thunderstorms', 'thunder storms'],
+        path: "./assets/weather-icons-master/production/fill/all/thunderstorms-night-rain.svg",
+        keywords: ["thunder", "thunderstorms", "thunder storms"],
         day: false,
         night: true,
-        icon: ThunderstormsNightRain
+        icon: ThunderstormsNightRain,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/thunderstorms-snow.svg',
-        keywords: ['thunder snow'],
+        path: "./assets/weather-icons-master/production/fill/all/thunderstorms-snow.svg",
+        keywords: ["thunder snow"],
         day: true,
         night: true,
-        icon: ThunderstormsSnow
+        icon: ThunderstormsSnow,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/fog.svg',
-        keywords: ['fog', 'foggy'],
+        path: "./assets/weather-icons-master/production/fill/all/fog.svg",
+        keywords: ["fog", "foggy"],
         day: true,
         night: true,
-        icon: Fog
+        icon: Fog,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/fog-day.svg',
-        keywords: ['fog', 'foggy'],
+        path: "./assets/weather-icons-master/production/fill/all/fog-day.svg",
+        keywords: ["fog", "foggy"],
         day: true,
         night: false,
-        icon: FogDay
+        icon: FogDay,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/fog-night.svg',
-        keywords: ['fog', 'foggy'],
+        path: "./assets/weather-icons-master/production/fill/all/fog-night.svg",
+        keywords: ["fog", "foggy"],
         day: false,
         night: true,
-        icon: FogNight
+        icon: FogNight,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/snow.svg',
-        keywords: ['snow', 'blowing snow', 'snow showers', 'snow showers likely'],
+        path: "./assets/weather-icons-master/production/fill/all/snow.svg",
+        keywords: ["snow", "blowing snow", "snow showers", "snow showers likely"],
         day: true,
         night: true,
-        icon: Snow
+        icon: Snow,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/snow.svg',
-        keywords: ['snow', 'blowing snow', 'snow showers', 'snow showers likely'],
-        day: true,
-        night: false,
-        icon: Snow
-    },
-    {
-        path: './assets/weather-icons-master/production/fill/all/snow.svg',
-        keywords: ['snow', 'blowing snow', 'snow showers', 'snow showers likely'],
-        day: false,
-        night: true,
-        icon: Snow
-    },
-    {
-        path: './assets/weather-icons-master/production/fill/all/partly-cloudy-day-snow.svg',
-        keywords: ['light snow', 'snow likely'],
+        path: "./assets/weather-icons-master/production/fill/all/snow.svg",
+        keywords: ["snow", "blowing snow", "snow showers", "snow showers likely"],
         day: true,
         night: false,
-        icon: PartlyCloudyDaySnow
+        icon: Snow,
     },
     {
-        path: './assets/weather-icons-master/production/fill/all/partly-cloudy-night-snow.svg',
-        keywords: ['light snow', 'snow likely'],
+        path: "./assets/weather-icons-master/production/fill/all/snow.svg",
+        keywords: ["snow", "blowing snow", "snow showers", "snow showers likely"],
         day: false,
         night: true,
-        icon: PartlyCloudyNightSnow
-    }
+        icon: Snow,
+    },
+    {
+        path: "./assets/weather-icons-master/production/fill/all/partly-cloudy-day-snow.svg",
+        keywords: ["light snow", "snow likely"],
+        day: true,
+        night: false,
+        icon: PartlyCloudyDaySnow,
+    },
+    {
+        path: "./assets/weather-icons-master/production/fill/all/partly-cloudy-night-snow.svg",
+        keywords: ["light snow", "snow likely"],
+        day: false,
+        night: true,
+        icon: PartlyCloudyNightSnow,
+    },
 ]
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -272,23 +272,23 @@ const fuse = new Fuse(
     icons,
     {
         isCaseSensitive: false,
-        keys: ['keywords'],
+        keys: ["keywords"],
         includeScore: true,
-        shouldSort: true
+        shouldSort: true,
     },
-    iconIndex
+    iconIndex,
 )
 
 export function getIcon({ keyword, isDay, isNight }: Record<string, string | boolean>) {
-    const tokens = (keyword as string).split(' ')
+    const tokens = (keyword as string).split(" ")
 
     let searchTerm
     if (tokens.length === 1) {
         searchTerm = tokens.pop()
     } else if (tokens.length === 2) {
-        searchTerm = tokens.slice(-2).join(' ')
+        searchTerm = tokens.slice(-2).join(" ")
     } else {
-        searchTerm = tokens.slice(-3).join(' ')
+        searchTerm = tokens.slice(-3).join(" ")
     }
 
     const searchResults: FuseResult<Icon>[] = fuse.search(searchTerm as string)

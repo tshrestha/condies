@@ -1,16 +1,16 @@
-import { Show, Suspense } from 'solid-js'
-import { createAsync, query, type RouteSectionProps, useLocation, useParams } from '@solidjs/router'
+import { createAsync, query, type RouteSectionProps, useLocation, useParams } from "@solidjs/router"
+import { Show, Suspense } from "solid-js"
 
-import { type ForecastResult, getForecast, getPoint, type Point } from './lib/nws.ts'
+import { type ForecastResult, getForecast, getPoint, type Point } from "./lib/nws.ts"
 
-import LatestObservations from './LatestObservations.tsx'
-import HourlyForecast from './HourlyForecast'
-import ShortForecast from './ShortForecast.tsx'
-import DetailedForecast from './DetailedForecaset.tsx'
-import ForecastPlaceholder from './ForecastPlaceholder.tsx'
-import HomeButton from './HomeButton.tsx'
-import LatestObservationsPlaceholder from './LatestObservationsPlaceholder.tsx'
-import SunRiseSet from './SunRiseSet.tsx'
+import DetailedForecast from "./DetailedForecaset.tsx"
+import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
+import HomeButton from "./HomeButton.tsx"
+import HourlyForecast from "./HourlyForecast"
+import LatestObservations from "./LatestObservations.tsx"
+import LatestObservationsPlaceholder from "./LatestObservationsPlaceholder.tsx"
+import ShortForecast from "./ShortForecast.tsx"
+import SunRiseSet from "./SunRiseSet.tsx"
 
 export interface ForecastProps {
     point?: {
@@ -29,14 +29,14 @@ const getData = query(async (lat, lon) => {
         .filter((p) => p.number >= 1 && p.number <= 10)
         .map((p) => {
             const d = new Date(p.startTime)
-            const timeString = d.toLocaleTimeString('en-US', { hour12: true, timeStyle: 'short' })
+            const timeString = d.toLocaleTimeString("en-US", { hour12: true, timeStyle: "short" })
             const match = timeString.match(timeRegex)
             p.hourString = `${match![1]} ${match![3]}`
             return { ...p, hourString: `${match![1]} ${match![3]}` }
         })
     const hourlyForecast = { periods }
     return { point, forecast, hourlyForecast }
-}, 'forecast')
+}, "forecast")
 
 export default function Forecast(props: ForecastProps | RouteSectionProps) {
     const location = useLocation()
@@ -47,7 +47,7 @@ export default function Forecast(props: ForecastProps | RouteSectionProps) {
         lat = (props as ForecastProps).point!.lat
         lon = (props as ForecastProps).point!.lon
     } else {
-        const point = params.point?.split(',')
+        const point = params.point?.split(",")
         lat = point![0]
         lon = point![1]
     }
@@ -69,8 +69,8 @@ export default function Forecast(props: ForecastProps | RouteSectionProps) {
                     <DetailedForecast periods={data()!.forecast.properties.periods} />
                 </Show>
             </Suspense>
-            <Show when={location.pathname !== '/'}>
-                <div class={'position-fixed bottom-0 pb-4 z-3'}>
+            <Show when={location.pathname !== "/"}>
+                <div class={"position-fixed bottom-0 pb-4 z-3"}>
                     <HomeButton />
                 </div>
             </Show>

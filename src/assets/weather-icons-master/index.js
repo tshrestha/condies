@@ -1,49 +1,49 @@
-const fs = require('fs').promises
-const fss = require('fs')
-const rimraf = require('rimraf')
-const SVGOptimizer = require('svgo')
+const fs = require("fs").promises
+const fss = require("fs")
+const rimraf = require("rimraf")
+const SVGOptimizer = require("svgo")
 
 const OPTIMIZED_ICONS = {}
 const ICONS_MAP = {
     all: {},
     darksky: {
-        'clear-day': 'clear-day',
-        'clear-night': 'clear-night',
-        'cloudy': 'cloudy',
-        'drizzle': 'drizzle',
-        'fog': 'mist',
-        'hail': 'hail',
-        'partly-cloudy-day': 'partly-cloudy-day',
-        'partly-cloudy-day-rain': 'partly-cloudy-day-rain',
-        'partly-cloudy-night': 'partly-cloudy-night',
-        'partly-cloudy-night-rain': 'partly-cloudy-night-rain',
-        'rain': 'rain',
-        'sleet': 'sleet',
-        'snow': 'snow',
-        'thunderstorm': 'thunderstorms',
-        'tornado': 'tornado',
-        'wind': 'wind'
+        "clear-day": "clear-day",
+        "clear-night": "clear-night",
+        "cloudy": "cloudy",
+        "drizzle": "drizzle",
+        "fog": "mist",
+        "hail": "hail",
+        "partly-cloudy-day": "partly-cloudy-day",
+        "partly-cloudy-day-rain": "partly-cloudy-day-rain",
+        "partly-cloudy-night": "partly-cloudy-night",
+        "partly-cloudy-night-rain": "partly-cloudy-night-rain",
+        "rain": "rain",
+        "sleet": "sleet",
+        "snow": "snow",
+        "thunderstorm": "thunderstorms",
+        "tornado": "tornado",
+        "wind": "wind",
     },
     openweathermap: {
-        '01d': 'clear-day',
-        '01n': 'clear-night',
-        '02d': 'partly-cloudy-day',
-        '02n': 'partly-cloudy-night',
-        '03d': 'cloudy',
-        '03n': 'cloudy',
-        '04d': 'cloudy',
-        '04n': 'cloudy',
-        '09d': 'rain',
-        '09n': 'rain',
-        '10d': 'partly-cloudy-day-rain',
-        '10n': 'partly-cloudy-night-rain',
-        '11d': 'thunderstorms',
-        '11n': 'thunderstorms',
-        '13d': 'partly-cloudy-day-snow',
-        '13n': 'partly-cloudy-day-snow',
-        '50d': 'mist',
-        '50n': 'mist'
-    }
+        "01d": "clear-day",
+        "01n": "clear-night",
+        "02d": "partly-cloudy-day",
+        "02n": "partly-cloudy-night",
+        "03d": "cloudy",
+        "03n": "cloudy",
+        "04d": "cloudy",
+        "04n": "cloudy",
+        "09d": "rain",
+        "09n": "rain",
+        "10d": "partly-cloudy-day-rain",
+        "10n": "partly-cloudy-night-rain",
+        "11d": "thunderstorms",
+        "11n": "thunderstorms",
+        "13d": "partly-cloudy-day-snow",
+        "13n": "partly-cloudy-day-snow",
+        "50d": "mist",
+        "50n": "mist",
+    },
 }
 
 function initializeSvgOptimizer() {
@@ -81,8 +81,8 @@ function initializeSvgOptimizer() {
             { mergePaths: true },
             { convertShapeToPath: true },
             { sortAttrs: true },
-            { removeDimensions: true }
-        ]
+            { removeDimensions: true },
+        ],
     })
 }
 
@@ -97,7 +97,7 @@ async function copyIcon(type, provider, name, icon) {
     if (OPTIMIZED_ICONS[type] && OPTIMIZED_ICONS[type][icon]) {
         console.log(`Creating ${name} for ${provider}...`)
 
-        await fs.writeFile(path, OPTIMIZED_ICONS[type][icon], { encoding: 'utf8' })
+        await fs.writeFile(path, OPTIMIZED_ICONS[type][icon], { encoding: "utf8" })
     } else {
         console.error(`Could not find icon ${icon} (> ${name}) for ${type}!`)
     }
@@ -107,7 +107,7 @@ async function optimizeIcon(type, icon) {
     console.log(`Optimizing icon ${icon}...`)
 
     const path = `./design/${type}/animation-ready/${icon}.svg`
-    const svg = await fs.readFile(path, { encoding: 'utf8' })
+    const svg = await fs.readFile(path, { encoding: "utf8" })
 
     const { data } = await svgo.optimize(svg, { path })
 
@@ -115,13 +115,13 @@ async function optimizeIcon(type, icon) {
 }
 
 async function run() {
-    await new Promise((resolve) => rimraf('./production/*', resolve))
+    await new Promise((resolve) => rimraf("./production/*", resolve))
 
-    for (let type of ['line', 'fill']) {
+    for (let type of ["line", "fill"]) {
         await fs.mkdir(`./production/${type}`)
 
         const icons = (await fs.readdir(`./design/${type}/animation-ready`))
-            .filter((icon) => icon !== '.DS_Store')
+            .filter((icon) => icon !== ".DS_Store")
             .map((icon) => icon.substr(0, icon.length - 4))
 
         OPTIMIZED_ICONS[type] = {}
@@ -131,11 +131,12 @@ async function run() {
             await optimizeIcon(type, icon)
         }
 
-        for (let provider in ICONS_MAP)
+        for (let provider in ICONS_MAP) {
             for (let name in ICONS_MAP[provider]) await copyIcon(type, provider, name, ICONS_MAP[provider][name])
+        }
     }
 }
 
 run()
-    .then(() => console.log('Done!'))
+    .then(() => console.log("Done!"))
     .catch((err) => console.error(err))

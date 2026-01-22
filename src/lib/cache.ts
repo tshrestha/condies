@@ -1,4 +1,4 @@
-export const savedSelectionsCollectionKey = 'nawaSavedSelections'
+export const savedSelectionsCollectionKey = "nawaSavedSelections"
 
 export function getItem(key: string) {
     const serializedItem = localStorage.getItem(key)

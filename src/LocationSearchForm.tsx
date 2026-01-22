@@ -1,10 +1,10 @@
-import { createEffect, createSignal, For } from 'solid-js'
-import { debounce } from '@solid-primitives/scheduled'
-import { useNavigate } from '@solidjs/router'
-import type { Feature } from 'geojson'
+import { debounce } from "@solid-primitives/scheduled"
+import { useNavigate } from "@solidjs/router"
+import type { Feature } from "geojson"
+import { createEffect, createSignal, For } from "solid-js"
 
-import { geocodeSearch } from './lib/geocoding.ts'
-import { addItem, getItem, setItem, savedSelectionsCollectionKey } from './lib/cache.ts'
+import { addItem, getItem, savedSelectionsCollectionKey, setItem } from "./lib/cache.ts"
+import { geocodeSearch } from "./lib/geocoding.ts"
 
 export default function LocationSearchForm() {
     const navigate = useNavigate()
@@ -14,7 +14,7 @@ export default function LocationSearchForm() {
 
     const [resultNav, setResultNav] = createSignal({
         maxOffset: searchResults ? searchResults.length - 1 : 0,
-        selectionOffset: 0
+        selectionOffset: 0,
     })
 
     const saveSelection = (selection: any) => {
@@ -34,7 +34,7 @@ export default function LocationSearchForm() {
     }
 
     const onBlur = (e: FocusEvent) => {
-        if (!(e.relatedTarget as HTMLElement)?.classList.contains('search-result')) {
+        if (!(e.relatedTarget as HTMLElement)?.classList.contains("search-result")) {
             setSearchResultsVisible(false)
         }
     }
@@ -76,49 +76,56 @@ export default function LocationSearchForm() {
 
     const onKeyDown = (e: KeyboardEvent) => {
         if (searchResults() && searchResults()!.length) {
-            if (e.key === 'Enter') {
+            if (e.key === "Enter") {
                 const {
                     properties: {
                         // @ts-ignore
-                        coordinates: { latitude, longitude }
-                    }
+                        coordinates: { latitude, longitude },
+                    },
                 } = searchResults()![resultNav().selectionOffset]
                 saveSelection(searchResults()![resultNav().selectionOffset])
                 navigate(`/forecast/${latitude},${longitude}`)
-            } else if (e.key === 'ArrowDown') {
+            } else if (e.key === "ArrowDown") {
                 setResultNav({
                     ...resultNav(),
-                    selectionOffset:
-                        resultNav().selectionOffset < resultNav().maxOffset ? resultNav().selectionOffset + 1 : 0
+                    selectionOffset: resultNav().selectionOffset < resultNav().maxOffset
+                        ? resultNav().selectionOffset + 1
+                        : 0,
                 })
-            } else if (e.key === 'ArrowUp') {
+            } else if (e.key === "ArrowUp") {
                 setResultNav({
                     ...resultNav(),
-                    selectionOffset:
-                        resultNav().selectionOffset > 0 ? resultNav().selectionOffset - 1 : resultNav().maxOffset
+                    selectionOffset: resultNav().selectionOffset > 0
+                        ? resultNav().selectionOffset - 1
+                        : resultNav().maxOffset,
                 })
-            } else if (e.key === 'Tab') {
+            } else if (e.key === "Tab") {
                 e.preventDefault()
                 setResultNav({
                     ...resultNav(),
-                    selectionOffset:
-                        resultNav().selectionOffset < resultNav().maxOffset ? resultNav().selectionOffset + 1 : 0
+                    selectionOffset: resultNav().selectionOffset < resultNav().maxOffset
+                        ? resultNav().selectionOffset + 1
+                        : 0,
                 })
             }
         }
     }
 
     return (
-        <div class={'container position-fixed bottom-0 start-50 pb-4 z-3 translate-middle-x'}>
+        <div class={"container position-fixed bottom-0 start-50 pb-4 z-3 translate-middle-x"}>
             <div
-                id='suggestions'
-                class={`list-group list-group-flush rounded rounded-3 position-absolute start-0 bottom-100 pb-1 w-100 shadow-sm ${searchResults()?.length && searchResultsVisible() ? '' : 'd-none'}`}
-                style={{ 'z-index': 1000 }}
+                id="suggestions"
+                class={`list-group list-group-flush rounded rounded-3 position-absolute start-0 bottom-100 pb-1 w-100 shadow-sm ${
+                    searchResults()?.length && searchResultsVisible() ? "" : "d-none"
+                }`}
+                style={{ "z-index": 1000 }}
             >
                 <For each={searchResults()}>
                     {(feature, i) => (
                         <a
-                            class={`list-group-item list-group-item-action search-result ${i() === resultNav().selectionOffset ? 'active' : ''}`}
+                            class={`list-group-item list-group-item-action search-result ${
+                                i() === resultNav().selectionOffset ? "active" : ""
+                            }`}
                             href={`/forecast/${feature.properties?.coordinates.latitude},${feature.properties?.coordinates.longitude}`}
                             onClick={() => saveSelection(feature)}
                             tabIndex={0}
@@ -128,27 +135,27 @@ export default function LocationSearchForm() {
                     )}
                 </For>
             </div>
-            <div class={'d-flex justify-content-between align-items-center position-relative'}>
-                <div class={'col-10 pe-2'}>
+            <div class={"d-flex justify-content-between align-items-center position-relative"}>
+                <div class={"col-10 pe-2"}>
                     <input
-                        autocomplete={'off'}
+                        autocomplete={"off"}
                         ref={searchInputRef}
-                        id={'geocodingSearch'}
-                        type='search'
-                        name={'search'}
-                        class='form-control form-control-lg rounded-pill border-4 shadow-sm'
-                        placeholder='Search for a city or place'
-                        aria-label='Location'
-                        aria-describedby='search'
+                        id={"geocodingSearch"}
+                        type="search"
+                        name={"search"}
+                        class="form-control form-control-lg rounded-pill border-4 shadow-sm"
+                        placeholder="Search for a city or place"
+                        aria-label="Location"
+                        aria-describedby="search"
                         onInput={onInput}
                         onKeyDown={onKeyDown}
                         onFocus={onFocus}
                         onBlur={onBlur}
                     />
                 </div>
-                <div class='col-2'>
-                    <a href={'/map'} type={'button'} class={'btn btn-light btn-lg rounded-pill border-4 shadow-sm'}>
-                        <i class={'bi bi-map'}></i>
+                <div class="col-2">
+                    <a href={"/map"} type={"button"} class={"btn btn-light btn-lg rounded-pill border-4 shadow-sm"}>
+                        <i class={"bi bi-map"}></i>
                     </a>
                 </div>
             </div>

@@ -1,23 +1,23 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap-icons/font/bootstrap-icons.min.css'
-import './app.css'
+import "bootstrap/dist/css/bootstrap.min.css"
+import "bootstrap-icons/font/bootstrap-icons.min.css"
+import "./app.css"
 
-import { render } from 'solid-js/web'
-import { HashRouter } from '@solidjs/router'
+import { HashRouter } from "@solidjs/router"
+import { render } from "solid-js/web"
 
-import { getTimeOfDay } from './lib/util.ts'
-import App from './App.tsx'
+import App from "./App.tsx"
+import { getTimeOfDay } from "./lib/util.ts"
 
 const timeofDay = getTimeOfDay()
 const body = document.body
-body.classList.remove('morning')
-body.classList.remove('day')
-body.classList.remove('evening')
-body.classList.remove('night')
+body.classList.remove("morning")
+body.classList.remove("day")
+body.classList.remove("evening")
+body.classList.remove("night")
 body.classList.add(timeofDay)
 
-if (timeofDay === 'night') {
-    body.setAttribute('data-bs-theme', 'dark')
+if (timeofDay === "night") {
+    body.setAttribute("data-bs-theme", "dark")
 }
 
 render(
@@ -26,5 +26,5 @@ render(
             <App />
         </HashRouter>
     ),
-    document.getElementById('root')!
+    document.getElementById("root")!,
 )

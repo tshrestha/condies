@@ -1,10 +1,10 @@
-import { createSignal, For, Match, Switch } from 'solid-js'
+import { createSignal, For, Match, Switch } from "solid-js"
 
-import type { Period } from './lib/nws.ts'
-import HourlyTempsChart from './HourlyTempsChart.tsx'
-import HourlyPrecipChart from './HourlyPrecipForecast.tsx'
-import HourlyWindChart from './HourlyWindChart.tsx'
-import HourlyWindGustChart from './HourlyWindGustChart.tsx'
+import HourlyPrecipChart from "./HourlyPrecipForecast.tsx"
+import HourlyTempsChart from "./HourlyTempsChart.tsx"
+import HourlyWindChart from "./HourlyWindChart.tsx"
+import HourlyWindGustChart from "./HourlyWindGustChart.tsx"
+import type { Period } from "./lib/nws.ts"
 
 export interface ForecastType {
     name: string
@@ -14,13 +14,13 @@ export interface ForecastType {
 
 export default function HourlyForecast({ periods }: { periods: Period[] }) {
     const forecastTypes = [
-        { name: 'TEMP', id: 'forecast-temp', isSelected: true },
-        { name: 'PRECIP %', id: 'forecast-precip', isSelected: false },
-        { name: 'WIND', id: 'forecast-wind', isSelected: false }
+        { name: "TEMP", id: "forecast-temp", isSelected: true },
+        { name: "PRECIP %", id: "forecast-precip", isSelected: false },
+        { name: "WIND", id: "forecast-wind", isSelected: false },
     ]
 
     if (periods.every((p) => p.windGust)) {
-        forecastTypes.push({ name: 'WIND GUST', id: 'forecast-wind-gust', isSelected: false })
+        forecastTypes.push({ name: "WIND GUST", id: "forecast-wind-gust", isSelected: false })
     }
     const [forecastType, setForecastType] = createSignal<ForecastType[]>(forecastTypes)
 
@@ -35,33 +35,33 @@ export default function HourlyForecast({ periods }: { periods: Period[] }) {
     return (
         <>
             <Switch>
-                <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-temp'}>
+                <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-temp"}>
                     <HourlyTempsChart periods={periods} />
                 </Match>
-                <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-precip'}>
+                <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-precip"}>
                     <HourlyPrecipChart periods={periods} />
                 </Match>
-                <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-wind'}>
+                <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-wind"}>
                     <HourlyWindChart periods={periods} />
                 </Match>
-                <Match when={forecastType().find((f) => f.isSelected)?.id === 'forecast-wind-gust'}>
+                <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-wind-gust"}>
                     <HourlyWindGustChart periods={periods} />
                 </Match>
             </Switch>
-            <div class='btn-group btn-group-sm mb-4 bg-body' role='group' aria-label='Forecast type selector'>
+            <div class="btn-group btn-group-sm mb-4 bg-body" role="group" aria-label="Forecast type selector">
                 <For each={forecastType()}>
                     {(type) => (
                         <>
                             <input
-                                type='radio'
-                                class='btn-check'
-                                name='btnradio'
+                                type="radio"
+                                class="btn-check"
+                                name="btnradio"
                                 id={type.id}
-                                autocomplete='off'
+                                autocomplete="off"
                                 checked={type.isSelected}
                                 onclick={() => onClick(type)}
                             />
-                            <label class='btn btn-outline-primary' for={type.id}>
+                            <label class="btn btn-outline-primary" for={type.id}>
                                 {type.name}
                             </label>
                         </>

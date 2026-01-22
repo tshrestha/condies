@@ -1,8 +1,8 @@
-export const weatherURL = 'https://api.weather.gov'
+export const weatherURL = "https://api.weather.gov"
 
 export const denver = {
-    lat: '39.7643918',
-    lon: '-105.019559'
+    lat: "39.7643918",
+    lon: "-105.019559",
 }
 
 export interface QuantitativeValue {
@@ -92,33 +92,33 @@ export interface BeaufortScale {
 }
 
 const headers = {
-    'User-Agent': 'Elevation Code Works LLC'
+    "User-Agent": "Elevation Code Works LLC",
 }
 
 export const beaufortScale: BeaufortScale[] = [
-    { force: 0, mphMin: 0, mphMax: 1, description: 'Calm' },
-    { force: 1, mphMin: 1, mphMax: 3, description: 'Light Air' },
-    { force: 2, mphMin: 4, mphMax: 7, description: 'Light Breeze' },
-    { force: 3, mphMin: 8, mphMax: 12, description: 'Gentle Breeze' },
+    { force: 0, mphMin: 0, mphMax: 1, description: "Calm" },
+    { force: 1, mphMin: 1, mphMax: 3, description: "Light Air" },
+    { force: 2, mphMin: 4, mphMax: 7, description: "Light Breeze" },
+    { force: 3, mphMin: 8, mphMax: 12, description: "Gentle Breeze" },
     {
         force: 4,
         mphMin: 13,
         mphMax: 18,
-        description: 'Moderate Breeze'
+        description: "Moderate Breeze",
     },
     {
         force: 5,
         mphMin: 19,
         mphMax: 24,
-        description: 'Fresh Breeze'
+        description: "Fresh Breeze",
     },
-    { force: 6, mphMin: 25, mphMax: 31, description: 'Strong Breeze' },
-    { force: 7, mphMin: 32, mphMax: 38, description: 'Near Gale' },
-    { force: 8, mphMin: 39, mphMax: 46, description: 'Gale' },
-    { force: 9, mphMin: 47, mphMax: 54, description: 'Severe Gale' },
-    { force: 10, mphMin: 55, mphMax: 63, description: 'Storm' },
-    { force: 11, mphMin: 64, mphMax: 72, description: 'Violent Storm' },
-    { force: 12, mphMin: 72, mphMax: 83, description: 'Hurricane' }
+    { force: 6, mphMin: 25, mphMax: 31, description: "Strong Breeze" },
+    { force: 7, mphMin: 32, mphMax: 38, description: "Near Gale" },
+    { force: 8, mphMin: 39, mphMax: 46, description: "Gale" },
+    { force: 9, mphMin: 47, mphMax: 54, description: "Severe Gale" },
+    { force: 10, mphMin: 55, mphMax: 63, description: "Storm" },
+    { force: 11, mphMin: 64, mphMax: 72, description: "Violent Storm" },
+    { force: 12, mphMin: 72, mphMax: 83, description: "Hurricane" },
 ]
 
 export function toBeaufortForce(windSpeed: number): number {
@@ -142,7 +142,7 @@ export function toMph(speed: number) {
 
 export async function getPoint(lat: string, lon: string) {
     const response = await fetch(`${weatherURL}/points/${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`, {
-        headers
+        headers,
     })
     if (!response.ok) {
         console.error(`failed to fetch point ${lat},${lon}`)
@@ -155,7 +155,7 @@ export async function getPoint(lat: string, lon: string) {
 export async function getClosestStation(stationsURL: string) {
     const response = await fetch(`${stationsURL}?limit=1`, { headers })
     if (!response.ok) {
-        console.error('failed to get stations')
+        console.error("failed to get stations")
         return null
     }
 
@@ -165,10 +165,10 @@ export async function getClosestStation(stationsURL: string) {
 
 export async function getLatestObservations(stationID: string) {
     const response = await fetch(`${weatherURL}/stations/${stationID}/observations/latest`, {
-        headers
+        headers,
     })
     if (!response.ok) {
-        console.error('failed to get latest observations')
+        console.error("failed to get latest observations")
         return null
     }
 
@@ -179,27 +179,29 @@ export async function getForecast(forecastURL: string) {
     const response = await fetch(`${forecastURL}?units=us`, {
         headers: {
             ...headers,
-            'Feature-Flags': 'forecast_wind_speed_qv'
-        }
+            "Feature-Flags": "forecast_wind_speed_qv",
+        },
     })
     if (!response.ok) {
-        console.error('failed to get forecast')
+        console.error("failed to get forecast")
         return null
     }
 
     const result: ForecastResult = await response.json()
     result.properties.periods.forEach((p) => {
-        if (p.windSpeed && p.windSpeed.unitCode.includes('km_h')) {
-            p.windSpeed.value = typeof p.windSpeed.value === 'number' ? toMph(p.windSpeed.value) : p.windSpeed.value
-            p.windSpeed.minValue =
-                typeof p.windSpeed.minValue === 'number' ? toMph(p.windSpeed.minValue) : p.windSpeed.minValue
-            p.windSpeed.maxValue =
-                typeof p.windSpeed.maxValue === 'number' ? toMph(p.windSpeed.maxValue) : p.windSpeed.maxValue
-            p.windSpeed.unitCode = 'mph'
+        if (p.windSpeed && p.windSpeed.unitCode.includes("km_h")) {
+            p.windSpeed.value = typeof p.windSpeed.value === "number" ? toMph(p.windSpeed.value) : p.windSpeed.value
+            p.windSpeed.minValue = typeof p.windSpeed.minValue === "number"
+                ? toMph(p.windSpeed.minValue)
+                : p.windSpeed.minValue
+            p.windSpeed.maxValue = typeof p.windSpeed.maxValue === "number"
+                ? toMph(p.windSpeed.maxValue)
+                : p.windSpeed.maxValue
+            p.windSpeed.unitCode = "mph"
         }
-        if (p.windGust && p.windGust.unitCode.includes('km_h')) {
-            p.windGust.value = typeof p.windGust.value === 'number' ? toMph(p.windGust.value) : p.windGust.value
-            p.windGust.unitCode = 'mph'
+        if (p.windGust && p.windGust.unitCode.includes("km_h")) {
+            p.windGust.value = typeof p.windGust.value === "number" ? toMph(p.windGust.value) : p.windGust.value
+            p.windGust.unitCode = "mph"
         }
     })
 

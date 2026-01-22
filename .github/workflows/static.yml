@@ -4,56 +4,56 @@
 name: Node.js CI
 
 on:
-    push:
-        branches: ['main']
-    pull_request:
-        branches: ['main']
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 permissions:
-    id-token: write
-    pages: write
-    contents: read
+  id-token: write
+  pages: write
+  contents: read
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
 
-        strategy:
-            matrix:
-                node-version: [24.x]
+    strategy:
+      matrix:
+        node-version: [24.x]
 
-        steps:
-            - name: Checkout repo
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-            - name: Use Node.js ${{ matrix.node-version }}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{ matrix.node-version }}
-                  cache: 'npm'
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-            - name: Install dependencies
-              run: npm ci
+      - name: Install dependencies
+        run: npm ci
 
-            - name: Build React app
-              run: npm run build
-              env:
-                  VITE_GEOCODE_URL: ${{ vars.GEOCODE_URL }}
-                  VITE_NAWA_TOKEN: ${{ secrets.NAWATOKEN }}
-                  VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+      - name: Build React app
+        run: npm run build
+        env:
+          VITE_GEOCODE_URL: ${{ vars.GEOCODE_URL }}
+          VITE_NAWA_TOKEN: ${{ secrets.NAWATOKEN }}
+          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
 
-            - name: Upload build artifacts
-              uses: actions/upload-pages-artifact@v3
-              with:
-                  path: './dist'
+      - name: Upload build artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "./dist"
 
-    deploy:
-        runs-on: ubuntu-latest
-        needs: build
-        environment:
-            name: github-pages
-            url: ${{ steps.deployment.outputs.page_url }}
-        steps:
-            - name: Deploy to GitHub Pages
-              id: deployment
-              uses: actions/deploy-pages@v4
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,6 +1,6 @@
-import { Match, Switch } from 'solid-js'
+import { Match, Switch } from "solid-js"
 
-import type { QuantitativeValue } from './lib/nws.ts'
+import type { QuantitativeValue } from "./lib/nws.ts"
 
 export default function WindSpeed({ windSpeed }: { windSpeed: QuantitativeValue }) {
     return (
