@@ -1,4 +1,4 @@
-import type { Period, QuantitativeValue } from "./nws.ts"
+import type { Period, QuantitativeValue } from './nws.ts'
 
 const snowForecastRegex = /(snow)(\saccumulation)?/gi
 const snowDepthRegex = /(\d+)(?:\sto\s)?(\d+)?\sinches/
@@ -129,11 +129,8 @@ export function getTotalSnowAccumulation({ periods, index }: { periods: Period[]
         }
     }
 
-    console.log("accumulations", accumulations)
     if (accumulations.length) {
-        const total = accumulations.reduce((a, b) => a + b)
-        console.log("total accumulation", total)
-        return total
+        return accumulations.reduce((a, b) => a + b)
     }
 
     return 0
