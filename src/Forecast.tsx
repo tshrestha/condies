@@ -1,8 +1,10 @@
 import { createAsync, query, type RouteSectionProps, useLocation, useParams } from "@solidjs/router"
+import type { Feature } from "geojson"
 import { Show, Suspense } from "solid-js"
 
-import { type ForecastResult, getForecast, getPoint, type Point } from "./lib/nws.ts"
+import { type Alert, type ForecastResult, getAlerts, getForecast, getPoint, type Point } from "./lib/nws.ts"
 
+import Alerts from "./Alerts.tsx"
 import DetailedForecast from "./DetailedForecaset.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
 import HomeButton from "./HomeButton.tsx"
@@ -19,13 +21,25 @@ export interface ForecastProps {
     }
 }
 
+const timeRegex = /(\d+):(\d+)\s(AM|PM)/
+
 const getData = query(async (lat, lon) => {
     const point: Point = await getPoint(lat, lon)
-    const forecast: ForecastResult = (await getForecast(point.properties.forecast)) as ForecastResult
-    const hourlyForecastResult: ForecastResult = (await getForecast(point.properties.forecastHourly)) as ForecastResult
-    const timeRegex = /(\d+):(\d+)\s(AM|PM)/
+    const forecastZoneUrlSegments = point.properties.forecastZone.split("/")
+    const forecastZone = forecastZoneUrlSegments.slice(-1)[0]
 
-    const periods = hourlyForecastResult.properties.periods
+    const [alertResults, forecast, hourlyForecastResult] = await Promise.all([
+        getAlerts(forecastZone),
+        getForecast(point.properties.forecast),
+        getForecast(point.properties.forecastHourly),
+    ])
+
+    let alerts!: Alert[]
+    if (alertResults && alertResults.features && alertResults.features.length) {
+        alerts = alertResults.features.map((f: Feature) => f.properties)
+    }
+
+    const periods = (hourlyForecastResult as ForecastResult).properties.periods
         .filter((p) => p.number >= 1 && p.number <= 10)
         .map((p) => {
             const d = new Date(p.startTime)
@@ -34,8 +48,9 @@ const getData = query(async (lat, lon) => {
             p.hourString = `${match![1]} ${match![3]}`
             return { ...p, hourString: `${match![1]} ${match![3]}` }
         })
+
     const hourlyForecast = { periods }
-    return { point, forecast, hourlyForecast }
+    return { point, forecast, hourlyForecast, alerts }
 }, "forecast")
 
 export default function Forecast(props: ForecastProps | RouteSectionProps) {
@@ -61,12 +76,15 @@ export default function Forecast(props: ForecastProps | RouteSectionProps) {
                     <LatestObservations point={data()!.point} />
                 </Show>
             </Suspense>
+            <Show when={data() && data()!.alerts}>
+                <Alerts alerts={data()!.alerts} />
+            </Show>
             <SunRiseSet lat={lat} lon={lon} />
             <Suspense fallback={<ForecastPlaceholder />}>
                 <Show when={data()}>
                     <HourlyForecast periods={data()!.hourlyForecast.periods} />
-                    <ShortForecast periods={data()!.forecast.properties.periods} />
-                    <DetailedForecast periods={data()!.forecast.properties.periods} />
+                    <ShortForecast periods={data()!.forecast!.properties.periods} />
+                    <DetailedForecast periods={data()!.forecast!.properties.periods} />
                 </Show>
             </Suspense>
             <Show when={location.pathname !== "/"}>

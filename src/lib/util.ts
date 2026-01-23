@@ -1,4 +1,4 @@
-import type { Period, QuantitativeValue } from './nws.ts'
+import type { Period, QuantitativeValue } from "./nws.ts"
 
 const snowForecastRegex = /(snow)(\saccumulation)?/gi
 const snowDepthRegex = /(\d+)(?:\sto\s)?(\d+)?\sinches/

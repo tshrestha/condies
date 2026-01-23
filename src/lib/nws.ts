@@ -57,6 +57,7 @@ export interface Point {
         forecastHourly: string
         forcastGridData: string
         observationStations: string
+        forecastZone: string
     }
 }
 
@@ -89,6 +90,120 @@ export interface BeaufortScale {
     mphMin: number
     mphMax: number
     description: string
+}
+
+/**
+ * "properties": {
+ *                 "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a675215faa4fa8f4919432cfbda087bd8650671a.001.1",
+ *                 "@type": "wx:Alert",
+ *                 "id": "urn:oid:2.49.0.1.840.0.a675215faa4fa8f4919432cfbda087bd8650671a.001.1",
+ *                 "areaDesc": "Grand and Battlement Mesas; Gore and Elk Mountains/Central Mountain Valleys; West Elk and Sawatch Mountains; Northwestern San Juan Mountains; Southwest San Juan Mountains",
+ *                 "geocode": {
+ *                     "SAME": [
+ *                         "008029",
+ *                         "008045",
+ *                         "008077",
+ *                         "008037",
+ *                         "008097",
+ *                         "008051",
+ *                         "008085",
+ *                         "008053",
+ *                         "008091",
+ *                         "008113",
+ *                         "008007",
+ *                         "008033",
+ *                         "008067",
+ *                         "008083",
+ *                         "008111"
+ *                     ],
+ *                     "UGC": [
+ *                         "COZ009",
+ *                         "COZ010",
+ *                         "COZ012",
+ *                         "COZ018",
+ *                         "COZ019"
+ *                     ]
+ *                 },
+ *                 "affectedZones": [
+ *                     "https://api.weather.gov/zones/forecast/COZ009",
+ *                     "https://api.weather.gov/zones/forecast/COZ010",
+ *                     "https://api.weather.gov/zones/forecast/COZ012",
+ *                     "https://api.weather.gov/zones/forecast/COZ018",
+ *                     "https://api.weather.gov/zones/forecast/COZ019"
+ *                 ],
+ *                 "references": [
+ *                     {
+ *                         "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.818474b3e7969bcdfcc7154f431aeb9e90c8cdfb.001.1",
+ *                         "identifier": "urn:oid:2.49.0.1.840.0.818474b3e7969bcdfcc7154f431aeb9e90c8cdfb.001.1",
+ *                         "sender": "w-nws.webmaster@noaa.gov",
+ *                         "sent": "2026-01-22T13:05:00-07:00"
+ *                     }
+ *                 ],
+ *                 "sent": "2026-01-23T02:13:00-07:00",
+ *                 "effective": "2026-01-23T02:13:00-07:00",
+ *                 "onset": "2026-01-23T05:00:00-07:00",
+ *                 "expires": "2026-01-24T02:15:00-07:00",
+ *                 "ends": "2026-01-25T05:00:00-07:00",
+ *                 "status": "Actual",
+ *                 "messageType": "Update",
+ *                 "category": "Met",
+ *                 "severity": "Moderate",
+ *                 "certainty": "Likely",
+ *                 "urgency": "Expected",
+ *                 "event": "Winter Weather Advisory",
+ *                 "sender": "w-nws.webmaster@noaa.gov",
+ *                 "senderName": "NWS Grand Junction CO",
+ *                 "headline": "Winter Weather Advisory issued January 23 at 2:13AM MST until January 25 at 5:00AM MST by NWS Grand Junction CO",
+ *                 "description": "* WHAT...Snow expected. Total snow accumulations between 6 and 12\ninches, with locally higher amounts on favored aspects.\n\n* WHERE...Northwest San Juan Mountains, Southwest San Juan\nMountains, Gore and Elk Mountains/Central Mountain Valleys, Grand\nand Battlement Mesas, and West Elk and Sawatch Mountains.\n\n* WHEN...Until 5 AM MST Sunday.\n\n* IMPACTS...Travel could be very difficult to impossible. The\nhazardous conditions could impact the Friday morning and evening\ncommutes.",
+ *                 "instruction": "Slow down and use caution while traveling. The latest road\nconditions for the state you are calling from can be obtained by\ncalling 5 1 1.",
+ *                 "response": "Execute",
+ *                 "parameters": {
+ *                     "AWIPSidentifier": [
+ *                         "WSWGJT"
+ *                     ],
+ *                     "WMOidentifier": [
+ *                         "WWUS45 KGJT 230913"
+ *                     ],
+ *                     "NWSheadline": [
+ *                         "WINTER WEATHER ADVISORY REMAINS IN EFFECT UNTIL 5 AM MST SUNDAY"
+ *                     ],
+ *                     "BLOCKCHANNEL": [
+ *                         "EAS",
+ *                         "NWEM",
+ *                         "CMAS"
+ *                     ],
+ *                     "VTEC": [
+ *                         "/O.CON.KGJT.WW.Y.0003.260123T1200Z-260125T1200Z/"
+ *                     ],
+ *                     "eventEndingTime": [
+ *                         "2026-01-25T05:00:00-07:00"
+ *                     ],
+ *                     "expiredReferences": [
+ *                         "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.337a590588be3521f7696acb88d72b4da3d76ddf.001.1,2026-01-22T02:58:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.26c4511a9d6549eec428b5e6d317e124ba3a3358.001.1,2026-01-21T13:58:00-07:00"
+ *                     ]
+ *                 },
+ *                 "scope": "Public",
+ *                 "code": "IPAWSv1.0",
+ *                 "language": "en-US",
+ *                 "web": "http://www.weather.gov",
+ *                 "eventCode": {
+ *                     "SAME": [
+ *                         "NWS"
+ *                     ],
+ *                     "NationalWeatherService": [
+ *                         "WWY"
+ *                     ]
+ *                 }
+ *             }
+ */
+
+export interface Alert {
+    severity: "Extreme" | "Severe" | "Moderate" | "Minor" | "Unknown"
+    event: string
+    headline: string
+    description: string
+    instruction: string
+    descriptions: string[]
 }
 
 const headers = {
@@ -206,4 +321,15 @@ export async function getForecast(forecastURL: string) {
     })
 
     return result
+}
+
+export async function getAlerts(zoneId: string) {
+    const response = await fetch(`${weatherURL}/alerts/active/zone/${zoneId}`, { headers: { ...headers } })
+
+    if (!response.ok) {
+        console.error("failed to get alerts for zone:", zoneId)
+        return null
+    }
+
+    return await response.json()
 }
