@@ -73,7 +73,7 @@ export default function Forecast(props: ForecastProps | RouteSectionProps) {
         <>
             <Suspense fallback={<LatestObservationsPlaceholder />}>
                 <Show when={data()}>
-                    <LatestObservations point={data()!.point} />
+                    <LatestObservations point={data()!.point} period={data()!.hourlyForecast.periods[0]} />
                 </Show>
             </Suspense>
             <Show when={data() && data()!.alerts}>

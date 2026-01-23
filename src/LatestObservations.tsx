@@ -2,7 +2,7 @@ import { createAsync, query } from "@solidjs/router"
 import { Show, Suspense } from "solid-js"
 
 import { reverseGeocodeSearch } from "./lib/geocoding.ts"
-import { getClosestStation, getLatestObservations, toF } from "./lib/nws.ts"
+import { type Period, type Point } from "./lib/nws.ts"
 import { getTimeOfDay } from "./lib/util.ts"
 import { getIcon } from "./lib/wicons.ts"
 
@@ -12,17 +12,14 @@ const getData = query(async (point: any) => {
     const lat = point.geometry.coordinates[1]
     const lon = point.geometry.coordinates[0]
 
-    const [observationLocation, latestObservations] = await Promise.all([
+    const [observationLocation] = await Promise.all([
         reverseGeocodeSearch(lat, lon),
-        getClosestStation(point.properties.observationStations).then((s) =>
-            getLatestObservations(s!.properties.stationIdentifier)
-        ),
     ])
 
-    return { observationLocation, latestObservations }
+    return { observationLocation }
 }, "latestObservations")
 
-export default function LatestObservations({ point }: any) {
+export default function LatestObservations({ point, period }: { point: Point; period: Period }) {
     const timeOfDay = getTimeOfDay()
     const data = createAsync(() => getData(point))
 
@@ -36,7 +33,7 @@ export default function LatestObservations({ point }: any) {
                         <div class="col text-end">
                             <img
                                 src={getIcon({
-                                    keyword: data()!.latestObservations.properties.textDescription,
+                                    keyword: period.shortForecast,
                                     isDay: timeOfDay !== "night",
                                     isNight: timeOfDay === "night",
                                 })}
@@ -45,12 +42,12 @@ export default function LatestObservations({ point }: any) {
                         </div>
                         <div class="col text-start">
                             <h1 class={"display-1 align-middle"}>
-                                {toF(data()!.latestObservations.properties.temperature.value)}º
+                                {period.temperature}º
                             </h1>
                         </div>
                     </div>
                     <span class={"badge text-bg-secondary fs-6 p-2 fw-light"}>
-                        {data()!.latestObservations.properties.textDescription}
+                        {period.shortForecast}
                     </span>
                 </div>
             </Show>
