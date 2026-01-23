@@ -1,5 +1,8 @@
 import type { Period, QuantitativeValue } from "./nws.ts"
 
+const snowForecastRegex = /(snow)(\saccumulation)?/gi
+const snowDepthRegex = /(\d+)(?:\sto\s)?(\d+)?\sinches/
+
 export function getLatLon(path: string) {
     const segments = path.split("/")
     const point = segments.pop() as string
@@ -110,10 +113,40 @@ export function isPrimo(condies: Period) {
     return p.test(shortForecast.toLowerCase())
 }
 
-export function isPowDay(condies: Period, ignoreIsDaytime = false, ignoreTemp = true) {
-    const { detailedForecast, isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
-    const snowForecastRegex = /(snow)(\saccumulation)?/gi
-    const snowDepthRegex = /(\d+)\s(inches)/
+export function getTotalSnowAccumulation({ periods, index }: { periods: Period[]; index: number }) {
+    const accumulations = []
+    for (let i = index; i >= 0 && index - i <= 2; i--) {
+        const { detailedForecast } = periods[i]
+        if (snowForecastRegex.test(detailedForecast)) {
+            const match = detailedForecast.match(snowDepthRegex)
+            if (match && match.length === 2) {
+                accumulations.push(parseInt(match[1]))
+            }
+            if (match && match.length === 3) {
+                accumulations.push(parseInt(match[1]))
+                accumulations.push(parseInt(match[2]))
+            }
+        }
+    }
+
+    console.log("accumulations", accumulations)
+    if (accumulations.length) {
+        const total = accumulations.reduce((a, b) => a + b)
+        console.log("total accumulation", total)
+        return total
+    }
+
+    return 0
+}
+
+export function isPowDay({ condies, periods, index, ignoreIsDaytime = false, ignoreTemp = true }: {
+    condies: Period
+    periods: Period[]
+    index: number
+    ignoreIsDaytime?: boolean
+    ignoreTemp?: boolean
+}) {
+    const { isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
 
     if (!isDaytime && !ignoreIsDaytime) {
         return false
@@ -127,11 +160,7 @@ export function isPowDay(condies: Period, ignoreIsDaytime = false, ignoreTemp = 
     if (probabilityOfPrecipitation.value < 70) {
         return false
     }
-    if (snowForecastRegex.test(detailedForecast)) {
-        const match = detailedForecast.match(snowDepthRegex)
-        if (!match) {
-            return false
-        }
-        return parseInt(match[1], 10) >= 6
-    }
+
+    const totalAccuulation = getTotalSnowAccumulation({ periods, index })
+    return totalAccuulation >= 6
 }

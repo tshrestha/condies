@@ -51,7 +51,7 @@ export default function ShortForecast({ periods }: { periods: Period[] }) {
                                     </span>
                                 </div>
                             </Match>
-                            <Match when={isPowDay(p)}>
+                            <Match when={isPowDay({ condies: p, periods, index: i })}>
                                 <div class={"d-flex justify-content-center align-items-center"}>
                                     <span class={"fs-2 mx-3"}>🏂</span>
                                     <span class="badge rounded-pill text-bg-primary fw-bolder text-center py-2 px-3">
