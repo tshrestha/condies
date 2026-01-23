@@ -110,7 +110,7 @@ export function isPrimo(condies: Period) {
     return p.test(shortForecast.toLowerCase())
 }
 
-export function isPowDay(condies: Period, ignoreIsDaytime = false, ignoreTemp = false) {
+export function isPowDay(condies: Period, ignoreIsDaytime = false, ignoreTemp = true) {
     const { detailedForecast, isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
     const snowForecastRegex = /(snow)(\saccumulation)?/gi
     const snowDepthRegex = /(\d+)\s(inches)/
