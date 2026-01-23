@@ -86,7 +86,36 @@ export default function Alerts({ alerts }: { alerts: Alert[] }) {
                             </div>
                             <div class="modal-body">
                                 <For each={alertDetails()?.descriptions}>
-                                    {description => <p>{description.trim()}</p>}
+                                    {d => (
+                                        <Switch fallback={<p>{d.trim()}</p>}>
+                                            <Match when={d.trim().startsWith("WHEN...")}>
+                                                <p>
+                                                    <strong>WHEN?</strong> {d.trim().replace("WHEN...", "")}
+                                                </p>
+                                            </Match>
+                                            <Match when={d.trim().startsWith("WHERE...")}>
+                                                <p>
+                                                    <strong>WHERE?</strong> {d.trim().replace("WHERE...", "")}
+                                                </p>
+                                            </Match>
+                                            <Match when={d.trim().startsWith("WHAT...")}>
+                                                <p>
+                                                    <strong>WHAT?</strong> {d.trim().replace("WHAT...", "")}
+                                                </p>
+                                            </Match>
+                                            <Match when={d.trim().startsWith("IMPACTS...")}>
+                                                <p>
+                                                    <strong>IMPACTS:</strong> {d.trim().replace("IMPACTS...", "")}
+                                                </p>
+                                            </Match>
+                                            <Match when={d.trim().startsWith("ADDITIONAL DETAILS...")}>
+                                                <p>
+                                                    <strong>ADDITIONAL DETAILS:</strong>{" "}
+                                                    {d.trim().replace("ADDITIONAL DETAILS...", "")}
+                                                </p>
+                                            </Match>
+                                        </Switch>
+                                    )}
                                 </For>
                             </div>
                             <div class="modal-footer">
