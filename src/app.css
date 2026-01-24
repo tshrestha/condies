@@ -7,11 +7,14 @@
 }
 
 .evening {
-    background-color: #ff8c42 !important;
+    /*background-color: #ff8c42 !important;*/
+    background: #F08A5D !important;
+    background: linear-gradient(0deg, rgba(240, 138, 93, 1) 0%, rgba(184, 59, 94, 1) 50%, rgba(106, 44, 112, 1) 100%) !important;
 }
 
 .night {
-    background-color: #1a2238 !important;
+    background: #3282B8 !important;
+    background: linear-gradient(0deg, rgba(50, 130, 184, 1) 0%, rgba(15, 76, 117, 1) 50%, rgba(27, 38, 44, 1) 100%) !important;
 }
 
 .container {

@@ -33,7 +33,7 @@ export default function ThemeToggle() {
 
     return (
         <div class="d-flex justify-content-end align-items-center">
-            <div class="btn-group btn-group-sm" role="group" aria-label="Light and dark mode toggle buttons">
+            <div class="btn-group btn-group-sm bg-body" role="group" aria-label="Light and dark mode toggle buttons">
                 <For each={Object.values(condiesTheme)}>
                     {(t) => (
                         <>
@@ -46,7 +46,7 @@ export default function ThemeToggle() {
                                 checked={t === theme()}
                                 onclick={() => onClick(t)}
                             />
-                            <label class="btn btn-outline-primary text-capitalize" for={`condies-theme-${t}`}>
+                            <label class={`btn ${theme() === "dark" ? "btn-outline-light" : "btn-outline-primary" } text-uppercase`} for={`condies-theme-${t}`}>
                                 <Switch>
                                     <Match when={t === theme() && t === condiesTheme.light}>
                                         <i class={"bi bi-sun-fill"} />
@@ -61,7 +61,7 @@ export default function ThemeToggle() {
                                         <i class={"bi bi-moon"} />
                                     </Match>
                                 </Switch>
-                                {` ${t}`}
+                                <small>{` ${t}`}</small>
                             </label>
                         </>
                     )}
