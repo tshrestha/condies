@@ -2,30 +2,32 @@ import { createSignal, For, Match, Switch } from "solid-js"
 import { getItem, setItem } from "./lib/cache.ts"
 import { getTimeOfDay } from "./lib/util.ts"
 
+const condiesThemeKey = "condiesTheme"
 const condiesTheme = { light: "light", dark: "dark" }
 const bgClasses = ["morning", "day", "evening", "night"]
 
 function updateTheme(theme: string) {
-    const body = document.body
-    body.classList.remove(...bgClasses)
-    body.setAttribute("data-bs-theme", theme)
+    if (theme) {
+        const body = document.body
+        body.classList.remove(...bgClasses)
+        body.setAttribute("data-bs-theme", theme)
 
-    if (theme === condiesTheme.dark) {
-        body.classList.add("night")
-    } else {
-        body.classList.add(getTimeOfDay())
+        if (theme === condiesTheme.dark) {
+            body.classList.add("night")
+        } else {
+            body.classList.add(getTimeOfDay())
+        }
     }
 }
 
 export default function ThemeToggle() {
-    let savedTheme = getItem("condiesTheme")
-    const [theme, setTheme] = createSignal(savedTheme || condiesTheme.light)
+    let savedTheme = getItem(condiesThemeKey)
+    const [theme, setTheme] = createSignal<string>(savedTheme || condiesTheme.light)
     updateTheme(theme())
 
     const onClick = (t: string) => {
-        navigator.vibrate(200)
         setTheme(t)
-        setItem("condiesTheme", t)
+        setItem(condiesThemeKey, t)
         updateTheme(theme())
     }
 
@@ -38,7 +40,7 @@ export default function ThemeToggle() {
                             <input
                                 type="radio"
                                 class="btn-check"
-                                name="btnradio"
+                                name="theme-btn"
                                 id={`condies-theme-${t}`}
                                 autocomplete="off"
                                 checked={t === theme()}
@@ -58,8 +60,8 @@ export default function ThemeToggle() {
                                     <Match when={t !== theme() && t === condiesTheme.dark}>
                                         <i class={"bi bi-moon"} />
                                     </Match>
-                                </Switch>{" "}
-                                {t}
+                                </Switch>
+                                {` ${t}`}
                             </label>
                         </>
                     )}

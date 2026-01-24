@@ -5,7 +5,7 @@ import { getLocation } from "./lib/util.ts"
 
 import Forecast from "./Forecast.tsx"
 import LocationSearchForm from "./LocationSearchForm.tsx"
-import ThemeToggle from './ThemeToggle.tsx'
+import ThemeToggle from "./ThemeToggle.tsx"
 
 const getData = query(async () => {
     try {
