@@ -1,10 +1,9 @@
 import { createSignal, For, Match, Switch } from "solid-js"
 import { getItem, setItem } from "./lib/cache.ts"
-import { getTimeOfDay } from "./lib/util.ts"
 
 const condiesThemeKey = "condiesTheme"
 const condiesTheme = { light: "light", dark: "dark" }
-const bgClasses = ["morning", "day", "evening", "night"]
+const bgClasses = ["dark-bg", "light-bg"]
 
 function updateTheme(theme: string) {
     if (theme) {
@@ -13,9 +12,9 @@ function updateTheme(theme: string) {
         body.setAttribute("data-bs-theme", theme)
 
         if (theme === condiesTheme.dark) {
-            body.classList.add("night")
+            body.classList.add("dark-bg")
         } else {
-            body.classList.add(getTimeOfDay())
+            body.classList.add("light-bg")
         }
     }
 }
@@ -46,7 +45,12 @@ export default function ThemeToggle() {
                                 checked={t === theme()}
                                 onclick={() => onClick(t)}
                             />
-                            <label class={`btn ${theme() === "dark" ? "btn-outline-light" : "btn-outline-primary" } text-uppercase`} for={`condies-theme-${t}`}>
+                            <label
+                                class={`btn ${
+                                    theme() === "dark" ? "btn-outline-light" : "btn-outline-primary"
+                                } text-uppercase`}
+                                for={`condies-theme-${t}`}
+                            >
                                 <Switch>
                                     <Match when={t === theme() && t === condiesTheme.light}>
                                         <i class={"bi bi-sun-fill"} />

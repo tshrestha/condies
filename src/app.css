@@ -1,20 +1,21 @@
-.morning {
-    background-color: #f4c2c2 !important;
+.light-bg {
+    background: #a6b1e1 !important;
+    background: linear-gradient(
+        180deg,
+        rgba(166, 177, 225, 0.9) 0%,
+        rgba(220, 214, 247, 1) 50%,
+        rgba(244, 238, 255, 1) 100%
+    ) !important;
 }
 
-.day {
-    background-color: #87ceeb !important;
-}
-
-.evening {
-    /*background-color: #ff8c42 !important;*/
-    background: #F08A5D !important;
-    background: linear-gradient(0deg, rgba(240, 138, 93, 1) 0%, rgba(184, 59, 94, 1) 50%, rgba(106, 44, 112, 1) 100%) !important;
-}
-
-.night {
-    background: #3282B8 !important;
-    background: linear-gradient(0deg, rgba(50, 130, 184, 1) 0%, rgba(15, 76, 117, 1) 50%, rgba(27, 38, 44, 1) 100%) !important;
+.dark-bg {
+    background: #3282b8 !important;
+    background: linear-gradient(
+        0deg,
+        rgba(50, 130, 184, 1) 0%,
+        rgba(15, 76, 117, 1) 50%,
+        rgba(27, 38, 44, 1) 100%
+    ) !important;
 }
 
 .container {
