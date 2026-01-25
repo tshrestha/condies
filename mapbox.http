@@ -2,3 +2,11 @@
 GET https://api.mapbox.com/search/geocode/v6/forward?q=winter park&country=us&types=place&access_token=
 Origin: http://localhost:3000
 Referer: http://localhost:3000/nawa
+
+### Historical weather data
+GET https://www.ncei.noaa.gov/cdo-web/api/v2/stations/KBKF:?startdate=2026-01-20&enddata=2026-01-23
+token:
+
+### Historical weather data
+GET https://www.ncei.noaa.gov/cdo-web/api/v2/stations
+token:
