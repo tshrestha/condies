@@ -19,7 +19,12 @@ export default function HourlyForecast({ periods }: { periods: Period[] }) {
         { name: "WIND", id: "forecast-wind", isSelected: false },
     ]
 
-    if (periods.every((p) => p.windGust)) {
+    if (periods.some((p) => p.windGust)) {
+        periods.forEach(p => {
+            if (!p.windGust) {
+                p.windGust = { value: p.windSpeed.value, unitCode: p.windSpeed.unitCode }
+            }
+        })
         forecastTypes.push({ name: "WIND GUST", id: "forecast-wind-gust", isSelected: false })
     }
     const [forecastType, setForecastType] = createSignal<ForecastType[]>(forecastTypes)
