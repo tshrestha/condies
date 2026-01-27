@@ -30,7 +30,7 @@ export default function LatestObservations({ point, period }: { point: Point; pe
                     <h1 class={"display-6"}>{data()!.observationLocation.properties.name}</h1>
                     <p class={"mb-0"}>Right meow 🐱</p>
                     <div class={"d-flex justify-content-center align-items-center"}>
-                        <div class="col text-end">
+                        <div class="col-6 text-end">
                             <img
                                 src={getIcon({
                                     keyword: period.shortForecast,
@@ -40,8 +40,8 @@ export default function LatestObservations({ point, period }: { point: Point; pe
                                 class={"img-fluid w-50"}
                             />
                         </div>
-                        <div class="col text-start">
-                            <h1 class={"display-1 align-middle"}>
+                        <div class="col-6 text-start">
+                            <h1 class={"display-1 align-middle fw-lighter"} style={"font-size: 4rem;"}>
                                 {period.temperature}º
                             </h1>
                         </div>
