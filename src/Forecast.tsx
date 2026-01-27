@@ -40,8 +40,17 @@ const getData = query(async (lat, lon) => {
         alerts = alertResults.features.map((f: Feature) => f.properties)
     }
 
+    let currentHourExpired = false
     const periods = (hourlyForecastResult as ForecastResult).properties.periods
-        .filter((p) => p.number >= 1 && p.number <= 10)
+        .filter((p) => {
+            if (p.number === 1) {
+                const currentDate = new Date()
+                const endTime = new Date(p.endTime)
+                currentHourExpired = currentDate.getTime() > endTime.getTime()
+                return !currentHourExpired
+            }
+            return currentHourExpired ? p.number < 13 : p.number < 12
+        })
         .map((p) => {
             const d = new Date(p.startTime)
             const timeString = d.toLocaleTimeString("en-US", { hour12: true, timeStyle: "short" })
