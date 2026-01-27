@@ -13,6 +13,7 @@ import LatestObservations from "./LatestObservations.tsx"
 import LatestObservationsPlaceholder from "./LatestObservationsPlaceholder.tsx"
 import ShortForecast from "./ShortForecast.tsx"
 import SunRiseSet from "./SunRiseSet.tsx"
+import ThemeToggle from "./ThemeToggle.tsx"
 
 export interface ForecastProps {
     point?: {
@@ -71,6 +72,7 @@ export default function Forecast(props: ForecastProps | RouteSectionProps) {
 
     return (
         <>
+            <ThemeToggle />
             <Suspense fallback={<LatestObservationsPlaceholder />}>
                 <Show when={data()}>
                     <LatestObservations point={data()!.point} period={data()!.hourlyForecast.periods[0]} />

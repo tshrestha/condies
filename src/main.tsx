@@ -6,11 +6,6 @@ import { HashRouter } from "@solidjs/router"
 import { render } from "solid-js/web"
 
 import App from "./App.tsx"
-import { getTimeOfDay } from "./lib/util.ts"
-
-if (getTimeOfDay() === "night") {
-    document.body.setAttribute("data-bs-theme", "dark")
-}
 
 render(
     () => (

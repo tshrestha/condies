@@ -5,7 +5,6 @@ import { getLocation } from "./lib/util.ts"
 
 import Forecast from "./Forecast.tsx"
 import LocationSearchForm from "./LocationSearchForm.tsx"
-import ThemeToggle from "./ThemeToggle.tsx"
 
 const getData = query(async () => {
     try {
@@ -27,7 +26,6 @@ export default function Home() {
 
     return (
         <>
-            <ThemeToggle />
             <Forecast point={{ lat: latlon().lat, lon: latlon().lon }} />
             <LocationSearchForm />
         </>
