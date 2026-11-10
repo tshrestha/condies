@@ -1,7 +1,6 @@
-import { createSignal, For, Match, Switch } from "solid-js"
-import { getItem, setItem } from "./lib/cache.ts"
+import { createSignal, For, Match, onCleanup, Switch } from "solid-js"
+import { condiesThemeKey, getItem, setItem } from "./lib/cache.ts"
 
-const condiesThemeKey = "condiesTheme"
 const condiesTheme = { light: "light", dark: "dark" }
 const bgClasses = ["dark-bg", "light-bg"]
 
@@ -20,14 +19,27 @@ function updateTheme(theme: string) {
 }
 
 export default function ThemeToggle() {
-    let savedTheme = getItem(condiesThemeKey)
-    const [theme, setTheme] = createSignal<string>(savedTheme || condiesTheme.light)
-    updateTheme(theme())
+    const systemTheme = matchMedia("(prefers-color-scheme: dark)")
+    const getSystemTheme = () => (systemTheme.matches ? condiesTheme.dark : condiesTheme.light)
+
+    const initialTheme: string = getItem(condiesThemeKey) || getSystemTheme()
+    const [theme, setTheme] = createSignal(initialTheme)
+    updateTheme(initialTheme)
+
+    // Follow the system setting until the user picks a theme themselves.
+    const onSystemChange = () => {
+        if (!getItem(condiesThemeKey)) {
+            setTheme(getSystemTheme())
+            updateTheme(getSystemTheme())
+        }
+    }
+    systemTheme.addEventListener("change", onSystemChange)
+    onCleanup(() => systemTheme.removeEventListener("change", onSystemChange))
 
     const onClick = (t: string) => {
         setTheme(t)
         setItem(condiesThemeKey, t)
-        updateTheme(theme())
+        updateTheme(t)
     }
 
     return (
@@ -43,7 +55,7 @@ export default function ThemeToggle() {
                                 id={`condies-theme-${t}`}
                                 autocomplete="off"
                                 checked={t === theme()}
-                                onclick={() => onClick(t)}
+                                onClick={() => onClick(t)}
                             />
                             <label
                                 class={`btn ${

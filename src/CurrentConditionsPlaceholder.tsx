@@ -1,4 +1,4 @@
-export default function LatestObservationsPlaceholder() {
+export default function CurrentConditionsPlaceholder() {
     return (
         <div class={"mt-4 mb-4 text-center"}>
             <h1 class={"display-6 placeholder-glow"}>

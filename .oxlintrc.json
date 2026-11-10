@@ -1,0 +1,7 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "rules": {
+        // Solid assigns `let el` variables through the JSX `ref={el}` prop, which this rule can't see.
+        "no-unassigned-vars": "off"
+    }
+}

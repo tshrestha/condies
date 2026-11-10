@@ -1,18 +1,32 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-        <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#cc74b5" />
+        <meta name="theme-color" media="(prefers-color-scheme: light)" content="#a6b1e1" />
+        <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b262c" />
         <title>Condies</title>
     </head>
     <body>
-        <div id="root" class="container pt-2 pb-5 mb-5"></div>
+        <script>
+            // Applies the theme before the first paint, so there's no flash of the wrong colors.
+            ;(function () {
+                var theme
+                try {
+                    theme = JSON.parse(localStorage.getItem("condiesTheme"))
+                } catch (e) {}
+                if (!theme) {
+                    theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+                }
+                document.body.setAttribute("data-bs-theme", theme)
+                document.body.classList.add(theme + "-bg")
+            })()
+        </script>
+        <main id="root" class="container pt-2 pb-5 mb-5"></main>
         <script type="module" src="./src/main.tsx"></script>
     </body>
 </html>

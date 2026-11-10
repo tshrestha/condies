@@ -1,37 +1,40 @@
 import { Modal } from "bootstrap"
-import { createSignal, For, Match, onCleanup, Show, Switch } from "solid-js"
+import { createSignal, flush, For, Match, onCleanup, Show, Switch, untrack } from "solid-js"
 
 import type { Alert } from "./lib/nws.ts"
 
-export default function Alerts({ alerts }: { alerts: Alert[] }) {
+export default function Alerts(props: { alerts: Alert[] }) {
     const [showAlertDetails, setShowAlertDetails] = createSignal(false)
     const [alertDetails, setAlertDetails] = createSignal<Alert>()
-    const [alertDetailsModal, setAlertDetailsModal] = createSignal<Modal>()
+    let alertDetailsModal: Modal | undefined
 
-    alerts.forEach(a => {
+    const alerts = untrack(() => props.alerts)
+    alerts.forEach((a) => {
         a.descriptions = a.description.split("*")
     })
 
     const onAlertClick = (a: Alert) => {
         setAlertDetails(a)
         setShowAlertDetails(true)
+        // Bootstrap looks up the modal in the DOM, so it has to be rendered first.
+        flush()
 
-        if (!alertDetailsModal()) {
-            const alertDetailModal = new Modal("#alert-details")
-            setAlertDetailsModal(alertDetailModal)
-        }
-        alertDetailsModal()!.show()
+        alertDetailsModal = Modal.getOrCreateInstance("#alert-details")
+        alertDetailsModal.show()
     }
 
     const onCloseAlertDetails = () => {
+        // Closing removes the markup, and a later open renders new markup that needs its own instance.
+        alertDetailsModal!.hide()
+        alertDetailsModal!.dispose()
+        alertDetailsModal = undefined
         setShowAlertDetails(false)
-        alertDetailsModal()!.hide()
     }
 
     onCleanup(() => {
-        if (alertDetailsModal()) {
-            alertDetailsModal()!.dispose()
-        }
+        // dispose() alone leaves the page scroll-locked if the modal is still open.
+        alertDetailsModal?.hide()
+        alertDetailsModal?.dispose()
     })
 
     return (
@@ -43,7 +46,7 @@ export default function Alerts({ alerts }: { alerts: Alert[] }) {
                             <div
                                 class="alert alert-info text-center rounded-5 p-2 shadow-sm border-4"
                                 role="alert"
-                                onclick={() => onAlertClick(a)}
+                                onClick={() => onAlertClick(a)}
                             >
                                 <i class={"bi bi-info-circle-fill"} /> {a.event}
                             </div>
@@ -52,7 +55,7 @@ export default function Alerts({ alerts }: { alerts: Alert[] }) {
                             <div
                                 class="alert alert-warning text-center rounded-5 p-2 shadow-sm border-4"
                                 role="alert"
-                                onclick={() => onAlertClick(a)}
+                                onClick={() => onAlertClick(a)}
                             >
                                 <i class={"bi bi-exclamation-triangle-fill"} /> {a.event}
                             </div>
@@ -61,7 +64,7 @@ export default function Alerts({ alerts }: { alerts: Alert[] }) {
                             <div
                                 class="alert alert-danger text-center rounded-5 p-2 shadow-sm border-4"
                                 role="alert"
-                                onclick={() => onAlertClick(a)}
+                                onClick={() => onAlertClick(a)}
                             >
                                 <i class={"bi bi-exclamation-triangle-fill"} /> {a.event}
                             </div>
@@ -80,13 +83,12 @@ export default function Alerts({ alerts }: { alerts: Alert[] }) {
                                     class="btn-close"
                                     data-bs-dismiss="modal"
                                     aria-label="Close"
-                                    onclick={onCloseAlertDetails}
-                                >
-                                </button>
+                                    onClick={onCloseAlertDetails}
+                                ></button>
                             </div>
                             <div class="modal-body">
                                 <For each={alertDetails()?.descriptions}>
-                                    {d => (
+                                    {(d) => (
                                         <Switch fallback={<p>{d.trim()}</p>}>
                                             <Match when={d.trim().startsWith("WHEN...")}>
                                                 <p>
@@ -119,7 +121,7 @@ export default function Alerts({ alerts }: { alerts: Alert[] }) {
                                 </For>
                             </div>
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" onclick={onCloseAlertDetails}>
+                                <button type="button" class="btn btn-secondary" onClick={onCloseAlertDetails}>
                                     Close
                                 </button>
                             </div>

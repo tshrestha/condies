@@ -1,0 +1,17 @@
+{
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
+    "printWidth": 120,
+    "tabWidth": 4,
+    "semi": false,
+    "experimentalOperatorPosition": "start",
+    "sortPackageJson": false,
+    "ignorePatterns": ["src/assets/weather-icons-master/**"],
+    "overrides": [
+        {
+            "files": ["*.yml", "*.yaml"],
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
+}

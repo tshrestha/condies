@@ -1,18 +1,31 @@
 import type { Period, QuantitativeValue } from "./nws.ts"
 
-const snowForecastRegex = /(snow)(\saccumulation)?/gi
-const snowDepthRegex = /(\d+)(?:\sto\s)?(\d+)?\sinches/
-
-export function getLatLon(path: string) {
-    const segments = path.split("/")
-    const point = segments.pop() as string
-    const [lat, lon] = point.split(",")
-    return { lat, lon }
-}
+// NWS wording, like "New snow accumulation of 3 to 5 inches" or "snow accumulation of around 8 inches".
+const snowAccumulationRegex = /snow accumulation of (?:around |up to )?(\d+)(?:\sto\s(\d+))?\sinch/i
 
 export function getPrecipType(forecast: string) {
-    const tokens = forecast.toLowerCase().split(" ")
-    return tokens.includes("snow") ? "snow" : "rain"
+    return /\bsnow\b/i.test(forecast) ? "snow" : "rain"
+}
+
+// NWS timestamps carry the forecast location's own date, so read it directly from the text.
+export function formatLocalDate(isoTime: string, options: Intl.DateTimeFormatOptions) {
+    return new Date(`${isoTime.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { ...options, timeZone: "UTC" })
+}
+
+export function formatAge(ms: number) {
+    const minutes = Math.floor(ms / 60_000)
+    if (minutes < 1) {
+        return "just now"
+    }
+    if (minutes < 60) {
+        return `${minutes} min ago`
+    }
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) {
+        return `${hours} hr ago`
+    }
+    const days = Math.floor(hours / 24)
+    return days === 1 ? "1 day ago" : `${days} days ago`
 }
 
 export function getLocation() {
@@ -24,40 +37,10 @@ export function getLocation() {
             (e) => {
                 reject(e)
             },
-            { enableHighAccuracy: true, timeout: 5000 },
+            // Forecasts only need rough coordinates, and waiting for a GPS-quality fix often takes too long.
+            { enableHighAccuracy: false, maximumAge: 600_000, timeout: 15_000 },
         )
     })
-}
-
-export function getTimeOfDay() {
-    const date = new Date()
-    const hours = date.getHours()
-
-    if (hours >= 5 && hours < 9) {
-        return "morning"
-    }
-
-    if (hours >= 9 && hours < 17) {
-        return "day"
-    }
-
-    if (hours >= 17 && hours < 20) {
-        return "evening"
-    }
-
-    return "night"
-}
-
-export function getMinMaxTemp(forecastPeriods: Period[]) {
-    const min = forecastPeriods.sort((a, b) => a.temperature - b.temperature)[0]
-    const max = forecastPeriods.sort((a, b) => b.temperature - a.temperature)[0]
-    return [min.temperature, max.temperature]
-}
-
-export function getRangeStep({ min, max, desiredStep }: Record<string, number>) {
-    // step = ((max - min) / (desiredStep / 100)) / 100
-    const diff = max - min
-    return Math.round(diff / (desiredStep / 100) / 100)
 }
 
 // Maps wind direction to arrow showing where wind is blowing TO
@@ -102,46 +85,45 @@ export function isPrimo(condies: Period) {
     if (temperature < 55 || temperature > 75) {
         return false
     }
-    if (windGust) {
+    if (windGust && tooWindy(windGust)) {
         return false
     }
     if (tooWindy(windSpeed)) {
         return false
     }
 
-    const p = /(mostly\s)?sunny/g
-    return p.test(shortForecast.toLowerCase())
+    return /^(mostly )?sunny$/i.test(shortForecast)
 }
 
 export function getTotalSnowAccumulation({ periods, index }: { periods: Period[]; index: number }) {
-    const accumulations = []
+    let total = 0
     for (let i = index; i >= 0 && index - i <= 2; i--) {
-        const { detailedForecast } = periods[i]
-        if (snowForecastRegex.test(detailedForecast)) {
-            const match = detailedForecast.match(snowDepthRegex)
-            if (match && match.length === 2) {
-                accumulations.push(parseInt(match[1]))
-            }
-            if (match && match.length === 3) {
-                accumulations.push(parseInt(match[1]))
-                accumulations.push(parseInt(match[2]))
-            }
+        const match = periods[i].detailedForecast.match(snowAccumulationRegex)
+        if (match) {
+            const low = parseInt(match[1], 10)
+            const high = match[2] ? parseInt(match[2], 10) : low
+            // A range counts as its midpoint, the best single estimate of what will fall.
+            total += (low + high) / 2
         }
     }
 
-    if (accumulations.length) {
-        return accumulations.reduce((a, b) => a + b)
-    }
-
-    return 0
+    return total
 }
 
-export function isPowDay({ condies, periods, index, ignoreIsDaytime = false, ignoreTemp = true }: {
+export function isPowDay({
+    condies,
+    periods,
+    index,
+    ignoreIsDaytime = false,
+    ignoreTemp = true,
+    snowInches,
+}: {
     condies: Period
     periods: Period[]
     index: number
     ignoreIsDaytime?: boolean
     ignoreTemp?: boolean
+    snowInches?: number
 }) {
     const { isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
 
@@ -158,6 +140,6 @@ export function isPowDay({ condies, periods, index, ignoreIsDaytime = false, ign
         return false
     }
 
-    const totalAccuulation = getTotalSnowAccumulation({ periods, index })
-    return totalAccuulation >= 6
+    // Prefer measured grid amounts, and read the forecast text only when those aren't available.
+    return (snowInches ?? getTotalSnowAccumulation({ periods, index })) >= 6
 }

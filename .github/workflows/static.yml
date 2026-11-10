@@ -35,12 +35,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build React app
+      - name: Run unit tests
+        run: npm test
+
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+
+      # This builds without the real env vars, so it has to come before the deploy build below.
+      - name: Run browser tests
+        run: npm run test:e2e
+
+      - name: Build app
         run: npm run build
         env:
           VITE_GEOCODE_URL: ${{ vars.GEOCODE_URL }}
           VITE_NAWA_TOKEN: ${{ secrets.NAWATOKEN }}
-          VITE_MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
 
       - name: Upload build artifacts
         uses: actions/upload-pages-artifact@v3
@@ -50,6 +59,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

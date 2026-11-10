@@ -1,3 +1,5 @@
+import { type Grid, parseGrid } from "./grid.ts"
+
 export const weatherURL = "https://api.weather.gov"
 
 export const denver = {
@@ -37,6 +39,8 @@ export interface Period {
     shortForecast: string
     detailedForecast: string
     hourString: string
+    snowInches?: number
+    feelsLike?: number
 }
 
 export interface HourlyForecast {
@@ -48,6 +52,7 @@ export interface HourlyForecast {
 export interface ForecastResult {
     properties: {
         periods: Period[]
+        generatedAt?: string
     }
 }
 
@@ -55,33 +60,16 @@ export interface Point {
     properties: {
         forecast: string
         forecastHourly: string
-        forcastGridData: string
+        forecastGridData?: string
         observationStations: string
         forecastZone: string
-    }
-}
-
-export interface Station {
-    properties: {
-        stationIdentifier: string
-        name: string
-    }
-}
-
-export interface StationsResult {
-    features: Station[]
-}
-
-export interface LatestObservations {
-    properties: {
-        stationName: string
-        temperature: {
-            value: number
-            minValue: number
-            maxValue: number
-            unitCode: string
+        timeZone: string
+        relativeLocation?: {
+            properties: {
+                city: string
+                state: string
+            }
         }
-        textDescription: string
     }
 }
 
@@ -247,18 +235,32 @@ export function toBeaufortForce(windSpeed: number): number {
     return beauf!.force
 }
 
-export function toF(temp: number) {
-    return Math.round((temp * 9) / 5 + 32)
-}
-
 export function toMph(speed: number) {
     return Math.round(speed * 0.621371)
 }
 
+const retryDelaysMs = [400, 1200]
+
+// NWS often answers with a 5xx that works a moment later. With no connection, retrying can't help.
+async function fetchWithRetry(url: string, init: RequestInit) {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            const response = await fetch(url, init)
+            if (response.status < 500 || attempt === retryDelaysMs.length) {
+                return response
+            }
+        } catch (e) {
+            if (attempt === retryDelaysMs.length || !navigator.onLine) {
+                throw e
+            }
+        }
+        await new Promise((resolve) => setTimeout(resolve, retryDelaysMs[attempt]))
+    }
+}
+
 export async function getPoint(lat: string, lon: string) {
-    const response = await fetch(`${weatherURL}/points/${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`, {
-        headers,
-    })
+    const url = `${weatherURL}/points/${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`
+    const response = await fetchWithRetry(url, { headers })
     if (!response.ok) {
         console.error(`failed to fetch point ${lat},${lon}`)
         return null
@@ -267,36 +269,44 @@ export async function getPoint(lat: string, lon: string) {
     return await response.json()
 }
 
-export async function getClosestStation(stationsURL: string) {
-    const response = await fetch(`${stationsURL}?limit=1`, { headers })
-    if (!response.ok) {
-        console.error("failed to get stations")
+// Adds snow amounts and hourly detail, so a failure here shouldn't affect the main forecast.
+export async function getGridForecast(gridURL?: string): Promise<Grid | null> {
+    if (!gridURL) {
         return null
     }
 
-    const stations = (await response.json()) as StationsResult
-    return stations.features[0]
+    try {
+        const response = await fetchWithRetry(gridURL, { headers })
+        if (!response.ok) {
+            console.error("failed to get grid forecast")
+            return null
+        }
+        return parseGrid(await response.json())
+    } catch (e) {
+        console.error("failed to get grid forecast", e)
+        return null
+    }
 }
 
-export async function getLatestObservations(stationID: string) {
-    const response = await fetch(`${weatherURL}/stations/${stationID}/observations/latest`, {
-        headers,
-    })
-    if (!response.ok) {
-        console.error("failed to get latest observations")
+export async function getForecast(forecastURL: string | null) {
+    // Some points NWS knows about, like offshore waters, have no forecast.
+    if (!forecastURL) {
         return null
     }
 
-    return await response.json()
-}
-
-export async function getForecast(forecastURL: string) {
-    const response = await fetch(`${forecastURL}?units=us`, {
-        headers: {
-            ...headers,
-            "Feature-Flags": "forecast_wind_speed_qv",
-        },
-    })
+    let response: Response
+    try {
+        response = await fetchWithRetry(`${forecastURL}?units=us`, {
+            headers: {
+                ...headers,
+                "Feature-Flags": "forecast_wind_speed_qv",
+            },
+        })
+    } catch (e) {
+        // The daily and hourly forecasts load separately, so one can still show without the other.
+        console.error("failed to get forecast", e)
+        return null
+    }
     if (!response.ok) {
         console.error("failed to get forecast")
         return null
@@ -304,14 +314,15 @@ export async function getForecast(forecastURL: string) {
 
     const result: ForecastResult = await response.json()
     result.properties.periods.forEach((p) => {
+        // The API allows null here, and everything downstream expects a number.
+        p.probabilityOfPrecipitation.value ??= 0
+
         if (p.windSpeed && p.windSpeed.unitCode.includes("km_h")) {
             p.windSpeed.value = typeof p.windSpeed.value === "number" ? toMph(p.windSpeed.value) : p.windSpeed.value
-            p.windSpeed.minValue = typeof p.windSpeed.minValue === "number"
-                ? toMph(p.windSpeed.minValue)
-                : p.windSpeed.minValue
-            p.windSpeed.maxValue = typeof p.windSpeed.maxValue === "number"
-                ? toMph(p.windSpeed.maxValue)
-                : p.windSpeed.maxValue
+            p.windSpeed.minValue =
+                typeof p.windSpeed.minValue === "number" ? toMph(p.windSpeed.minValue) : p.windSpeed.minValue
+            p.windSpeed.maxValue =
+                typeof p.windSpeed.maxValue === "number" ? toMph(p.windSpeed.maxValue) : p.windSpeed.maxValue
             p.windSpeed.unitCode = "mph"
         }
         if (p.windGust && p.windGust.unitCode.includes("km_h")) {
@@ -323,13 +334,19 @@ export async function getForecast(forecastURL: string) {
     return result
 }
 
-export async function getAlerts(zoneId: string) {
-    const response = await fetch(`${weatherURL}/alerts/active/zone/${zoneId}`, { headers: { ...headers } })
-
-    if (!response.ok) {
-        console.error("failed to get alerts for zone:", zoneId)
-        return null
+export async function getAlerts(lat: string, lon: string) {
+    // Looking up by point also finds county and fire-zone alerts, such as tornado warnings.
+    const point = `${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`
+    try {
+        const response = await fetchWithRetry(`${weatherURL}/alerts/active?status=actual&point=${point}`, {
+            headers: { ...headers },
+        })
+        if (response.ok) {
+            return await response.json()
+        }
+        console.error("failed to get alerts for point:", point)
+    } catch (e) {
+        console.error("failed to get alerts for point:", point, e)
     }
-
-    return await response.json()
+    return null
 }

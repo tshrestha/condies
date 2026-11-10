@@ -2,16 +2,21 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap-icons/font/bootstrap-icons.min.css"
 import "./app.css"
 
-import { HashRouter } from "@solidjs/router"
-import { render } from "solid-js/web"
+import { render } from "@solidjs/web"
 
 import App from "./App.tsx"
 
-render(
-    () => (
-        <HashRouter>
-            <App />
-        </HashRouter>
-    ),
-    document.getElementById("root")!,
-)
+render(() => <App />, document.getElementById("root")!)
+
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(console.error)
+}
+
+// Forecasts age quickly, so reload when someone returns to a tab left open for a while.
+const staleAfterMs = 30 * 60 * 1000
+const loadedAt = Date.now()
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && Date.now() - loadedAt > staleAfterMs) {
+        location.reload()
+    }
+})

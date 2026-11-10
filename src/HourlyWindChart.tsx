@@ -2,7 +2,7 @@ import ForecastChart from "./ForecastChart.tsx"
 import { beaufortScale, type Period, toBeaufortForce } from "./lib/nws.ts"
 import { getWindArrow } from "./lib/util.ts"
 
-export default function HourlyWindChart({ periods }: { periods: Period[] }) {
+export default function HourlyWindChart(props: { periods: Period[] }) {
     return (
         <ForecastChart
             title={"HOURLY WIND"}
@@ -20,9 +20,15 @@ export default function HourlyWindChart({ periods }: { periods: Period[] }) {
                 "#b33025", // 70 mph - red (severe)
                 "#8b1a1a", // 80 mph
                 "#5c1a5c", // 90+ mph - deep purple (extreme)
+                "#3b0f3b", // hurricane force
             ]}
-            classList={["wind-forecast-chart"]}
-            periods={periods}
+            getOverlayX={
+                props.periods.some((p) => p.windGust)
+                    ? (p: Period) => p.windGust?.value ?? (p.windSpeed.value as number)
+                    : undefined
+            }
+            overlayLabel="gusts"
+            periods={props.periods}
             getX={(p: Period) => p.windSpeed.value as number}
             getXLabel={(p: Period) => (p.windSpeed.value as number).toString() + " mph"}
             getForecastLabel={(p) => `${getWindArrow(p.windDirection)} ${p.windDirection}`}

@@ -1,6 +1,6 @@
-import { createAsync, query } from "@solidjs/router"
+import { query } from "@solidjs/router"
 import type { Feature } from "geojson"
-import { Show, Suspense } from "solid-js"
+import { createMemo, Loading, Show } from "solid-js"
 
 import sunriseIcon from "./assets/weather-icons-master/production/fill/all/sunrise.svg"
 import sunsetIcon from "./assets/weather-icons-master/production/fill/all/sunset.svg"
@@ -8,48 +8,52 @@ import SunRiseSetPlaceholder from "./SunRiseSetPlaceholder.tsx"
 
 const apiURL = `https://aa.usno.navy.mil/api/rstt/oneday`
 
-const getData = query(async (lat: string, lon: string) => {
-    const date = new Date()
-    const dateQuery = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
-    const tzQuery = -(date.getTimezoneOffset() / 60)
+// Today's date and UTC offset at the forecast location, which can differ from the viewer's.
+function getLocalDateAndOffset(timeZone: string) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZoneName: "longOffset",
+    }).formatToParts(new Date())
+    const part = (type: string) => parts.find((p) => p.type === type)!.value
 
-    const response = await fetch(
-        `${apiURL}?date=${dateQuery}&tz=${tzQuery}&coords=${lat},${lon}&id=ElevationCodeWorksLLC`,
-    )
+    const [, sign, hours, minutes] = part("timeZoneName").match(/GMT(?:([+-])(\d+):(\d+))?/)!
+    const offset = hours ? parseInt(hours, 10) + parseInt(minutes, 10) / 60 : 0
+
+    return { date: `${part("year")}-${part("month")}-${part("day")}`, offset: sign === "-" ? -offset : offset }
+}
+
+function formatTime(time: string) {
+    const [hours, minutes] = time.split(":")
+    const hour = parseInt(hours, 10)
+    return `${hour % 12 || 12}:${minutes} ${hour < 12 ? "AM" : "PM"}`
+}
+
+const getData = query(async (lat: string, lon: string, timeZone: string) => {
+    const { date, offset } = getLocalDateAndOffset(timeZone)
+
+    const response = await fetch(`${apiURL}?date=${date}&tz=${offset}&coords=${lat},${lon}&id=ElevationCodeWorksLLC`)
     if (!response.ok) {
         console.error("failed to get sun rise/set data", response.status, response.statusText)
         return null
     }
 
     const result: Feature = await response.json()
-    const { sundata } = result.properties?.data
-
-    const [sunriseHours, sunriseMinutes] = sundata
-        .find((d: Record<string, string>) => d.phen === "Rise")
-        .time.split(":")
-    const [sunsetHours, sunsetMinutes] = sundata.find((d: Record<string, string>) => d.phen === "Set").time.split(":")
-    const sunriseDate = new Date()
-    const sunsetDate = new Date()
-    sunriseDate.setHours(parseInt(sunriseHours, 10))
-    sunriseDate.setMinutes(parseInt(sunriseMinutes, 10))
-    sunsetDate.setHours(parseInt(sunsetHours, 10))
-    sunsetDate.setMinutes(parseInt(sunsetMinutes, 10))
+    const { sundata } = result.properties!.data
 
     return {
-        sunrise: `${sunriseDate.getHours()}:${
-            sunriseDate.getMinutes() < 10 ? "0" + sunriseDate.getMinutes() : sunriseDate.getMinutes()
-        } AM`,
-        sunset: `${sunsetDate.getHours() - 12}:${
-            sunsetDate.getMinutes() < 10 ? "0" + sunsetDate.getMinutes() : sunsetDate.getMinutes()
-        } PM`,
+        sunrise: formatTime(sundata.find((d: Record<string, string>) => d.phen === "Rise").time),
+        sunset: formatTime(sundata.find((d: Record<string, string>) => d.phen === "Set").time),
     }
 }, "sunriseset")
 
-export default function SunRiseSet({ lat, lon }: Record<string, string>) {
-    const data = createAsync(() => getData(lat, lon))
+export default function SunRiseSet(props: Record<string, string>) {
+    const data = createMemo(() => getData(props.lat, props.lon, props.timeZone))
 
     return (
-        <Suspense fallback={<SunRiseSetPlaceholder />}>
+        <Loading fallback={<SunRiseSetPlaceholder />}>
             <Show when={data()}>
                 <div class={"d-flex justify-content-between align-items-center w-100 fs-6 fw-light mb-2"}>
                     <div class={"d-flex justify-content-start align-items-center col-6"}>
@@ -58,8 +62,7 @@ export default function SunRiseSet({ lat, lon }: Record<string, string>) {
                                 src={sunriseIcon}
                                 alt={"sunrise icon"}
                                 class={"img-fluid img-thumbnail rounded-circle"}
-                            >
-                            </img>
+                            ></img>
                         </div>
                         <div class={"col-auto ms-2"}>{data()!.sunrise}</div>
                     </div>
@@ -70,12 +73,11 @@ export default function SunRiseSet({ lat, lon }: Record<string, string>) {
                                 src={sunsetIcon}
                                 alt={"sunset icon"}
                                 class={"img-fluid img-thumbnail rounded-circle"}
-                            >
-                            </img>
+                            ></img>
                         </div>
                     </div>
                 </div>
             </Show>
-        </Suspense>
+        </Loading>
     )
 }
