@@ -231,7 +231,7 @@ html[data-design="quiet"][data-theme="dark"] {
     }
 }
 
-/* The dock: phones only. Glass in Strata's own material: square chips of the temperature right now, milk glass
+/* The dock: phones only. Glass in Strata's own material, tinted with the temperature right now: milk glass
    by day and smoked glass by night (`glassPaint` in ramp.ts), with the page softened behind. The 86% must match
    GLASS_OPACITY, which the label contrast is computed for. Where blur isn't available, or the reader asked for
    less transparency, it's simply the solid chip. */
@@ -270,10 +270,13 @@ html[data-design="quiet"][data-theme="dark"] {
     }
 }
 
+/* Printed things are square; the things you touch float, so they're rounded: the tab bar a soft rectangle, the
+   theme switch a disc like the sun and moon it shows. */
 .sq-dock-nav {
     display: grid;
     flex: 1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-radius: var(--sq-dock-radius, 22px);
 }
 
 .sq-dock-item {
@@ -306,6 +309,9 @@ html[data-design="quiet"][data-theme="dark"] {
 .sq-dock-theme {
     flex: none;
     width: 58px;
+    height: 58px;
+    align-self: center;
+    border-radius: 50%;
 }
 
 .sq-dock-theme .sq-horizon {

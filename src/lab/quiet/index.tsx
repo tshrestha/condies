@@ -169,9 +169,9 @@ function Masthead(props: Ctx) {
     )
 }
 
-// The phone's controls, within thumb reach. Glass in this app's own material: square chips tinted with the
-// temperature right now, milk glass by day and smoked glass by night, so a little of the present follows you to
-// every screen. The page shows through, softened, but the edge stays square like every other chip.
+// The phone's controls, within thumb reach. Glass in this app's own material: tinted with the temperature right
+// now, milk glass by day and smoked glass by night, so a little of the present follows you to every screen. The
+// page shows through, softened. It floats, so it's rounded, unlike the printed, square things on the page.
 function Dock(props: Ctx) {
     const paint = () => glassPaint(props.app.forecast.current.temperature, props.app.theme)
     const current = (name: string) => (props.app.screen.name === name ? "page" : undefined)
