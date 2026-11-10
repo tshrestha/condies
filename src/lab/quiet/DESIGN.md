@@ -68,7 +68,7 @@ and its low column stays empty. Columns align through CSS subgrid.
 
 One treatment everywhere (Best day, the Day screen, My Spots), on one line:
 "Condies score", an ink meter (a 0–100 track with an ink fill, never a temperature color), then
-"84/100 Great". Grades from `grade()`: 90+ Epic, 75+ Great, 60+ Good, 40+ Fair, below Poor. It is a button;
+"84/100 Great". Grades from `grade()`: 100 PRIMO, 90+ Epic, 75+ Great, 60+ Good, 40+ Fair, below Poor. It is a button;
 tapping it shows `scoreHelp`, one sentence on what the score measures. Never near a degree sign, never in the
 temperatures' size. No score, no line.
 

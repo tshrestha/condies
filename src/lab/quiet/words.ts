@@ -241,6 +241,9 @@ export function numeralFit(text: string) {
 
 // Plain words for the Condies score, so a newcomer knows what a number means without being told.
 export function grade(score: number) {
+    if (score >= 100) {
+        return "PRIMO"
+    }
     if (score >= 90) {
         return "Epic"
     }

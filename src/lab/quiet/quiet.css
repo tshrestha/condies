@@ -375,6 +375,19 @@ html[data-design="quiet"][data-theme="dark"] {
     font-size: var(--sq-s);
 }
 
+/* The narrowest phones can't fit "100/100 PRIMO" beside the label, so the label takes its own line. */
+@media (max-width: 359.98px) {
+    .sq-score {
+        grid-template-columns: minmax(40px, 1fr) max-content;
+        row-gap: 2px;
+    }
+
+    .sq-score-label {
+        grid-column: 1 / -1;
+        text-align: left;
+    }
+}
+
 .sq-score-value strong {
     font-weight: 700;
 }
