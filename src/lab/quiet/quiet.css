@@ -12,6 +12,7 @@ html[data-design="quiet"][data-theme="dark"] {
     --sq-ground: #fff;
     --sq-ink: #111;
     --sq-track: #e3e3e3;
+    --sq-dim: #8a8a8a;
     --b: var(--sq-ground);
     --k: var(--sq-ink);
     --sq-gut: 20px;
@@ -34,6 +35,7 @@ html[data-design="quiet"][data-theme="dark"] {
     --sq-ground: #0d0d0d;
     --sq-ink: #f0f0f0;
     --sq-track: #333;
+    --sq-dim: #6b6b6b;
     color-scheme: dark;
 }
 
@@ -520,8 +522,98 @@ html[data-design="quiet"][data-theme="dark"] {
     margin-top: 4px;
 }
 
-.sq-sun {
+/* Home's closing sections: a bold heading like "This week", then the facts on the next-12-hours columns or a
+   row shaped like the week's rows. */
+
+.sq-facts,
+.sq-daylight {
+    display: grid;
+    gap: 8px;
+    padding: 26px var(--sq-gut) 6px;
+}
+
+/* No column gap, so the columns start exactly where the next-12-hours columns do. */
+.sq-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Labels can wrap on narrow phones, so each column sits on the bottom to keep the numbers on one baseline. */
+.sq-facts-grid > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-right: 8px;
+}
+
+.sq-facts-grid dt {
+    margin-bottom: 2px;
+}
+
+.sq-facts-source {
+    margin-top: 2px;
+}
+
+.sq-alerts-calm {
+    padding-top: 22px;
+}
+
+.sq-daylight {
     padding-bottom: 40px;
+}
+
+.sq-sunrow {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+}
+
+.sq-sunbar {
+    position: relative;
+    height: 12px;
+}
+
+.sq-sunbar::before {
+    position: absolute;
+    top: 5px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--sq-track);
+    content: "";
+}
+
+.sq-sunbar i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.sq-sunbar-past {
+    background: var(--sq-dim);
+}
+
+.sq-sunbar-left {
+    background: var(--sq-ink);
+}
+
+.sq-sunrow-status {
+    text-align: center;
+}
+
+.sq-sunrow-end {
+    text-align: right;
+}
+
+.sq-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 /* Day */

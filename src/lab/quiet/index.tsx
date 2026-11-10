@@ -397,12 +397,118 @@ function Week(props: Ctx & { anchor: (el: HTMLElement) => void }) {
                     )}
                 </For>
             </ol>
-            <Show when={f().weekSnow >= 1}>
-                <p class="sq-caption">
-                    <strong>{formatSnow(f().weekSnow)}</strong> of snow this week.
-                </p>
-            </Show>
         </section>
+    )
+}
+
+// Snow in time order: what fell, what's there now, what's coming. Laid out on the same three columns as the
+// next 12 hours, so the two read as one system.
+function Snow(props: Ctx) {
+    const f = () => props.app.forecast
+    const depth = () => f().snowDepth
+    const coming = () => (f().weekSnow >= 1 ? f().weekSnow : undefined)
+    const signed = (inches: number) => `${inches > 0 ? "+" : inches < 0 ? "−" : ""}${Math.abs(inches)}″`
+    return (
+        <Show when={depth() || coming()}>
+            <section class="sq-ground sq-facts" aria-labelledby="sq-snow-title">
+                <h2 id="sq-snow-title" class="sq-strong">
+                    Snow
+                </h2>
+                <dl class="sq-facts-grid">
+                    <Show when={depth()}>
+                        {(d) => (
+                            <>
+                                <div>
+                                    <dt class="sq-small">Last 24 hours</dt>
+                                    <dd class="sq-num">{signed(d().change)}</dd>
+                                </div>
+                                <div>
+                                    <dt class="sq-small">On the ground</dt>
+                                    <dd class="sq-num">{d().depth}″</dd>
+                                </div>
+                            </>
+                        )}
+                    </Show>
+                    <Show when={coming()}>
+                        {(inches) => (
+                            <div>
+                                <dt class="sq-small">Next 7 days</dt>
+                                <dd class="sq-num">{formatSnow(inches())}</dd>
+                            </div>
+                        )}
+                    </Show>
+                </dl>
+                <Show when={depth()}>
+                    {(d) => (
+                        <p class="sq-small sq-facts-source">
+                            Measured at {d().station.name}, {Number(d().station.miles.toFixed(1))} mi away at{" "}
+                            {d().station.elevation.toLocaleString()} ft, {formatAge(f().now - d().measuredAt)}.
+                        </p>
+                    )}
+                </Show>
+            </section>
+        </Show>
+    )
+}
+
+const duration = (hours: number) => {
+    const minutes = Math.round(hours * 60)
+    const h = Math.floor(minutes / 60)
+    return h ? `${h} hr ${minutes % 60} min` : `${minutes} min`
+}
+
+function localHour(time: number, timeZone: string) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone,
+        hour: "numeric",
+        minute: "numeric",
+        hourCycle: "h23",
+    }).formatToParts(time)
+    const part = (type: string) => Number(parts.find((p) => p.type === type)!.value)
+    return part("hour") + part("minute") / 60
+}
+
+// Today's light, drawn like a week row: sunrise on the left, sunset on the right, and the daylight between them
+// on a 24-hour track. The part already behind us is dimmed, so the bar shows how much light is left.
+function Daylight(props: Ctx) {
+    const f = () => props.app.forecast
+    return (
+        <Show when={f().sun}>
+            {(sun) => {
+                const now = () => localHour(f().now, f().place.timeZone)
+                const rise = () => sun().sunriseHour
+                const set = () => sun().sunsetHour
+                const passed = () => Math.min(Math.max(now(), rise()), set())
+                const at = (hour: number) => `${(hour / 24) * 100}%`
+                const status = () =>
+                    now() < rise()
+                        ? `Sunrise in ${duration(rise() - now())}`
+                        : now() < set()
+                          ? `${duration(set() - now())} left`
+                          : `${duration(set() - rise())} total`
+                return (
+                    <section class="sq-ground sq-daylight" aria-labelledby="sq-daylight-title">
+                        <h2 id="sq-daylight-title" class="sq-strong">
+                            Daylight
+                        </h2>
+                        <p class="sq-sr">
+                            Sunrise {sun().sunrise}, sunset {sun().sunset}. {status()}.
+                        </p>
+                        <div class="sq-sunrow" aria-hidden="true">
+                            <span class="sq-strong">{sun().sunrise}</span>
+                            <span class="sq-sunbar">
+                                <i class="sq-sunbar-past" style={{ left: at(rise()), width: at(passed() - rise()) }} />
+                                <i class="sq-sunbar-left" style={{ left: at(passed()), width: at(set() - passed()) }} />
+                            </span>
+                            <span class="sq-strong">{sun().sunset}</span>
+                            <span class="sq-small">Sunrise</span>
+                            <span class="sq-small sq-sunrow-status">{status()}</span>
+                            <span class="sq-small sq-sunrow-end">Sunset</span>
+                        </div>
+                    </section>
+                )
+            }}
+        </Show>
     )
 }
 
@@ -411,41 +517,15 @@ function Mountain(props: Ctx) {
     const calmAvalanche = () => (risenAvalanche(f()) ? undefined : f().avalanche)
     return (
         <>
+            <Snow {...props} />
             <Show when={calmAvalanche()}>
                 {(avalanche) => (
-                    <div class="sq-ground sq-alerts">
+                    <div class="sq-ground sq-alerts sq-alerts-calm">
                         <AvalancheRow {...props} avalanche={avalanche()} />
                     </div>
                 )}
             </Show>
-            <Show when={f().snowDepth}>
-                {(depth) => (
-                    <section class="sq-ground sq-stats" aria-label="Snow on the ground">
-                        <p>
-                            <span class="sq-num">{depth().depth}″</span> on the ground
-                        </p>
-                        <p>
-                            <span class="sq-num">
-                                {depth().change > 0 ? "+" : depth().change < 0 ? "−" : ""}
-                                {Math.abs(depth().change)}″
-                            </span>{" "}
-                            in 24 hours
-                        </p>
-                        <p class="sq-small">
-                            {depth().station.name}, {Number(depth().station.miles.toFixed(1))} mi away,{" "}
-                            {depth().station.elevation.toLocaleString()} ft. Measured{" "}
-                            {formatAge(f().now - depth().measuredAt)}.
-                        </p>
-                    </section>
-                )}
-            </Show>
-            <Show when={f().sun}>
-                {(sun) => (
-                    <p class="sq-ground sq-caption sq-sun">
-                        Sunrise {sun().sunrise}, sunset {sun().sunset}
-                    </p>
-                )}
-            </Show>
+            <Daylight {...props} />
         </>
     )
 }

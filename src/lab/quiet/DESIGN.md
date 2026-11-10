@@ -74,9 +74,15 @@ temperatures' size. No score, no line.
 
 ## Other blocks
 
-- Next 12 hours: a caption ("Snow until 1 AM · 17.5″") and three 4-hour blocks from the same hours, so the
+- Next 12 hours: a caption ("Snow until 1 AM, 17.5″") and three 4-hour blocks from the same hours, so the
   numbers agree. A storm that runs past them gets its own line with its own span.
 - Best day: "Best day Saturday 1 PM–5 PM", then the score line.
+- Snow (`Snow`): a bold heading like "This week", then up to three facts on the next-12-hours columns, in time
+  order: "Last 24 hours", "On the ground", "Next 7 days". One small line names the measuring station. Numbers
+  share a baseline even when a label wraps. No snow data, no section.
+- Daylight (`Daylight`): a bold heading, then a row shaped like a week row: sunrise time on the left, sunset on
+  the right, and today's light as a bar on a 24-hour track between them. The part already gone is dim, the
+  part left is ink. Under it: "Sunrise", how much light is left ("3 hr 12 min left"), "Sunset".
 - Day screen: swatch with "High 26°" and "Low 10°" in words, best window and score, facts, the snow line,
   the hourly chart (temperature columns in ramp colors, other views in ink), the forecast text on the ground.
 - My Spots: rows on the ground ranked by score: name, day and window, snow, then the score line.
