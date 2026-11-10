@@ -9,7 +9,7 @@ import type { Period } from "../../lib/nws.ts"
 import { formatAge } from "../../lib/util.ts"
 import { type DesignProps, type LabAlert, type LabForecast, rankSpots } from "../data.ts"
 
-import { avalancheScale, glassPaint, type Paint, paintDay, paintTemp, paintVars, rampSteps, rampWalk } from "./ramp.ts"
+import { avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampSteps, rampWalk } from "./ramp.ts"
 import {
     conditionWord,
     dayName,
@@ -169,14 +169,14 @@ function Masthead(props: Ctx) {
     )
 }
 
-// The phone's controls, within thumb reach. Glass in this app's own material: tinted with the temperature right
-// now, milk glass by day and smoked glass by night, so a little of the present follows you to every screen. The
-// page shows through, softened. It floats, so it's rounded, unlike the printed, square things on the page.
+// The phone's controls, within thumb reach: clear frosted glass with the page's own colors glowing through, and
+// the current tab as a chip in the color of the temperature right now, so a little of the present follows you
+// to every screen. It floats, so it's round, unlike the printed, square things on the page.
 function Dock(props: Ctx) {
-    const paint = () => glassPaint(props.app.forecast.current.temperature, props.app.theme)
+    const paint = () => paintTemp(props.app.forecast.current.temperature, props.app.theme)
     const current = (name: string) => (props.app.screen.name === name ? "page" : undefined)
     return (
-        <div class="sq-dock" style={paintVars(paint())}>
+        <div class="sq-dock" style={{ "--sq-now-chip": paint().bg, "--sq-now-ink": paint().ink }}>
             <nav class="sq-dock-nav sq-glass" aria-label="Main">
                 <a class="sq-dock-item" aria-current={current("home")} {...props.app.link({ name: "home" })}>
                     <Cat />

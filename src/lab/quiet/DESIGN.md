@@ -15,19 +15,21 @@ white type on saturated blue, no banners, no condensed numerals.
 5. **The first screen answers six questions**: temperature now, what's happening, rain or snow in the next 12
    hours, best day, any warning, tomorrow's high.
 6. **No ornament.** No texture, gradient, shadow, card or legend. Weather is always told in words.
-7. **Printed things are square; things you touch float and are rounded.** The swatch, notices and bars are square.
-   Only the dock is rounded: a 22px soft rectangle (not a full capsule) and a disc for the theme switch.
+7. **Printed things are square; things you touch float and are round.** The swatch, notices and bars are square.
+   Only the dock is round, with continuous (squircle) corners where the browser supports `corner-shape`, a
+   plain capsule elsewhere, and a disc for the theme switch. Inner corners are concentric with the bar's.
 8. **Icons are for controls only.** Search, star, map, the horizon theme switch and the cat for Now. One style:
    24px, 2px strokes, round joins, in the ink of what they sit on. Filled means on (a saved star, the current tab).
 
 ## Controls
 
-- Phones (under 768px): the dock, fixed at the bottom within thumb reach, replaces the top bar. It's glass in
-  this app's own material: tinted with the temperature right now, milk glass by day and smoked glass by night
-  (`glassPaint` in ramp.ts), 86% opaque with the page blurred behind. `glassPaint` picks the tint so the labels
-  pass 4.5:1 even when the darkest or lightest content shows through. With `prefers-reduced-transparency`, or
-  without backdrop blur, it's solid. Tabs: Now (the cat), Search, Spots (the star), Map, in a 22px-radius bar.
-  The current tab is bold, underlined and filled. The theme switch is a separate 58px disc beside it.
+- Phones (under 768px): the dock, fixed at the bottom within thumb reach, replaces the top bar. It's clear
+  frosted glass, white at 74% by day and graphite at 74% by night, blurred and saturated so the page's own
+  colors glow through, with a hairline edge and a soft shadow. Labels pass AA even over the worst content
+  showing through (about 10:1 by day, 6:1 by night). With `prefers-reduced-transparency`, or without backdrop
+  blur, it's solid. Tabs: Now (the cat), Search, Spots (the star), Map. The current tab is a chip in the color
+  of the temperature right now, bold, with its icon filled: the dock's one painted thing. The theme switch is a
+  separate 58px glass disc beside it.
 - Wide screens: the top bar keeps words (Search, Spots, Map) and the same theme switch.
 - The theme switch is a horizon: the sun up in light mode; switching sets the sun and raises a crescent moon
   as two stars come out. It shows the current theme and is a toggle button ("Dark mode", pressed or not).

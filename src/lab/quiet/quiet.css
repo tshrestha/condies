@@ -231,52 +231,62 @@ html[data-design="quiet"][data-theme="dark"] {
     }
 }
 
-/* The dock: phones only. Glass in Strata's own material, tinted with the temperature right now: milk glass
-   by day and smoked glass by night (`glassPaint` in ramp.ts), with the page softened behind. The 86% must match
-   GLASS_OPACITY, which the label contrast is computed for. Where blur isn't available, or the reader asked for
-   less transparency, it's simply the solid chip. */
+/* The dock: phones only. Clear frosted glass, light by day and graphite by night, blurred and saturated so the
+   page's own colors glow through it. The one painted thing in it is the current tab: a chip in the color of
+   the temperature right now. Where blur isn't available, or the reader asked for less transparency, the glass is
+   solid. At these opacities the labels pass AA over any content: about 9:1 by day and 5.6:1 by night against
+   the worst case showing through. */
 
 .sq-dock {
     display: none;
 }
 
 .sq-glass {
-    background: color-mix(in srgb, var(--b) 86%, transparent);
-    color: var(--k);
+    --glass: rgb(255 255 255 / 0.74);
+    --glass-solid: #f3f3f3;
+    --glass-ink: #111;
+    --glass-edge: rgb(0 0 0 / 0.07);
+    --glass-shadow: 0 10px 30px rgb(0 0 0 / 0.14);
+    background: var(--glass);
+    color: var(--glass-ink);
     box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--k) 18%, transparent),
-        inset 0 1px 0 color-mix(in srgb, #fff 50%, transparent);
-    -webkit-backdrop-filter: blur(16px) saturate(1.4);
-    backdrop-filter: blur(16px) saturate(1.4);
+        inset 0 0 0 1px var(--glass-edge),
+        var(--glass-shadow);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    backdrop-filter: blur(22px) saturate(1.8);
 }
 
 .sq-root[data-theme="dark"] .sq-glass {
-    box-shadow:
-        inset 0 0 0 1px color-mix(in srgb, var(--k) 16%, transparent),
-        inset 0 1px 0 color-mix(in srgb, #fff 14%, transparent);
+    --glass: rgb(32 32 34 / 0.74);
+    --glass-solid: #222224;
+    --glass-ink: #f0f0f0;
+    --glass-edge: rgb(255 255 255 / 0.1);
+    --glass-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .sq-glass {
-        background: var(--b);
+        background: var(--glass-solid);
     }
 }
 
 @media (prefers-reduced-transparency: reduce) {
     .sq-glass {
-        background: var(--b);
+        background: var(--glass-solid);
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
     }
 }
 
-/* Printed things are square; the things you touch float, so they're rounded: the tab bar a soft rectangle, the
-   theme switch a disc like the sun and moon it shows. */
+/* Printed things are square; the things you touch float, so they're round. Continuous (squircle) corners where
+   the browser has them, a plain capsule where it doesn't. Inner corners are concentric with the bar's. */
 .sq-dock-nav {
     display: grid;
     flex: 1;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    border-radius: var(--sq-dock-radius, 22px);
+    padding: 5px;
+    border-radius: 29px;
+    corner-shape: squircle;
 }
 
 .sq-dock-item {
@@ -285,8 +295,10 @@ html[data-design="quiet"][data-theme="dark"] {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    min-height: 58px;
-    padding: 6px 2px 7px;
+    min-height: 48px;
+    padding: 4px 2px 5px;
+    border-radius: 24px;
+    corner-shape: squircle;
     font-size: var(--sq-s);
     line-height: 1;
 }
@@ -297,13 +309,9 @@ html[data-design="quiet"][data-theme="dark"] {
 }
 
 .sq-dock-item[aria-current="page"] {
+    background: var(--sq-now-chip);
+    color: var(--sq-now-ink);
     font-weight: 700;
-}
-
-.sq-dock-item[aria-current="page"] span {
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-underline-offset: 4px;
 }
 
 .sq-dock-theme {
