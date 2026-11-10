@@ -70,9 +70,22 @@ for (const { name, query, viewport } of shots) {
     await page.evaluate(() => document.fonts.ready)
     // Lets entrance animations finish, so a screenshot shows the settled design.
     await page.waitForTimeout(1800)
-    await page.screenshot({ path: join(outDir, `${name}.png`), fullPage: true })
     // What a person sees before scrolling, for judging the first glance.
     await page.screenshot({ path: join(outDir, `${name}-fold.png`) })
+    // A full-page capture would freeze bars fixed to the bottom of the screen mid-page, so move them to the
+    // bottom of the page, where they sit once you've scrolled there.
+    await page.evaluate(() => {
+        const pageHeight = document.documentElement.scrollHeight
+        for (const el of document.querySelectorAll("body *")) {
+            const box = el.getBoundingClientRect()
+            if (getComputedStyle(el).position === "fixed" && box.top > innerHeight / 2) {
+                el.style.position = "absolute"
+                el.style.top = `${pageHeight - (innerHeight - box.top)}px`
+                el.style.bottom = "auto"
+            }
+        }
+    })
+    await page.screenshot({ path: join(outDir, `${name}.png`), fullPage: true })
 
     const overflow = await page.evaluate(() => {
         const limit = document.documentElement.clientWidth
