@@ -1,7 +1,7 @@
 import { debounce } from "@solid-primitives/scheduled"
 import { useNavigate } from "@solidjs/router"
 import type { Feature } from "geojson"
-import { createEffect, createSignal, For } from "solid-js"
+import { createSignal, For } from "solid-js"
 
 import { addItem, getItem, savedSelectionsCollectionKey, setItem } from "./lib/cache.ts"
 import { geocodeSearch } from "./lib/geocoding.ts"
@@ -12,9 +12,10 @@ export default function LocationSearchForm() {
     const [searchResultsVisible, setSearchResultsVisible] = createSignal(false)
     let searchInputRef!: HTMLInputElement
 
-    const [resultNav, setResultNav] = createSignal({
-        maxOffset: searchResults ? searchResults.length - 1 : 0,
-        selectionOffset: 0,
+    // Resets to the last result whenever the results change.
+    const [resultNav, setResultNav] = createSignal(() => {
+        const lastOffset = (searchResults()?.length ?? 0) - 1
+        return { maxOffset: lastOffset, selectionOffset: lastOffset }
     })
 
     const saveSelection = (selection: any) => {
@@ -39,28 +40,25 @@ export default function LocationSearchForm() {
         }
     }
 
+    let latestQuery = ""
+
     const debouncedSearch = debounce((query: string) => {
         geocodeSearch(query).then(({ features }) => {
-            setItem(query, features)
-            setSearchResults(features?.reverse())
+            if (features) {
+                setItem(query, features)
+            }
+            // A slow response must not replace the results of a newer search.
+            if (query === latestQuery) {
+                setSearchResults(features?.reverse())
+            }
         })
     }, 300)
-
-    createEffect(() => {
-        return () => {
-            debouncedSearch.clear()
-        }
-    }, [debouncedSearch])
-
-    createEffect(() => {
-        if (searchResults() && searchResults()!.length) {
-            setResultNav({ selectionOffset: searchResults()!.length - 1, maxOffset: searchResults()!.length - 1 })
-        }
-    }, [searchResults()])
 
     const onInput = () => {
         if (searchInputRef?.isConnected) {
             const query = searchInputRef.value
+            latestQuery = query
+            debouncedSearch.clear()
             if (query && query.length > 2) {
                 const cached = getItem(query)
                 if (cached) {
@@ -88,24 +86,21 @@ export default function LocationSearchForm() {
             } else if (e.key === "ArrowDown") {
                 setResultNav({
                     ...resultNav(),
-                    selectionOffset: resultNav().selectionOffset < resultNav().maxOffset
-                        ? resultNav().selectionOffset + 1
-                        : 0,
+                    selectionOffset:
+                        resultNav().selectionOffset < resultNav().maxOffset ? resultNav().selectionOffset + 1 : 0,
                 })
             } else if (e.key === "ArrowUp") {
                 setResultNav({
                     ...resultNav(),
-                    selectionOffset: resultNav().selectionOffset > 0
-                        ? resultNav().selectionOffset - 1
-                        : resultNav().maxOffset,
+                    selectionOffset:
+                        resultNav().selectionOffset > 0 ? resultNav().selectionOffset - 1 : resultNav().maxOffset,
                 })
             } else if (e.key === "Tab") {
                 e.preventDefault()
                 setResultNav({
                     ...resultNav(),
-                    selectionOffset: resultNav().selectionOffset < resultNav().maxOffset
-                        ? resultNav().selectionOffset + 1
-                        : 0,
+                    selectionOffset:
+                        resultNav().selectionOffset < resultNav().maxOffset ? resultNav().selectionOffset + 1 : 0,
                 })
             }
         }
@@ -126,9 +121,9 @@ export default function LocationSearchForm() {
                             class={`list-group-item list-group-item-action search-result ${
                                 i() === resultNav().selectionOffset ? "active" : ""
                             }`}
-                            href={`/forecast/${feature.properties?.coordinates.latitude},${feature.properties?.coordinates.longitude}`}
+                            href={`#/forecast/${feature.properties?.coordinates.latitude},${feature.properties?.coordinates.longitude}`}
                             onClick={() => saveSelection(feature)}
-                            tabIndex={0}
+                            tabindex={0}
                         >
                             {feature.properties?.full_address}
                         </a>
@@ -154,7 +149,7 @@ export default function LocationSearchForm() {
                     />
                 </div>
                 <div class="col-2">
-                    <a href={"/map"} type={"button"} class={"btn btn-light btn-lg rounded-pill border-4 shadow-sm"}>
+                    <a href={"#/map"} type={"button"} class={"btn btn-light btn-lg rounded-pill border-4 shadow-sm"}>
                         <i class={"bi bi-map"}></i>
                     </a>
                 </div>

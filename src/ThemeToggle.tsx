@@ -1,7 +1,6 @@
 import { createSignal, For, Match, Switch } from "solid-js"
-import { getItem, setItem } from "./lib/cache.ts"
+import { condiesThemeKey, getItem, setItem } from "./lib/cache.ts"
 
-const condiesThemeKey = "condiesTheme"
 const condiesTheme = { light: "light", dark: "dark" }
 const bgClasses = ["dark-bg", "light-bg"]
 
@@ -20,14 +19,14 @@ function updateTheme(theme: string) {
 }
 
 export default function ThemeToggle() {
-    let savedTheme = getItem(condiesThemeKey)
-    const [theme, setTheme] = createSignal<string>(savedTheme || condiesTheme.light)
-    updateTheme(theme())
+    const initialTheme: string = getItem(condiesThemeKey) || condiesTheme.light
+    const [theme, setTheme] = createSignal(initialTheme)
+    updateTheme(initialTheme)
 
     const onClick = (t: string) => {
         setTheme(t)
         setItem(condiesThemeKey, t)
-        updateTheme(theme())
+        updateTheme(t)
     }
 
     return (
@@ -43,7 +42,7 @@ export default function ThemeToggle() {
                                 id={`condies-theme-${t}`}
                                 autocomplete="off"
                                 checked={t === theme()}
-                                onclick={() => onClick(t)}
+                                onClick={() => onClick(t)}
                             />
                             <label
                                 class={`btn ${

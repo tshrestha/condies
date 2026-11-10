@@ -1,8 +1,8 @@
-import { createAsync, query, type RouteSectionProps, useLocation, useParams } from "@solidjs/router"
+import { query, useLocation, useParams } from "@solidjs/router"
 import type { Feature } from "geojson"
-import { Show, Suspense } from "solid-js"
+import { createMemo, Errored, Loading, Show, untrack } from "solid-js"
 
-import { type Alert, type ForecastResult, getAlerts, getForecast, getPoint, type Point } from "./lib/nws.ts"
+import { type Alert, getAlerts, getForecast, getPoint, type Point } from "./lib/nws.ts"
 
 import Alerts from "./Alerts.tsx"
 import DetailedForecast from "./DetailedForecaset.tsx"
@@ -16,7 +16,7 @@ import SunRiseSet from "./SunRiseSet.tsx"
 import ThemeToggle from "./ThemeToggle.tsx"
 
 export interface ForecastProps {
-    point?: {
+    point: {
         lat: string
         lon: string
     }
@@ -24,16 +24,27 @@ export interface ForecastProps {
 
 const timeRegex = /(\d+):(\d+)\s(AM|PM)/
 
-const getData = query(async (lat, lon) => {
+export const getForecastData = query(async (lat, lon) => {
     const point: Point = await getPoint(lat, lon)
-    const forecastZoneUrlSegments = point.properties.forecastZone.split("/")
-    const forecastZone = forecastZoneUrlSegments.slice(-1)[0]
+    if (!point) {
+        throw new Error(`no NWS data for ${lat},${lon}`)
+    }
 
     const [alertResults, forecast, hourlyForecastResult] = await Promise.all([
-        getAlerts(forecastZone),
+        getAlerts(lat, lon),
         getForecast(point.properties.forecast),
         getForecast(point.properties.forecastHourly),
     ])
+
+    if (!forecast && !hourlyForecastResult) {
+        throw new Error(`no forecast available for ${lat},${lon}`)
+    }
+
+    // NWS responses are cached for a while, so the first period can already be over.
+    if (forecast) {
+        const now = Date.now()
+        forecast.properties.periods = forecast.properties.periods.filter((p) => new Date(p.endTime).getTime() > now)
+    }
 
     let alerts!: Alert[]
     if (alertResults && alertResults.features && alertResults.features.length) {
@@ -41,7 +52,7 @@ const getData = query(async (lat, lon) => {
     }
 
     let currentHourExpired = false
-    const periods = (hourlyForecastResult as ForecastResult).properties.periods
+    const periods = (hourlyForecastResult?.properties.periods ?? [])
         .filter((p) => {
             if (p.number === 1) {
                 const currentDate = new Date()
@@ -53,7 +64,11 @@ const getData = query(async (lat, lon) => {
         })
         .map((p) => {
             const d = new Date(p.startTime)
-            const timeString = d.toLocaleTimeString("en-US", { hour12: true, timeStyle: "short" })
+            const timeString = d.toLocaleTimeString("en-US", {
+                hour12: true,
+                timeStyle: "short",
+                timeZone: point.properties.timeZone,
+            })
             const match = timeString.match(timeRegex)
             p.hourString = `${match![1]} ${match![3]}`
             return { ...p, hourString: `${match![1]} ${match![3]}` }
@@ -63,41 +78,53 @@ const getData = query(async (lat, lon) => {
     return { point, forecast, hourlyForecast, alerts }
 }, "forecast")
 
-export default function Forecast(props: ForecastProps | RouteSectionProps) {
-    const location = useLocation()
+// The router reuses a route's component when only its params change, so key on the location to remount.
+export function ForecastRoute() {
     const params = useParams()
-    let lat, lon
 
-    if ((props as ForecastProps).point) {
-        lat = (props as ForecastProps).point!.lat
-        lon = (props as ForecastProps).point!.lon
-    } else {
-        const point = params.point?.split(",")
-        lat = point![0]
-        lon = point![1]
-    }
+    return (
+        <Show when={params.point} keyed>
+            {(point) => {
+                const [lat, lon] = point.split(",")
+                return <Forecast point={{ lat, lon }} />
+            }}
+        </Show>
+    )
+}
 
-    const data = createAsync(() => getData(lat, lon))
+export default function Forecast(props: ForecastProps) {
+    const location = useLocation()
+    // Each mount shows one location, so the coordinates are read once.
+    const { lat, lon } = untrack(() => props.point)
+
+    const data = createMemo(() => getForecastData(lat, lon))
 
     return (
         <>
             <ThemeToggle />
-            <Suspense fallback={<LatestObservationsPlaceholder />}>
-                <Show when={data()}>
+            <Loading fallback={<LatestObservationsPlaceholder />}>
+                <Show when={data()!.hourlyForecast.periods.length}>
                     <LatestObservations point={data()!.point} period={data()!.hourlyForecast.periods[0]} />
                 </Show>
-            </Suspense>
-            <Show when={data() && data()!.alerts}>
-                <Alerts alerts={data()!.alerts} />
-            </Show>
-            <SunRiseSet lat={lat} lon={lon} />
-            <Suspense fallback={<ForecastPlaceholder />}>
-                <Show when={data()}>
+            </Loading>
+            <Loading fallback={null}>
+                <Show when={data() && data()!.alerts}>
+                    <Alerts alerts={data()!.alerts} />
+                </Show>
+            </Loading>
+            {/* Sunrise times are optional, so a failed lookup only hides this row. */}
+            <Errored fallback={null}>
+                <SunRiseSet lat={lat} lon={lon} timeZone={data()!.point.properties.timeZone} />
+            </Errored>
+            <Loading fallback={<ForecastPlaceholder />}>
+                <Show when={data()!.hourlyForecast.periods.length}>
                     <HourlyForecast periods={data()!.hourlyForecast.periods} />
+                </Show>
+                <Show when={data()!.forecast}>
                     <ShortForecast periods={data()!.forecast!.properties.periods} />
                     <DetailedForecast periods={data()!.forecast!.properties.periods} />
                 </Show>
-            </Suspense>
+            </Loading>
             <Show when={location.pathname !== "/"}>
                 <div class={"position-fixed bottom-0 pb-4 z-3"}>
                     <HomeButton />

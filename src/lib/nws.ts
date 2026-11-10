@@ -58,6 +58,13 @@ export interface Point {
         forcastGridData: string
         observationStations: string
         forecastZone: string
+        timeZone: string
+        relativeLocation?: {
+            properties: {
+                city: string
+                state: string
+            }
+        }
     }
 }
 
@@ -290,7 +297,12 @@ export async function getLatestObservations(stationID: string) {
     return await response.json()
 }
 
-export async function getForecast(forecastURL: string) {
+export async function getForecast(forecastURL: string | null) {
+    // Some points NWS knows about, like offshore waters, have no forecast.
+    if (!forecastURL) {
+        return null
+    }
+
     const response = await fetch(`${forecastURL}?units=us`, {
         headers: {
             ...headers,
@@ -304,14 +316,15 @@ export async function getForecast(forecastURL: string) {
 
     const result: ForecastResult = await response.json()
     result.properties.periods.forEach((p) => {
+        // The API allows null here, and everything downstream expects a number.
+        p.probabilityOfPrecipitation.value ??= 0
+
         if (p.windSpeed && p.windSpeed.unitCode.includes("km_h")) {
             p.windSpeed.value = typeof p.windSpeed.value === "number" ? toMph(p.windSpeed.value) : p.windSpeed.value
-            p.windSpeed.minValue = typeof p.windSpeed.minValue === "number"
-                ? toMph(p.windSpeed.minValue)
-                : p.windSpeed.minValue
-            p.windSpeed.maxValue = typeof p.windSpeed.maxValue === "number"
-                ? toMph(p.windSpeed.maxValue)
-                : p.windSpeed.maxValue
+            p.windSpeed.minValue =
+                typeof p.windSpeed.minValue === "number" ? toMph(p.windSpeed.minValue) : p.windSpeed.minValue
+            p.windSpeed.maxValue =
+                typeof p.windSpeed.maxValue === "number" ? toMph(p.windSpeed.maxValue) : p.windSpeed.maxValue
             p.windSpeed.unitCode = "mph"
         }
         if (p.windGust && p.windGust.unitCode.includes("km_h")) {
@@ -323,11 +336,15 @@ export async function getForecast(forecastURL: string) {
     return result
 }
 
-export async function getAlerts(zoneId: string) {
-    const response = await fetch(`${weatherURL}/alerts/active/zone/${zoneId}`, { headers: { ...headers } })
+export async function getAlerts(lat: string, lon: string) {
+    // Looking up by point also finds county and fire-zone alerts, such as tornado warnings.
+    const point = `${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`
+    const response = await fetch(`${weatherURL}/alerts/active?status=actual&point=${point}`, {
+        headers: { ...headers },
+    })
 
     if (!response.ok) {
-        console.error("failed to get alerts for zone:", zoneId)
+        console.error("failed to get alerts for point:", point)
         return null
     }
 

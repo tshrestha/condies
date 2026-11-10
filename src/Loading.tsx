@@ -15,8 +15,7 @@ export default function Loading() {
                         <div
                             class="progress-bar progress-bar-striped progress-bar-animated"
                             style={{ width: "100%" }}
-                        >
-                        </div>
+                        ></div>
                     </div>
                 </div>
             </div>

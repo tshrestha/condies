@@ -1,4 +1,4 @@
-import { createSignal, For, Match, Switch } from "solid-js"
+import { createSignal, For, Match, Switch, untrack } from "solid-js"
 
 import HourlyPrecipChart from "./HourlyPrecipForecast.tsx"
 import HourlyTempsChart from "./HourlyTempsChart.tsx"
@@ -12,7 +12,8 @@ export interface ForecastType {
     isSelected: boolean
 }
 
-export default function HourlyForecast({ periods }: { periods: Period[] }) {
+export default function HourlyForecast(props: { periods: Period[] }) {
+    const periods = untrack(() => props.periods)
     const forecastTypes = [
         { name: "TEMP", id: "forecast-temp", isSelected: true },
         { name: "PRECIP %", id: "forecast-precip", isSelected: false },
@@ -20,7 +21,7 @@ export default function HourlyForecast({ periods }: { periods: Period[] }) {
     ]
 
     if (periods.some((p) => p.windGust)) {
-        periods.forEach(p => {
+        periods.forEach((p) => {
             if (!p.windGust) {
                 p.windGust = { value: p.windSpeed.value, unitCode: p.windSpeed.unitCode }
             }
@@ -64,7 +65,7 @@ export default function HourlyForecast({ periods }: { periods: Period[] }) {
                                 id={type.id}
                                 autocomplete="off"
                                 checked={type.isSelected}
-                                onclick={() => onClick(type)}
+                                onClick={() => onClick(type)}
                             />
                             <label class="btn btn-outline-primary" for={type.id}>
                                 {type.name}

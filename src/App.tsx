@@ -1,19 +1,48 @@
-import { Route } from "@solidjs/router"
-import { lazy, Suspense } from "solid-js"
+import { createRouter, hashHistory } from "@solidjs/router"
+import { Errored, lazy, Loading } from "solid-js"
 
-import Forecast from "./Forecast.tsx"
+import { ForecastRoute } from "./Forecast.tsx"
 import Home from "./Home.tsx"
-import Loading from "./Loading.tsx"
+import LoadingScreen from "./Loading.tsx"
 
 const Map = lazy(() => import("./Map.tsx"))
 
+const Router = createRouter({
+    routes: [
+        { path: "/", component: Home },
+        { path: "/map", component: Map },
+        { path: "/forecast/:point", component: ForecastRoute },
+    ],
+    history: hashHistory(),
+})
+
 function App() {
     return (
-        <Suspense fallback={<Loading />}>
-            <Route path={"/"} component={Home} />
-            <Route path={"/map"} component={Map} />
-            <Route path={"/forecast/:point"} component={Forecast} />
-        </Suspense>
+        <Router>
+            {(props) => (
+                // Without a boundary, one uncaught error stops all reactivity for the rest of the session.
+                <Errored
+                    fallback={
+                        <div class="alert alert-danger text-center rounded-5 mt-4" role="alert">
+                            Couldn't load this page.{" "}
+                            <button
+                                type="button"
+                                class="btn btn-link alert-link p-0 align-baseline"
+                                onClick={() => location.reload()}
+                            >
+                                Try again
+                            </button>{" "}
+                            or{" "}
+                            <a href="#/" class="alert-link">
+                                go home
+                            </a>
+                        </div>
+                    }
+                >
+                    <Loading fallback={<LoadingScreen />}>{props.children}</Loading>
+                </Errored>
+            )}
+        </Router>
     )
 }
 

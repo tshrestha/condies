@@ -1,5 +1,5 @@
 import { area, curveCatmullRom, line, scaleLinear, scalePoint, select } from "d3"
-import { onCleanup, onMount } from "solid-js"
+import { onSettled } from "solid-js"
 
 import type { Period } from "./lib/nws.ts"
 
@@ -14,24 +14,25 @@ export interface ForecastChartProps {
     getY?: (p: Period) => number
     getForecastLabel: (p: Period) => string
     getColorValue: (p: Period) => number
+    xDomain?: [number, number]
 }
 
-export default function ForecastChart({
-    title,
-    colorDomain,
-    colorRange,
-    periods,
-    getX,
-    getXLabel,
-    getForecastLabel,
-    getColorValue,
-}: ForecastChartProps) {
+// Not every browser reports a scroll size for SVG text, so fall back to its bounding box.
+function measureText(node: SVGTextElement) {
+    return { width: node.scrollWidth || node.getBBox().width, height: node.scrollHeight || node.getBBox().height }
+}
+
+export default function ForecastChart(props: ForecastChartProps) {
     let containerRef!: HTMLDivElement
 
-    onMount(() => {
+    const draw = () => {
+        const { colorDomain, colorRange, periods, getX, getXLabel, getForecastLabel, getColorValue, xDomain } = props
+
         if (!containerRef || !periods) {
             return
         }
+
+        select(containerRef).selectAll("*").remove()
 
         const { paddingLeft, paddingRight, paddingTop, paddingBottom } = getComputedStyle(containerRef)
         const margin = {
@@ -46,7 +47,9 @@ export default function ForecastChart({
 
         const xMin = Math.min(...periods.map((p) => getX(p)))
         const xMax = Math.max(...periods.map((p) => getX(p)))
-        const relativeMinX = xMin - (xMax - xMin)
+        // Without a fixed scale, start left of the lowest value so it isn't drawn at zero width,
+        // even when every value is the same.
+        const [domainMin, domainMax] = xDomain ?? [xMin - Math.max(xMax - xMin, 1), xMax]
         const timeLabelPadding = 10
 
         // data-value to color scale
@@ -81,7 +84,7 @@ export default function ForecastChart({
             .text((d, i) => (i === 0 ? "NOW" : d.hourString))
 
         // Get width of the widest time label
-        const timeLabelWidths = timeLabels.nodes().map((n) => n.scrollWidth)
+        const timeLabelWidths = timeLabels.nodes().map((n) => measureText(n).width)
         const maxTimeLabelWidth = Math.max(...timeLabelWidths)
 
         // Use the maxTimeLabelWidth to determine how much the chart area needs to shift right
@@ -107,7 +110,7 @@ export default function ForecastChart({
         const golden = 1.618
         const half = 0.5
         const quarter = 0.25
-        const dataPointLabelDim = dataPointLabels.nodes().map((n) => ({ width: n.scrollWidth, height: n.scrollHeight }))
+        const dataPointLabelDim = dataPointLabels.nodes().map((n) => measureText(n))
         const maxDataPointLabelWidth = Math.max(...dataPointLabelDim.map((d) => d.width))
         const dataPointLabelBgHeight = dataPointLabelDim[0].height + dataPointLabelDim[0].height * quarter
         const dataPointLabelBgWidth = maxDataPointLabelWidth + dataPointLabelBgHeight * golden * half
@@ -115,16 +118,16 @@ export default function ForecastChart({
 
         // X scale for data point (horizontal)
         const xScale = scaleLinear()
-            .domain([relativeMinX, xMax])
+            .domain([domainMin, domainMax])
             .range([
                 0,
                 width
-                + margin.left
-                + margin.right
-                - maxTimeLabelWidth
-                - timeLabelPadding
-                - dataPointLabelBgWidth * half
-                - dataPointLabelBgStrokeWidth,
+                    + margin.left
+                    + margin.right
+                    - maxTimeLabelWidth
+                    - timeLabelPadding
+                    - dataPointLabelBgWidth * half
+                    - dataPointLabelBgStrokeWidth,
             ])
 
         dataPointLabelBg
@@ -139,7 +142,8 @@ export default function ForecastChart({
         dataPointLabelGroup.attr(
             "transform",
             (d, i) =>
-                `translate(${xScale(getX(d)) - dataPointLabelBgWidth * half}, ${
+                // Labels for values near the left edge stop there, clear of the time column.
+                `translate(${Math.max(xScale(getX(d)) - dataPointLabelBgWidth * half, 0)}, ${
                     (yScale(i) ?? 0) - dataPointLabelBgHeight * half
                 })`,
         )
@@ -150,7 +154,7 @@ export default function ForecastChart({
 
         // Create the area generator for vertical orientation
         const areaGenerator = area<Period>()
-            .x0(xScale(relativeMinX))
+            .x0(xScale(domainMin))
             .x1((d) => xScale(getX(d)))
             .y((_, i) => yScale(i) ?? 0)
             .curve(curve)
@@ -183,7 +187,7 @@ export default function ForecastChart({
 
         // Add gradient stops for each data point based on its data point
         periods.forEach((period, i) => {
-            const offset = (i / (periods.length - 1)) * 100
+            const offset = periods.length > 1 ? (i / (periods.length - 1)) * 100 : 0
             const color = tempColorScale(getColorValue(period))
             areaGradient.append("stop").attr("offset", `${offset}%`).attr("stop-color", color)
             lineGradient.append("stop").attr("offset", `${offset}%`).attr("stop-color", color.replace("0.6)", "1)"))
@@ -232,7 +236,19 @@ export default function ForecastChart({
             .attr("fill", "black")
             .text((d) => getForecastLabel(d))
 
-        const forecastLabelWidths = forecastLabelText.nodes().map((el) => [el.scrollHeight, el.scrollWidth])
+        // Long forecasts would otherwise run past the edge of the chart on narrow screens.
+        const maxForecastLabelWidth = width + margin.left + margin.right - maxTimeLabelWidth - timeLabelPadding - 10
+        forecastLabelText.each(function () {
+            const label = this.textContent ?? ""
+            for (let length = label.length; measureText(this).width > maxForecastLabelWidth && length > 0; length--) {
+                this.textContent = `${label.slice(0, length).trimEnd()}…`
+            }
+        })
+
+        const forecastLabelWidths = forecastLabelText.nodes().map((el) => {
+            const { width, height } = measureText(el)
+            return [height, width]
+        })
 
         forecastLabelBg
             .attr("height", (_, i) => forecastLabelWidths[i][0])
@@ -254,15 +270,27 @@ export default function ForecastChart({
 
         dataPointLabelGroup.raise()
         dataPointLabels.raise()
+    }
 
-        onCleanup(() => {
-            select(containerRef).selectAll("*").remove()
+    onSettled(() => {
+        draw()
+
+        // The chart is drawn at a fixed pixel width, so redraw it when the available width changes.
+        let drawnWidth = containerRef.clientWidth
+        const observer = new ResizeObserver(() => {
+            if (containerRef.clientWidth !== drawnWidth) {
+                drawnWidth = containerRef.clientWidth
+                draw()
+            }
         })
+        observer.observe(containerRef)
+
+        return () => observer.disconnect()
     })
 
     return (
         <div class={"card rounded-4 mb-2"}>
-            <div class={"card-header"}>{title}</div>
+            <div class={"card-header"}>{props.title}</div>
             <div class={"card-body rounded-bottom-4"}>
                 <div ref={containerRef} class="w-100 forecast-chart"></div>
             </div>
