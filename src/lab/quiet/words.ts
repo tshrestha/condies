@@ -83,8 +83,10 @@ export function conditionWord(forecast: string) {
         .reduce((worst, part) => (part.rank > worst.rank ? part : worst)).word
 }
 
-export const highlightWord = (highlight?: DaySummary["highlight"]) =>
-    highlight === "pow" ? "POW DAY" : highlight === "primo" ? "PRIMO" : undefined
+// PRIMO means one thing: a perfect Condies score, the same word the score's grade uses. A day never says PRIMO
+// beside a lesser grade. POW DAY is about snow, so it stands on its own and wins when both apply.
+export const highlightWord = (day: DaySummary) =>
+    day.highlight === "pow" ? "POW DAY" : day.condies?.score === 100 ? "PRIMO" : undefined
 
 const kindOf = (p: Period): "snow" | "storms" | "rain" => {
     const text = p.shortForecast.toLowerCase()

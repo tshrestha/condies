@@ -420,7 +420,7 @@ function DayRow(
 ) {
     const name = () => dayName(props.day, props.index)
     const period = () => props.day.day ?? props.day.night
-    const marker = () => highlightWord(props.day.highlight)
+    const marker = () => highlightWord(props.day)
     const condition = () => marker() ?? conditionWord(period()?.shortForecast ?? "")
     // "Light snow · 6.4″ snow" says snow twice, so the amount drops the word when the condition has it.
     const snow = () =>
@@ -910,7 +910,7 @@ function DayView(props: Ctx & { day: DaySummary; index: number }) {
     const f = () => props.app.forecast
     const name = () => dayName(props.day, props.index)
     const period = () => props.day.day ?? props.day.night
-    const marker = () => highlightWord(props.day.highlight)
+    const marker = () => highlightWord(props.day)
     const insight = () => snowLine(props.day)
     const hours = createMemo(() => {
         const own = f().hours.filter((h) => dateOf(h) === props.day.date)

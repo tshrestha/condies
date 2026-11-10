@@ -1,5 +1,8 @@
 # Strata Quiet
 
+Status: final, chosen by the owner on 2026-11-10. This is the spec for porting the design into the app; see
+`PLAN.md` beside it. The reference implementation is this folder, viewable with `npm run lab`.
+
 Every 5°F has its own color, used like a paint chip: a flat swatch with dark ink, laid on a plain ground. The
 current temperature is one swatch; the week is a range bar per day built from the same chips. Everything else
 is plain type on the ground, and every number is printed. Not a broadcast panel: no full-bleed color bars, no
@@ -79,7 +82,9 @@ its sheet and prints its severity in words.
 ## The week (`Week`, `DayRow`, `RangeBar`)
 
 On the ground. A head row reads "This week · Low · High" once. Each row: day name (bold), low (regular), range
-bar, high (32px bold), and under them one condition word or POW DAY / PRIMO, and the snow amount if any. All
+bar, high (32px bold), and under them one condition word or a marker, and the snow amount if any. Markers
+(`highlightWord`): POW DAY when the day is a pow day, otherwise PRIMO only when the day's score is a perfect 100. The old sunny-and-mild rule (`isPrimo`) no longer shows a marker, so a day never says PRIMO beside a
+lesser grade. All
 rows share one scale for the week, so warm days sit right and cold days left. The bar is the ramp's own 5°
 steps as hard segments from low to high, on a thin track. A day missing its low shows a short tick at its high,
 and its low column stays empty. Columns align through CSS subgrid.
@@ -107,6 +112,31 @@ temperatures' size. No score, no line.
   the hourly chart (temperature columns in ramp colors, other views in ink), the forecast text on the ground.
 - My Spots: rows on the ground ranked by score: name, day and window, snow, then the score line.
 
+## Map (designed here, not yet in the lab)
+
+- Full screen. A quiet base map so the only color is data: OpenFreeMap's Positron style by day and its dark
+  style at night (confirm the dark style's name when porting). NOAA radar on by default, as today.
+- Radar switch: a glass chip at the top right, round because it's a control, "Radar" with a pressed state.
+- Saved spots: square paint chips (printed, so square) in the color of the spot's high today, printing that
+  high in its ink ("26°"). Tapping one opens a popup on the ground with the name, best day and window, and the
+  score line, linking to the forecast. Place names from search or reverse geocoding are plain text, never HTML.
+- Phones: the dock floats over the map. Map controls (zoom, compass, locate) sit on the right edge above the
+  dock; attribution stays compact at the top left. Wide screens: the top bar.
+
+## Loading in sections
+
+The app fetches the forecast, sun times, avalanche danger and snow depth separately, so each section can be
+waiting on its own. A waiting section shows its shape on the ground in `--sq-track`: the swatch as a plain
+block of the same size, rows as bars at their text's height. No shimmer and no spinner. The full-screen state
+(a swatch stepping through the ramp, "Getting the forecast.") is only for a first load with nothing saved.
+Optional extras that fail (sun, avalanche, snow depth) leave their section off, as today.
+
+## Theme and app colors
+
+- `data-theme="light|dark"` on `<html>`, set before first paint by the inline script in `index.html`, stored
+  under the existing `condiesTheme` key, following the system setting until the owner picks one.
+- `theme-color` metas and the manifest: `#ffffff` light, `#0d0d0d` dark (the grounds).
+
 ## Chart grammar (`Hourly`)
 
 One series at a time, one column per hour on a baseline, direct labels at the ends and extremes only. A
@@ -125,7 +155,15 @@ from the baseline. Loading steps a swatch through the ramp in hard cuts. `prefer
 ## Voice
 
 Plain sentences. Mountain-town words live only in "Right meow", POW DAY, PRIMO and the score's grades. Warning
-and avalanche text is the agency's own, with no jokes near it.
+and avalanche text is the agency's own, with no jokes near it. Separators before a number are commas, never
+" · ", which reads as a decimal point ("Snow until 1 AM, 17.5″").
+
+## Known limits
+
+- With the offline notice and three warnings on a 390×844 phone, tomorrow's row can't clear the dock even at
+  the numeral's minimum size. Everything else answers the six questions on the first screen.
+- `corner-shape: squircle` is Chromium-only so far; other browsers get a capsule. Tested only in Chromium:
+  check Safari on iOS for backdrop blur, safe areas and the dock in standalone (installed) mode.
 
 ## Extending
 
