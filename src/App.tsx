@@ -2,6 +2,7 @@ import { createRouter, hashHistory } from "@solidjs/router"
 import { Errored, lazy, Loading } from "solid-js"
 
 import { ForecastRoute } from "./Forecast.tsx"
+import { ForecastDayRoute } from "./ForecastDay.tsx"
 import Home from "./Home.tsx"
 import LoadingScreen from "./Loading.tsx"
 
@@ -12,6 +13,7 @@ const Router = createRouter({
         { path: "/", component: Home },
         { path: "/map", component: Map },
         { path: "/forecast/:point", component: ForecastRoute },
+        { path: "/forecast/:point/day/:date", component: ForecastDayRoute },
     ],
     history: hashHistory(),
 })

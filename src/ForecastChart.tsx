@@ -22,6 +22,11 @@ function measureText(node: SVGTextElement) {
     return { width: node.scrollWidth || node.getBBox().width, height: node.scrollHeight || node.getBBox().height }
 }
 
+function isCurrentHour({ startTime, endTime }: Period) {
+    const now = Date.now()
+    return now >= new Date(startTime).getTime() && now < new Date(endTime).getTime()
+}
+
 export default function ForecastChart(props: ForecastChartProps) {
     let containerRef!: HTMLDivElement
 
@@ -80,8 +85,8 @@ export default function ForecastChart(props: ForecastChartProps) {
             .attr("text-anchor", "end")
             .attr("font-size", "14px")
             .attr("font-weight", "bold")
-            .attr("fill", (_, i) => (i === 0 ? "rgba(59, 130, 246, 1)" : "var(--bs-body-color)"))
-            .text((d, i) => (i === 0 ? "NOW" : d.hourString))
+            .attr("fill", (d) => (isCurrentHour(d) ? "rgba(59, 130, 246, 1)" : "var(--bs-body-color)"))
+            .text((d) => (isCurrentHour(d) ? "NOW" : d.hourString))
 
         // Get width of the widest time label
         const timeLabelWidths = timeLabels.nodes().map((n) => measureText(n).width)

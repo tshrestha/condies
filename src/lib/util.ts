@@ -15,11 +15,8 @@ export function getPrecipType(forecast: string) {
 }
 
 // NWS timestamps carry the forecast location's own date, so read it directly from the text.
-export function getWeekday(isoTime: string) {
-    return new Date(`${isoTime.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", {
-        weekday: "short",
-        timeZone: "UTC",
-    })
+export function formatLocalDate(isoTime: string, options: Intl.DateTimeFormatOptions) {
+    return new Date(`${isoTime.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { ...options, timeZone: "UTC" })
 }
 
 export function getLocation() {

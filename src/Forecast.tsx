@@ -5,13 +5,12 @@ import { createMemo, Errored, Loading, Show, untrack } from "solid-js"
 import { type Alert, getAlerts, getForecast, getPoint, type Point } from "./lib/nws.ts"
 
 import Alerts from "./Alerts.tsx"
-import DetailedForecast from "./DetailedForecaset.tsx"
+import DailyForecast from "./DailyForecast.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
 import HomeButton from "./HomeButton.tsx"
 import HourlyForecast from "./HourlyForecast"
 import LatestObservations from "./LatestObservations.tsx"
 import LatestObservationsPlaceholder from "./LatestObservationsPlaceholder.tsx"
-import ShortForecast from "./ShortForecast.tsx"
 import SunRiseSet from "./SunRiseSet.tsx"
 import ThemeToggle from "./ThemeToggle.tsx"
 
@@ -41,8 +40,8 @@ export const getForecastData = query(async (lat, lon) => {
     }
 
     // NWS responses are cached for a while, so the first period can already be over.
+    const now = Date.now()
     if (forecast) {
-        const now = Date.now()
         forecast.properties.periods = forecast.properties.periods.filter((p) => new Date(p.endTime).getTime() > now)
     }
 
@@ -51,17 +50,8 @@ export const getForecastData = query(async (lat, lon) => {
         alerts = alertResults.features.map((f: Feature) => f.properties)
     }
 
-    let currentHourExpired = false
-    const periods = (hourlyForecastResult?.properties.periods ?? [])
-        .filter((p) => {
-            if (p.number === 1) {
-                const currentDate = new Date()
-                const endTime = new Date(p.endTime)
-                currentHourExpired = currentDate.getTime() > endTime.getTime()
-                return !currentHourExpired
-            }
-            return currentHourExpired ? p.number < 13 : p.number < 12
-        })
+    const allHourlyPeriods = (hourlyForecastResult?.properties.periods ?? [])
+        .filter((p) => new Date(p.endTime).getTime() > now)
         .map((p) => {
             const d = new Date(p.startTime)
             const timeString = d.toLocaleTimeString("en-US", {
@@ -74,8 +64,8 @@ export const getForecastData = query(async (lat, lon) => {
             return { ...p, hourString: `${match![1]} ${match![3]}` }
         })
 
-    const hourlyForecast = { periods }
-    return { point, forecast, hourlyForecast, alerts }
+    const hourlyForecast = { periods: allHourlyPeriods.slice(0, 11) }
+    return { point, forecast, hourlyForecast, allHourlyPeriods, alerts }
 }, "forecast")
 
 // The router reuses a route's component when only its params change, so key on the location to remount.
@@ -121,8 +111,12 @@ export default function Forecast(props: ForecastProps) {
                     <HourlyForecast periods={data()!.hourlyForecast.periods} />
                 </Show>
                 <Show when={data()!.forecast}>
-                    <ShortForecast periods={data()!.forecast!.properties.periods} />
-                    <DetailedForecast periods={data()!.forecast!.properties.periods} />
+                    <DailyForecast
+                        periods={data()!.forecast!.properties.periods}
+                        lat={lat}
+                        lon={lon}
+                        fromHome={location.pathname === "/"}
+                    />
                 </Show>
             </Loading>
             <Show when={location.pathname !== "/"}>
