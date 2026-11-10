@@ -1,4 +1,4 @@
-import { createSignal, For, Match, Switch } from "solid-js"
+import { createSignal, For, Match, onCleanup, Switch } from "solid-js"
 import { condiesThemeKey, getItem, setItem } from "./lib/cache.ts"
 
 const condiesTheme = { light: "light", dark: "dark" }
@@ -19,9 +19,22 @@ function updateTheme(theme: string) {
 }
 
 export default function ThemeToggle() {
-    const initialTheme: string = getItem(condiesThemeKey) || condiesTheme.light
+    const systemTheme = matchMedia("(prefers-color-scheme: dark)")
+    const getSystemTheme = () => (systemTheme.matches ? condiesTheme.dark : condiesTheme.light)
+
+    const initialTheme: string = getItem(condiesThemeKey) || getSystemTheme()
     const [theme, setTheme] = createSignal(initialTheme)
     updateTheme(initialTheme)
+
+    // Follow the system setting until the user picks a theme themselves.
+    const onSystemChange = () => {
+        if (!getItem(condiesThemeKey)) {
+            setTheme(getSystemTheme())
+            updateTheme(getSystemTheme())
+        }
+    }
+    systemTheme.addEventListener("change", onSystemChange)
+    onCleanup(() => systemTheme.removeEventListener("change", onSystemChange))
 
     const onClick = (t: string) => {
         setTheme(t)

@@ -2,15 +2,18 @@ import { query, useLocation, useParams } from "@solidjs/router"
 import type { Feature } from "geojson"
 import { createMemo, Errored, Loading, Show, untrack } from "solid-js"
 
-import { type Alert, getAlerts, getForecast, getPoint, type Point } from "./lib/nws.ts"
+import { groupIntoDays } from "./lib/daily.ts"
+import { type Alert, getAlerts, getForecast, getGridForecast, getPoint, type Point } from "./lib/nws.ts"
 
 import Alerts from "./Alerts.tsx"
 import DailyForecast from "./DailyForecast.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
 import HomeButton from "./HomeButton.tsx"
 import HourlyForecast from "./HourlyForecast"
-import LatestObservations from "./LatestObservations.tsx"
-import LatestObservationsPlaceholder from "./LatestObservationsPlaceholder.tsx"
+import CurrentConditions from "./CurrentConditions.tsx"
+import CurrentConditionsPlaceholder from "./CurrentConditionsPlaceholder.tsx"
+import LastUpdated from "./LastUpdated.tsx"
+import MountainConditions from "./MountainConditions.tsx"
 import SunRiseSet from "./SunRiseSet.tsx"
 import ThemeToggle from "./ThemeToggle.tsx"
 
@@ -29,15 +32,12 @@ export const getForecastData = query(async (lat, lon) => {
         throw new Error(`no NWS data for ${lat},${lon}`)
     }
 
-    const [alertResults, forecast, hourlyForecastResult] = await Promise.all([
+    const [alertResults, forecast, hourlyForecastResult, grid] = await Promise.all([
         getAlerts(lat, lon),
         getForecast(point.properties.forecast),
         getForecast(point.properties.forecastHourly),
+        getGridForecast(point.properties.forecastGridData),
     ])
-
-    if (!forecast && !hourlyForecastResult) {
-        throw new Error(`no forecast available for ${lat},${lon}`)
-    }
 
     // NWS responses are cached for a while, so the first period can already be over.
     const now = Date.now()
@@ -60,12 +60,30 @@ export const getForecastData = query(async (lat, lon) => {
                 timeZone: point.properties.timeZone,
             })
             const match = timeString.match(timeRegex)
-            p.hourString = `${match![1]} ${match![3]}`
-            return { ...p, hourString: `${match![1]} ${match![3]}` }
+            const hourString = `${match![1]} ${match![3]}`
+            const start = d.getTime()
+            const gridGust = grid?.gust.get(start)
+
+            return {
+                ...p,
+                hourString,
+                snowInches: grid?.snowfall.get(start) ?? 0,
+                feelsLike: grid?.feelsLike.get(start),
+                // The grid has gusts for far more hours than the hourly forecast does.
+                windGust:
+                    p.windGust
+                    ?? (gridGust === undefined ? undefined : { value: Math.round(gridGust), unitCode: "mph" }),
+            }
         })
 
+    // Also catches a forecast saved for offline use that has since run out.
+    if (!forecast?.properties.periods.length && !allHourlyPeriods.length) {
+        throw new Error(`no current forecast for ${lat},${lon}`)
+    }
+
     const hourlyForecast = { periods: allHourlyPeriods.slice(0, 11) }
-    return { point, forecast, hourlyForecast, allHourlyPeriods, alerts }
+    const updatedAt = forecast?.properties.generatedAt ?? hourlyForecastResult?.properties.generatedAt
+    return { point, forecast, hourlyForecast, allHourlyPeriods, alerts, grid, updatedAt }
 }, "forecast")
 
 // The router reuses a route's component when only its params change, so key on the location to remount.
@@ -88,13 +106,39 @@ export default function Forecast(props: ForecastProps) {
     const { lat, lon } = untrack(() => props.point)
 
     const data = createMemo(() => getForecastData(lat, lon))
+    const powDay = createMemo(
+        () =>
+            groupIntoDays(data().forecast?.properties.periods ?? [], {
+                grid: data().grid,
+                hourly: data().allHourlyPeriods,
+            })[0]?.highlight === "pow",
+    )
 
     return (
         <>
-            <ThemeToggle />
-            <Loading fallback={<LatestObservationsPlaceholder />}>
+            <div class="d-flex justify-content-between align-items-center">
+                <Show when={location.pathname === "/"}>
+                    <a href="#/spots" class="btn btn-sm btn-light rounded-pill">
+                        <i class="bi bi-star-fill text-warning" /> My Spots
+                    </a>
+                </Show>
+                <div class="ms-auto">
+                    <ThemeToggle />
+                </div>
+            </div>
+            <Loading fallback={<CurrentConditionsPlaceholder />}>
                 <Show when={data()!.hourlyForecast.periods.length}>
-                    <LatestObservations point={data()!.point} period={data()!.hourlyForecast.periods[0]} />
+                    <CurrentConditions
+                        point={data()!.point}
+                        period={data()!.hourlyForecast.periods[0]}
+                        next={data()!.hourlyForecast.periods[1]}
+                        powDay={powDay()}
+                        lat={lat}
+                        lon={lon}
+                    />
+                </Show>
+                <Show when={data()!.updatedAt}>
+                    <LastUpdated time={data()!.updatedAt!} />
                 </Show>
             </Loading>
             <Loading fallback={null}>
@@ -110,12 +154,16 @@ export default function Forecast(props: ForecastProps) {
                 <Show when={data()!.hourlyForecast.periods.length}>
                     <HourlyForecast periods={data()!.hourlyForecast.periods} />
                 </Show>
+                <MountainConditions lat={lat} lon={lon} />
                 <Show when={data()!.forecast}>
                     <DailyForecast
                         periods={data()!.forecast!.properties.periods}
+                        grid={data()!.grid}
+                        hourly={data()!.allHourlyPeriods}
                         lat={lat}
                         lon={lon}
                         fromHome={location.pathname === "/"}
+                        timeZone={data()!.point.properties.timeZone}
                     />
                 </Show>
             </Loading>

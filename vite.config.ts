@@ -3,7 +3,7 @@ import solidPlugin from "@solidjs/vite-plugin"
 
 export default defineConfig({
     plugins: [solidPlugin()],
-    base: "/condies",
+    base: "/condies/",
     server: {
         port: 3000,
     },
@@ -16,7 +16,7 @@ export default defineConfig({
                             debugName: "vendor",
                             name(id) {
                                 if (id.includes("node_modules")) {
-                                    // React core - frequently cached, loaded on every page
+                                    // Solid core - frequently cached, loaded on every page
                                     if (
                                         id.includes("/solid-js/")
                                         || id.includes("/@solidjs/")
@@ -24,7 +24,7 @@ export default defineConfig({
                                     ) {
                                         return "vendor-solid"
                                     }
-                                    // Mapbox - large library, only needed on map page
+                                    // MapLibre - large library, only needed on map page
                                     if (id.includes("/maplibre-gl/")) {
                                         return "vendor-maplibre"
                                     }

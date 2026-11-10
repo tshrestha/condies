@@ -1,0 +1,15 @@
+{
+    "name": "Condies",
+    "short_name": "Condies",
+    "description": "Snow and weather forecasts for wherever you're headed.",
+    "start_url": "/condies/",
+    "scope": "/condies/",
+    "display": "standalone",
+    "background_color": "#a6b1e1",
+    "theme_color": "#a6b1e1",
+    "icons": [
+        { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}

@@ -1,4 +1,6 @@
+import { getPrecipPhase, type Grid, type PrecipPhase, sumBetween } from "./grid.ts"
 import type { Period } from "./nws.ts"
+import { type DayScore, scoreDay } from "./score.ts"
 import { formatLocalDate, getPrecipType, isPowDay, isPrimo } from "./util.ts"
 
 export interface DaySummary {
@@ -14,18 +16,31 @@ export interface DaySummary {
     precipChance: number
     precipType: "snow" | "rain"
     highlight?: "primo" | "pow"
+    snow?: number
+    phase?: PrecipPhase
+    condies?: DayScore
+}
+
+interface DayExtras {
+    grid?: Grid | null
+    hourly?: Period[]
 }
 
 const isNumber = (value: unknown): value is number => typeof value === "number"
 
 // NWS sends alternating day and night periods. Each calendar day pairs its daytime period with the
 // night that follows it, so the night's temperature is that day's low.
-export function groupIntoDays(periods: Period[]): DaySummary[] {
+export function groupIntoDays(periods: Period[], { grid, hourly = [] }: DayExtras = {}): DaySummary[] {
     const periodsByDate = new Map<string, Period[]>()
     for (const period of periods) {
         const date = period.startTime.slice(0, 10)
         periodsByDate.set(date, [...(periodsByDate.get(date) ?? []), period])
     }
+
+    const snowDuring = (list: Period[]) =>
+        grid
+            ? list.reduce((t, p) => t + sumBetween(grid.snowfall, Date.parse(p.startTime), Date.parse(p.endTime)), 0)
+            : undefined
 
     return [...periodsByDate].map(([date, dayPeriods]) => {
         const day = dayPeriods.find((p) => p.isDaytime)
@@ -40,9 +55,18 @@ export function groupIntoDays(periods: Period[]): DaySummary[] {
         let highlight: DaySummary["highlight"]
         if (day && isPrimo(day)) {
             highlight = "primo"
-        } else if (day && isPowDay({ condies: day, periods, index: periods.indexOf(day) })) {
-            highlight = "pow"
+        } else if (day) {
+            const index = periods.indexOf(day)
+            const snowInches = snowDuring(periods.slice(Math.max(0, index - 2), index + 1))
+            if (isPowDay({ condies: day, periods, index, snowInches })) {
+                highlight = "pow"
+            }
         }
+
+        const phase = grid
+            ? getPrecipPhase(grid, Date.parse(dayPeriods[0].startTime), Date.parse(dayPeriods.at(-1)!.endTime))
+            : undefined
+        const textSaysSnow = dayPeriods.some((p) => getPrecipType(p.detailedForecast) === "snow")
 
         return {
             date,
@@ -55,8 +79,11 @@ export function groupIntoDays(periods: Period[]): DaySummary[] {
             windMax: speeds.length ? Math.max(...speeds) : 0,
             gust: gusts.length ? Math.max(...gusts) : undefined,
             precipChance: Math.max(...dayPeriods.map((p) => p.probabilityOfPrecipitation.value)),
-            precipType: dayPeriods.some((p) => getPrecipType(p.detailedForecast) === "snow") ? "snow" : "rain",
+            precipType: (phase ? phase.phase !== "rain" : textSaysSnow) ? "snow" : "rain",
             highlight,
+            snow: snowDuring(dayPeriods),
+            phase,
+            condies: grid ? scoreDay(date, hourly, grid) : undefined,
         }
     })
 }
@@ -73,3 +100,13 @@ export const formatTemp = (temperature?: number) => (temperature === undefined ?
 export function formatWindRange({ windMin, windMax }: DaySummary) {
     return windMin === windMax ? `${windMax} mph` : `${windMin}–${windMax} mph`
 }
+
+export const formatSnow = (inches: number) => `${inches < 10 ? inches.toFixed(1) : Math.round(inches)}″`
+
+// Half a point is less than any real difference in score, so a POW or PRIMO day only wins ties.
+const rank = (day?: DaySummary) => (day?.condies?.score ?? -1) + (day?.highlight ? 0.5 : 0)
+
+export const bestDay = (days: DaySummary[]) =>
+    days.reduce<DaySummary | undefined>((best, day) => (rank(day) > rank(best) ? day : best), undefined)
+
+export const hasSnow = (summary: DaySummary) => (summary.snow ?? 0) >= 0.1

@@ -13,12 +13,27 @@ interface WindSpeed {
     unitCode: string
 }
 
+// Keeps today's periods in the future, so they aren't dropped as already over.
+function periodEnd(date: string, isDaytime: boolean) {
+    const end = isDaytime ? `${date}T18:00:00-07:00` : `${nextDate(date)}T06:00:00-07:00`
+    return Date.parse(end) < Date.now() + 3_600_000 ? timeAt(2) : end
+}
+
+const nextDate = (date: string) => new Date(Date.parse(`${date}T12:00:00Z`) + 86_400_000).toISOString().slice(0, 10)
+
+// NWS hourly periods always start on the hour.
+function hourAt(hours: number) {
+    const time = new Date(Date.now() - OFFSET + hours * 3_600_000)
+    time.setUTCMinutes(0, 0, 0)
+    return `${time.toISOString().slice(0, 19)}-07:00`
+}
+
 export function period(name: string, date: string, isDaytime: boolean, temperature: number, extra: object = {}) {
     return {
         number: 1,
         name,
         startTime: `${date}${isDaytime ? "T06:00:00" : "T18:00:00"}-07:00`,
-        endTime: timeAt(240),
+        endTime: periodEnd(date, isDaytime),
         isDaytime,
         temperature,
         shortForecast: isDaytime ? "Mostly Sunny" : "Mostly Clear",
@@ -46,8 +61,8 @@ export function hourly(count = 80, extra: object = {}) {
     return Array.from({ length: count }, (_, i) => ({
         number: i + 1,
         name: "",
-        startTime: timeAt(i),
-        endTime: timeAt(i + 1),
+        startTime: hourAt(i),
+        endTime: hourAt(i + 1),
         isDaytime: true,
         temperature: 30 + (i % 20),
         shortForecast: "Snow",
@@ -84,6 +99,10 @@ interface MockOptions {
     hourly?: object[]
     alerts?: object[]
     location?: "denied" | { latitude: number; longitude: number }
+    grid?: object | ((lat: number) => object)
+    avalanche?: object[]
+    snowDepth?: object[]
+    generatedAt?: string
     override?: (url: URL, route: Route) => boolean | void | Promise<boolean | void>
 }
 
@@ -94,16 +113,19 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
     const requests: string[] = []
     const location = options.location ?? "denied"
 
-    await page.addInitScript((loc) => {
+    await page.addInitScript((initial) => {
         const geolocation = {
             getCurrentPosition(ok: (p: unknown) => void, fail: (e: unknown) => void) {
+                // Tests can move the user between page loads by setting this.
+                const moved = sessionStorage.getItem("mockLocation")
+                const loc = moved ? JSON.parse(moved) : initial
                 setTimeout(() => (loc === "denied" ? fail({ code: 1, message: "denied" }) : ok({ coords: loc })), 20)
             },
         }
         Object.defineProperty(navigator, "geolocation", { value: geolocation })
     }, location)
 
-    await page.route("**/*", async (route) => {
+    await page.context().route("**/*", async (route) => {
         const request = route.request()
         const url = new URL(request.url())
         const json = (body: unknown) =>
@@ -143,16 +165,24 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
                     properties: {
                         timeZone: "America/Denver",
                         relativeLocation: { properties: { city: `Place ${lat}`, state: "CO" } },
+                        forecastGridData: options.grid ? `https://api.weather.gov/g/grid?lat=${lat}` : undefined,
                         forecast: "https://api.weather.gov/g/forecast",
                         forecastHourly: "https://api.weather.gov/g/forecast/hourly",
                     },
                 })
             }
+            if (url.pathname.endsWith("/g/grid")) {
+                const { grid } = options
+                return json({
+                    properties: typeof grid === "function" ? grid(Number(url.searchParams.get("lat"))) : grid,
+                })
+            }
+            const { generatedAt } = options
             if (url.pathname.endsWith("/forecast/hourly")) {
-                return json({ properties: { periods: options.hourly ?? hourly() } })
+                return json({ properties: { generatedAt, periods: options.hourly ?? hourly() } })
             }
             if (url.pathname.endsWith("/forecast")) {
-                return json({ properties: { periods: options.daily ?? week() } })
+                return json({ properties: { generatedAt, periods: options.daily ?? week() } })
             }
             return json({ features: options.alerts ?? [] })
         }
@@ -168,6 +198,23 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
                 },
             })
         }
+        if (url.hostname === "api.avalanche.org" && options.avalanche) {
+            return json({ features: options.avalanche })
+        }
+        if (url.hostname === "wcc.sc.egov.usda.gov" && options.snowDepth) {
+            return json(options.snowDepth)
+        }
+        if (url.hostname === "opengeo.ncep.noaa.gov") {
+            return route.fulfill({
+                status: 200,
+                contentType: "image/png",
+                headers: cors,
+                body: Buffer.from(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                    "base64",
+                ),
+            })
+        }
         if (url.hostname === "tiles.openfreemap.org") {
             return json({ version: 8, sources: {}, layers: [] })
         }
@@ -179,3 +226,33 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
 
 export const pointRequests = (requests: string[]) =>
     requests.filter((u) => u.includes("/points/")).map((u) => u.split("/points/")[1])
+
+const series = (values: { validTime: string; value: number }[]) => ({ values })
+
+// A grid forecast with snow falling at given hours from now (inches), over 6-hour blocks.
+export function gridFixture(
+    snow: { hoursFromNow: number; inches: number }[],
+    { elevation = 3000, snowLevel = 2000 }: { elevation?: number; snowLevel?: number } = {},
+) {
+    const hourStart = (hours: number) => {
+        const start = new Date(Date.now() + hours * 3_600_000)
+        start.setUTCMinutes(0, 0, 0)
+        return start.toISOString().replace(".000Z", "+00:00")
+    }
+    const span = (value: number) => series([{ validTime: `${hourStart(-48)}/P20D`, value }])
+    return {
+        elevation: { value: elevation },
+        snowfallAmount: series(
+            snow.map(({ hoursFromNow, inches }) => ({
+                validTime: `${hourStart(hoursFromNow)}/PT6H`,
+                value: inches * 25.4,
+            })),
+        ),
+        quantitativePrecipitation: span(1),
+        snowLevel: span(snowLevel),
+        windChill: span(-5),
+        apparentTemperature: span(-5),
+        windGust: span(16),
+        skyCover: span(20),
+    }
+}

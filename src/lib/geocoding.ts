@@ -23,32 +23,6 @@ export async function geocodeSearch(query: string): Promise<Partial<FeatureColle
     return await response.json()
 }
 
-export async function geocodingSearch(query: string) {
-    const reqURL = `${baseURL}/search?q=${query}&format=json&addressdetails=1&countrycodes=us`
-    const cached = getItem(reqURL)
-
-    if (cached) {
-        return cached
-    }
-
-    const response = await fetch(reqURL, {
-        method: "GET",
-        headers: {
-            "User-Agent": "Elevation Code Works LLC",
-        },
-    })
-
-    if (!response.ok) {
-        console.error("geocoding search request failed")
-        return []
-    }
-
-    const result = await response.json()
-    setItem(reqURL, result)
-
-    return result
-}
-
 export async function reverse(lat: string, lon: string): Promise<GeocodingResult> {
     const reqURL = `${baseURL}/reverse?lat=${lat}&lon=${lon}&format=json&addressdetails=1`
     const cached = getItem(reqURL)

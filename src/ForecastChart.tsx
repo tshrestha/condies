@@ -1,20 +1,20 @@
 import { area, curveCatmullRom, line, scaleLinear, scalePoint, select } from "d3"
-import { onSettled } from "solid-js"
+import { onSettled, Show } from "solid-js"
 
 import type { Period } from "./lib/nws.ts"
 
 export interface ForecastChartProps {
     title: string
-    classList?: string[]
     colorDomain: number[]
     colorRange: string[]
     periods: Period[]
     getX: (p: Period) => number
     getXLabel: (p: Period) => string
-    getY?: (p: Period) => number
     getForecastLabel: (p: Period) => string
     getColorValue: (p: Period) => number
     xDomain?: [number, number]
+    getOverlayX?: (p: Period) => number
+    overlayLabel?: string
 }
 
 // Not every browser reports a scroll size for SVG text, so fall back to its bounding box.
@@ -31,7 +31,17 @@ export default function ForecastChart(props: ForecastChartProps) {
     let containerRef!: HTMLDivElement
 
     const draw = () => {
-        const { colorDomain, colorRange, periods, getX, getXLabel, getForecastLabel, getColorValue, xDomain } = props
+        const {
+            colorDomain,
+            colorRange,
+            periods,
+            getX,
+            getXLabel,
+            getForecastLabel,
+            getColorValue,
+            xDomain,
+            getOverlayX,
+        } = props
 
         if (!containerRef || !periods) {
             return
@@ -51,7 +61,7 @@ export default function ForecastChart(props: ForecastChartProps) {
         const curve = curveCatmullRom.alpha(1)
 
         const xMin = Math.min(...periods.map((p) => getX(p)))
-        const xMax = Math.max(...periods.map((p) => getX(p)))
+        const xMax = Math.max(...periods.map((p) => getOverlayX?.(p) ?? getX(p)), ...periods.map((p) => getX(p)))
         // Without a fixed scale, start left of the lowest value so it isn't drawn at zero width,
         // even when every value is the same.
         const [domainMin, domainMax] = xDomain ?? [xMin - Math.max(xMax - xMin, 1), xMax]
@@ -64,6 +74,11 @@ export default function ForecastChart(props: ForecastChartProps) {
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height)
+            .attr("role", "img")
+            .attr(
+                "aria-label",
+                `${props.title}: ${periods.map((p) => `${p.hourString} ${getForecastLabel(p)}`).join(", ")}`,
+            )
             .append("g")
 
         // Y scale for time periods (vertical)
@@ -94,6 +109,20 @@ export default function ForecastChart(props: ForecastChartProps) {
 
         // Use the maxTimeLabelWidth to determine how much the chart area needs to shift right
         svg.attr("transform", `translate(${maxTimeLabelWidth + timeLabelPadding},0)`)
+
+        // Shade the hours between sunset and sunrise, behind everything else.
+        svg.insert("g", ":first-child")
+            .attr("class", "night-bands")
+            .selectAll("rect")
+            .data(periods.map((period, i) => ({ period, i })).filter(({ period }) => !period.isDaytime))
+            .enter()
+            .append("rect")
+            .attr("x", -(maxTimeLabelWidth + timeLabelPadding))
+            .attr("y", ({ i }) => (yScale(i) ?? 0) - yScale.step() / 2)
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", yScale.step())
+            .attr("fill", "var(--bs-body-color)")
+            .attr("fill-opacity", 0.07)
 
         const dataPointLabelGroup = svg
             .selectAll(".data-point-label-group")
@@ -212,6 +241,23 @@ export default function ForecastChart(props: ForecastChartProps) {
             .attr("stroke-width", 5)
             .attr("d", lineGenerator)
 
+        if (getOverlayX) {
+            const overlayGenerator = line<Period>()
+                .x((d) => xScale(getOverlayX(d)))
+                .y((_, i) => yScale(i) ?? 0)
+                .curve(curve)
+
+            svg.append("path")
+                .datum(periods)
+                .attr("class", "chart-overlay")
+                .attr("fill", "none")
+                .attr("stroke", "var(--bs-body-color)")
+                .attr("stroke-opacity", 0.55)
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,4")
+                .attr("d", overlayGenerator)
+        }
+
         // Add short forecast description (only when different from previous hour)
         const forecastLabels = periods
             .map((d, i) => ({ ...d, index: i }))
@@ -241,11 +287,26 @@ export default function ForecastChart(props: ForecastChartProps) {
             .attr("fill", "black")
             .text((d) => getForecastLabel(d))
 
-        // Long forecasts would otherwise run past the edge of the chart on narrow screens.
-        const maxForecastLabelWidth = width + margin.left + margin.right - maxTimeLabelWidth - timeLabelPadding - 10
-        forecastLabelText.each(function () {
+        // A label sits at the left edge unless that hour's value is in the way. Then it moves to whichever
+        // side of the value has more room, and long text is shortened to fit.
+        const chartRight = width + margin.left + margin.right - maxTimeLabelWidth - timeLabelPadding
+        const labelGap = 10
+        forecastLabelText.each(function (d) {
+            const group = select(this.parentNode as SVGGElement)
+            const valueLeft = Math.max(xScale(getX(d)) - dataPointLabelBgWidth * half, 0)
+            const valueRight = valueLeft + dataPointLabelBgWidth
+            const roomBefore = valueLeft - labelGap
+            const roomAfter = chartRight - valueRight - labelGap
+            const goesAfter = measureText(this).width > roomBefore && roomAfter > roomBefore
+            const room = goesAfter ? roomAfter : roomBefore
+
+            group.attr("transform", `translate(${goesAfter ? valueRight + labelGap / 2 : 0}, ${yScale(d.index) ?? 0})`)
+            if (room < 40) {
+                group.style("display", "none")
+            }
+
             const label = this.textContent ?? ""
-            for (let length = label.length; measureText(this).width > maxForecastLabelWidth && length > 0; length--) {
+            for (let length = label.length; measureText(this).width > room && length > 0; length--) {
                 this.textContent = `${label.slice(0, length).trimEnd()}…`
             }
         })
@@ -295,7 +356,12 @@ export default function ForecastChart(props: ForecastChartProps) {
 
     return (
         <div class={"card rounded-4 mb-2"}>
-            <div class={"card-header"}>{props.title}</div>
+            <div class={"card-header d-flex justify-content-between align-items-center"}>
+                <span class="chart-title">{props.title}</span>
+                <Show when={props.getOverlayX && props.overlayLabel}>
+                    <small class="chart-legend">{props.overlayLabel}</small>
+                </Show>
+            </div>
             <div class={"card-body rounded-bottom-4"}>
                 <div ref={containerRef} class="w-100 forecast-chart"></div>
             </div>

@@ -149,7 +149,7 @@ export default function LocationSearchForm() {
                     />
                 </div>
                 <div class="col-2">
-                    <a href={"#/map"} type={"button"} class={"btn btn-light btn-lg rounded-pill border-4 shadow-sm"}>
+                    <a href={"#/map"} class={"btn btn-light btn-lg rounded-pill border-4 shadow-sm"} aria-label="Map">
                         <i class={"bi bi-map"}></i>
                     </a>
                 </div>

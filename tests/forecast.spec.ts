@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test"
 
 import { hourly, mockApis, pointRequests, stormAlerts } from "./fixtures.ts"
 
-const heading = (page: Page) => page.locator(".latest-observations h1.display-6")
+const heading = (page: Page) => page.locator(".current-conditions h1.display-6")
 const chart = (page: Page) => page.locator(".forecast-chart svg")
 const here = { latitude: 40.1234, longitude: -105.5678 }
 
@@ -149,11 +149,10 @@ test("chart tabs switch the chart", async ({ page }) => {
     for (const [id, title] of [
         ["forecast-precip", "HOURLY PRECIPITATION"],
         ["forecast-wind", "HOURLY WIND"],
-        ["forecast-wind-gust", "HOURLY WIND GUST"],
         ["forecast-temp", "HOURLY TEMPS"],
     ]) {
         await page.locator(`label[for=${id}]`).click()
-        await expect(page.locator(".card-header").first()).toHaveText(title)
+        await expect(page.locator(".chart-title")).toHaveText(title)
         await expect(chart(page)).toHaveCount(1)
     }
 })

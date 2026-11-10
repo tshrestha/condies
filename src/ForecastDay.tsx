@@ -1,7 +1,16 @@
 import { useParams, useSearchParams } from "@solidjs/router"
 import { createMemo, For, Loading, Match, Show, Switch, untrack } from "solid-js"
 
-import { type DaySummary, formatTemp, formatWindRange, getDayLabel, groupIntoDays } from "./lib/daily.ts"
+import {
+    type DaySummary,
+    formatSnow,
+    formatTemp,
+    formatWindRange,
+    getDayLabel,
+    groupIntoDays,
+    hasSnow,
+} from "./lib/daily.ts"
+import { scoreColor } from "./lib/score.ts"
 import { tempGradient } from "./lib/tempColors.ts"
 import { formatLocalDate } from "./lib/util.ts"
 import { getIcon } from "./lib/wicons.ts"
@@ -61,7 +70,12 @@ function ForecastDay(props: { point: string; date: string }) {
     })
 
     const data = createMemo(() => getForecastData(lat, lon))
-    const days = createMemo(() => groupIntoDays(data().forecast?.properties.periods ?? []))
+    const days = createMemo(() =>
+        groupIntoDays(data().forecast?.properties.periods ?? [], {
+            grid: data().grid,
+            hourly: data().allHourlyPeriods,
+        }),
+    )
     const index = createMemo(() => days().findIndex((d) => d.date === date))
     const summary = createMemo(() => days()[index()])
     const hours = createMemo(() => data().allHourlyPeriods.filter((p) => p.startTime.slice(0, 10) === date))
@@ -157,6 +171,59 @@ function ForecastDay(props: { point: string; date: string }) {
                                 </div>
                             </Show>
                         </div>
+                        <Show when={summary()!.condies || summary()!.phase}>
+                            <div class="day-insights mt-3 text-start">
+                                <Show when={summary()!.condies}>
+                                    <div class="day-insight">
+                                        <span
+                                            class="day-score-ring"
+                                            style={{
+                                                "--score": summary()!.condies!.score,
+                                                "--score-color": scoreColor(summary()!.condies!.score),
+                                            }}
+                                        >
+                                            {summary()!.condies!.score}
+                                        </span>
+                                        <span>
+                                            <strong>Condies score</strong>
+                                            <small>Best window {summary()!.condies!.bestWindow}</small>
+                                        </span>
+                                    </div>
+                                </Show>
+                                <Show when={summary()!.phase}>
+                                    <div class="day-insight">
+                                        <span class="day-insight-icon">
+                                            <i
+                                                class={
+                                                    summary()!.phase!.phase === "rain"
+                                                        ? "bi bi-droplet-fill"
+                                                        : "bi bi-snow2"
+                                                }
+                                            />
+                                        </span>
+                                        <span>
+                                            <strong>
+                                                {
+                                                    {
+                                                        snow: "All snow at this elevation",
+                                                        rain: "Rain at this elevation",
+                                                        mix: "Right at the rain/snow line",
+                                                    }[summary()!.phase!.phase]
+                                                }
+                                                <Show when={hasSnow(summary()!)}>
+                                                    {` · ${formatSnow(summary()!.snow!)}`}
+                                                </Show>
+                                            </strong>
+                                            <small>
+                                                Snow level {summary()!.phase!.snowLevelFeet.toLocaleString("en-US")} ft,
+                                                this spot is {summary()!.phase!.elevationFeet.toLocaleString("en-US")}{" "}
+                                                ft
+                                            </small>
+                                        </span>
+                                    </div>
+                                </Show>
+                            </div>
+                        </Show>
                     </section>
 
                     <div class="card rounded-4 shadow-sm mb-4">

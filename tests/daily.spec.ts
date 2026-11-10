@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 
-import { dateAt, mockApis, period, timeAt, week } from "./fixtures.ts"
+import { dateAt, gridFixture, mockApis, period, timeAt, week } from "./fixtures.ts"
 
 const rows = (page: Page) => page.locator(".daily-row")
 const here = { latitude: 40.1234, longitude: -105.5678 }
@@ -132,16 +132,19 @@ for (const width of [320, 390]) {
             temperature: p.temperature + 70,
             windSpeed: { minValue: 19, maxValue: 56, unitCode: "wmoUnit:km_h-1" },
         }))
-        await mockApis(page, { daily })
+        const snowTomorrow = (Date.parse(`${dateAt(1)}T12:00:00-07:00`) - Date.now()) / 3_600_000
+        await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: snowTomorrow, inches: 14 }]) })
         await page.goto("#/")
         await expect(rows(page)).toHaveCount(7)
 
         const overflow = () =>
             page.evaluate(() => ({
                 page: document.documentElement.scrollWidth - window.innerWidth,
-                clipped: [...document.querySelectorAll(".daily-meta, .daily-day, .daily-temps, .day-stat")].filter(
-                    (e) => e.scrollWidth > e.clientWidth + 1,
-                ).length,
+                clipped: [
+                    ...document.querySelectorAll(
+                        ".daily-meta, .daily-day, .daily-temps, .day-stat, .day-insight, .card-header",
+                    ),
+                ].filter((e) => e.scrollWidth > e.clientWidth + 1).length,
             }))
         expect(await overflow()).toEqual({ page: 0, clipped: 0 })
 

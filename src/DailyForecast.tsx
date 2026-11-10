@@ -2,8 +2,20 @@ import { createMemo, For, Show } from "solid-js"
 
 import raindropIcon from "./assets/weather-icons-master/production/fill/all/raindrop.svg"
 import snowflakeIcon from "./assets/weather-icons-master/production/fill/all/snowflake.svg"
-import { type DaySummary, formatTemp, formatWindRange, getDayLabel, groupIntoDays } from "./lib/daily.ts"
+import {
+    bestDay,
+    type DaySummary,
+    formatSnow,
+    formatTemp,
+    formatWindRange,
+    getDayLabel,
+    groupIntoDays,
+    hasSnow,
+} from "./lib/daily.ts"
+import type { Grid } from "./lib/grid.ts"
 import type { Period } from "./lib/nws.ts"
+import { scoreColor } from "./lib/score.ts"
+import { describeStorm, findNextStorm } from "./lib/storm.ts"
 import { tempGradient } from "./lib/tempColors.ts"
 import { formatLocalDate } from "./lib/util.ts"
 import { getIcon } from "./lib/wicons.ts"
@@ -52,11 +64,21 @@ function DayRow(props: { summary: DaySummary; index: number; min: number; max: n
                     </span>
                 </Show>
             </span>
-            <img
-                class="daily-icon"
-                src={getSummaryIcon(props.summary)}
-                alt={(props.summary.day ?? props.summary.night)!.shortForecast}
-            />
+            <span class="daily-icon">
+                <img
+                    src={getSummaryIcon(props.summary)}
+                    alt={(props.summary.day ?? props.summary.night)!.shortForecast}
+                />
+                <Show when={props.summary.condies}>
+                    <span
+                        class="daily-score"
+                        title="Condies score"
+                        style={{ background: scoreColor(props.summary.condies!.score) }}
+                    >
+                        {props.summary.condies!.score}
+                    </span>
+                </Show>
+            </span>
             <span class="daily-temps">
                 <span class="daily-low">{formatTemp(props.summary.low)}</span>
                 <span class="daily-track">
@@ -74,7 +96,7 @@ function DayRow(props: { summary: DaySummary; index: number; min: number; max: n
             <span class="daily-meta">
                 <span>
                     <img src={getPrecipIcon(props.summary)} alt={`chance of ${props.summary.precipType}`} />
-                    {props.summary.precipChance}%
+                    {hasSnow(props.summary) ? formatSnow(props.summary.snow!) : `${props.summary.precipChance}%`}
                 </span>
                 <span>
                     <i class="bi bi-wind" />
@@ -86,8 +108,28 @@ function DayRow(props: { summary: DaySummary; index: number; min: number; max: n
     )
 }
 
-export default function DailyForecast(props: { periods: Period[]; lat: string; lon: string; fromHome: boolean }) {
-    const days = createMemo(() => groupIntoDays(props.periods))
+// A week of bad days has no day worth pointing out.
+const worthGoingScore = 60
+
+export default function DailyForecast(props: {
+    periods: Period[]
+    grid: Grid | null
+    hourly: Period[]
+    lat: string
+    lon: string
+    fromHome: boolean
+    timeZone: string
+}) {
+    const days = createMemo(() => groupIntoDays(props.periods, { grid: props.grid, hourly: props.hourly }))
+    const weekSnow = createMemo(() => days().reduce((total, day) => total + (day.snow ?? 0), 0))
+    const storm = createMemo(() => (props.grid ? findNextStorm(props.grid.snowfall, Date.now()) : undefined))
+    const best = createMemo(() => {
+        const day = bestDay(days())
+        const hasChoice = days().filter((d) => d.condies).length > 1
+        return hasChoice && day!.condies!.score >= worthGoingScore ? day : undefined
+    })
+    const dayHref = (date: string) =>
+        `#/forecast/${props.lat},${props.lon}/day/${date}${props.fromHome ? "?from=home" : ""}`
     const temperatures = createMemo(() =>
         days()
             .flatMap(({ low, high }) => [low, high])
@@ -96,8 +138,38 @@ export default function DailyForecast(props: { periods: Period[]; lat: string; l
 
     return (
         <div class="card rounded-4 shadow-sm mb-4">
-            <div class="card-header">7-DAY FORECAST</div>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>7-DAY FORECAST</span>
+                <Show when={weekSnow() >= 1}>
+                    <span class="fw-medium">
+                        <i class="bi bi-snow2" /> {formatSnow(weekSnow())} this week
+                    </span>
+                </Show>
+            </div>
             <div class="list-group list-group-flush rounded-bottom-4">
+                <Show when={storm()}>
+                    <div class="list-group-item daily-outlook">
+                        <span class="daily-outlook-mark">
+                            <i class="bi bi-snow2" />
+                        </span>
+                        <span class="fw-medium">{describeStorm(storm()!, props.timeZone, Date.now())}</span>
+                    </div>
+                </Show>
+                <Show when={best()}>
+                    <a class="list-group-item list-group-item-action daily-outlook" href={dayHref(best()!.date)}>
+                        <span
+                            class="daily-outlook-mark daily-outlook-score"
+                            style={{ background: scoreColor(best()!.condies!.score) }}
+                        >
+                            {best()!.condies!.score}
+                        </span>
+                        <span class="fw-medium">
+                            Best day: {getDayLabel(best()!, days().indexOf(best()!), "long")},{" "}
+                            {best()!.condies!.bestWindow}
+                        </span>
+                        <i class="bi bi-chevron-right daily-chevron ms-auto" />
+                    </a>
+                </Show>
                 <For each={days()}>
                     {(summary, i) => (
                         <DayRow
@@ -105,9 +177,7 @@ export default function DailyForecast(props: { periods: Period[]; lat: string; l
                             index={i()}
                             min={Math.min(...temperatures())}
                             max={Math.max(...temperatures())}
-                            href={`#/forecast/${props.lat},${props.lon}/day/${summary.date}${
-                                props.fromHome ? "?from=home" : ""
-                            }`}
+                            href={dayHref(summary.date)}
                         />
                     )}
                 </For>

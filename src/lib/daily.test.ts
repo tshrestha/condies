@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { formatTemp, formatWindRange, getDayLabel, groupIntoDays } from "./daily.ts"
+import { bestDay, type DaySummary, formatTemp, formatWindRange, getDayLabel, groupIntoDays } from "./daily.ts"
 import type { Period } from "./nws.ts"
 
 const period = (startTime: string, isDaytime: boolean, temperature: number, extra: Partial<Period> = {}) =>
@@ -78,5 +78,26 @@ describe("labels", () => {
     it("shows a dash for a missing temperature", () => {
         expect(formatTemp(undefined)).toBe("–")
         expect(formatTemp(0)).toBe("0°")
+    })
+})
+
+describe("bestDay", () => {
+    const day = (date: string, score?: number, highlight?: DaySummary["highlight"]) =>
+        ({ date, highlight, condies: score === undefined ? undefined : { score, bestWindow: "" } }) as DaySummary
+
+    it("picks the highest score", () => {
+        expect(bestDay([day("a", 60), day("b", 80), day("c", 70)])?.date).toBe("b")
+    })
+
+    it("prefers a highlighted day in a tie", () => {
+        expect(bestDay([day("a", 85), day("b", 85, "primo")])?.date).toBe("b")
+    })
+
+    it("doesn't let a highlight beat a better score", () => {
+        expect(bestDay([day("a", 86), day("b", 85, "pow")])?.date).toBe("a")
+    })
+
+    it("has no best day when nothing has a score", () => {
+        expect(bestDay([day("a"), day("b")])).toBeUndefined()
     })
 })

@@ -45,7 +45,7 @@ jobs:
       - name: Run browser tests
         run: npm run test:e2e
 
-      - name: Build React app
+      - name: Build app
         run: npm run build
         env:
           VITE_GEOCODE_URL: ${{ vars.GEOCODE_URL }}

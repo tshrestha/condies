@@ -8,6 +8,10 @@ import App from "./App.tsx"
 
 render(() => <App />, document.getElementById("root")!)
 
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(console.error)
+}
+
 // Forecasts age quickly, so reload when someone returns to a tab left open for a while.
 const staleAfterMs = 30 * 60 * 1000
 const loadedAt = Date.now()

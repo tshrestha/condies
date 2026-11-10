@@ -1,8 +1,9 @@
 export const savedSelectionsCollectionKey = "nawaSavedSelections"
 export const condiesThemeKey = "condiesTheme"
 export const lastLocationKey = "condiesLastLocation"
+export const spotsKey = "condiesSpots"
 
-const keptKeys = new Set([savedSelectionsCollectionKey, condiesThemeKey, lastLocationKey])
+const keptKeys = new Set([savedSelectionsCollectionKey, condiesThemeKey, lastLocationKey, spotsKey])
 
 export function getItem(key: string) {
     try {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import type { Period } from "./nws.ts"
-import { formatLocalDate, getPrecipType, getTotalSnowAccumulation, isPowDay, isPrimo } from "./util.ts"
+import { formatAge, formatLocalDate, getPrecipType, getTotalSnowAccumulation, isPowDay, isPrimo } from "./util.ts"
 
 const text = (detailedForecast: string) => ({ detailedForecast }) as Period
 const total = (...texts: string[]) => getTotalSnowAccumulation({ periods: texts.map(text), index: texts.length - 1 })
@@ -86,6 +86,23 @@ describe("getPrecipType", () => {
         ["Rain likely. Windy.", "rain"],
     ])("%s", (forecast, expected) => {
         expect(getPrecipType(forecast)).toBe(expected)
+    })
+})
+
+describe("formatAge", () => {
+    const MINUTE = 60_000
+
+    it.each([
+        [-5 * MINUTE, "just now"],
+        [30_000, "just now"],
+        [12 * MINUTE, "12 min ago"],
+        [59 * MINUTE, "59 min ago"],
+        [60 * MINUTE, "1 hr ago"],
+        [23 * 60 * MINUTE, "23 hr ago"],
+        [24 * 60 * MINUTE, "1 day ago"],
+        [72 * 60 * MINUTE, "3 days ago"],
+    ])("%d ms is %s", (ms, text) => {
+        expect(formatAge(ms)).toBe(text)
     })
 })
 

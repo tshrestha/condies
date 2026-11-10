@@ -3,13 +3,6 @@ import type { Period, QuantitativeValue } from "./nws.ts"
 // NWS wording, like "New snow accumulation of 3 to 5 inches" or "snow accumulation of around 8 inches".
 const snowAccumulationRegex = /snow accumulation of (?:around |up to )?(\d+)(?:\sto\s(\d+))?\sinch/i
 
-export function getLatLon(path: string) {
-    const segments = path.split("/")
-    const point = segments.pop() as string
-    const [lat, lon] = point.split(",")
-    return { lat, lon }
-}
-
 export function getPrecipType(forecast: string) {
     return /\bsnow\b/i.test(forecast) ? "snow" : "rain"
 }
@@ -17,6 +10,22 @@ export function getPrecipType(forecast: string) {
 // NWS timestamps carry the forecast location's own date, so read it directly from the text.
 export function formatLocalDate(isoTime: string, options: Intl.DateTimeFormatOptions) {
     return new Date(`${isoTime.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { ...options, timeZone: "UTC" })
+}
+
+export function formatAge(ms: number) {
+    const minutes = Math.floor(ms / 60_000)
+    if (minutes < 1) {
+        return "just now"
+    }
+    if (minutes < 60) {
+        return `${minutes} min ago`
+    }
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) {
+        return `${hours} hr ago`
+    }
+    const days = Math.floor(hours / 24)
+    return days === 1 ? "1 day ago" : `${days} days ago`
 }
 
 export function getLocation() {
@@ -32,18 +41,6 @@ export function getLocation() {
             { enableHighAccuracy: false, maximumAge: 600_000, timeout: 15_000 },
         )
     })
-}
-
-export function getMinMaxTemp(forecastPeriods: Period[]) {
-    const min = forecastPeriods.sort((a, b) => a.temperature - b.temperature)[0]
-    const max = forecastPeriods.sort((a, b) => b.temperature - a.temperature)[0]
-    return [min.temperature, max.temperature]
-}
-
-export function getRangeStep({ min, max, desiredStep }: Record<string, number>) {
-    // step = ((max - min) / (desiredStep / 100)) / 100
-    const diff = max - min
-    return Math.round(diff / (desiredStep / 100) / 100)
 }
 
 // Maps wind direction to arrow showing where wind is blowing TO
@@ -119,12 +116,14 @@ export function isPowDay({
     index,
     ignoreIsDaytime = false,
     ignoreTemp = true,
+    snowInches,
 }: {
     condies: Period
     periods: Period[]
     index: number
     ignoreIsDaytime?: boolean
     ignoreTemp?: boolean
+    snowInches?: number
 }) {
     const { isDaytime, windSpeed, temperature, probabilityOfPrecipitation } = condies
 
@@ -141,6 +140,6 @@ export function isPowDay({
         return false
     }
 
-    const totalAccuulation = getTotalSnowAccumulation({ periods, index })
-    return totalAccuulation >= 6
+    // Prefer measured grid amounts, and read the forecast text only when those aren't available.
+    return (snowInches ?? getTotalSnowAccumulation({ periods, index })) >= 6
 }

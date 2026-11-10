@@ -22,7 +22,12 @@ export default function HourlyWindChart(props: { periods: Period[] }) {
                 "#5c1a5c", // 90+ mph - deep purple (extreme)
                 "#3b0f3b", // hurricane force
             ]}
-            classList={["wind-forecast-chart"]}
+            getOverlayX={
+                props.periods.some((p) => p.windGust)
+                    ? (p: Period) => p.windGust?.value ?? (p.windSpeed.value as number)
+                    : undefined
+            }
+            overlayLabel="gusts"
             periods={props.periods}
             getX={(p: Period) => p.windSpeed.value as number}
             getXLabel={(p: Period) => (p.windSpeed.value as number).toString() + " mph"}

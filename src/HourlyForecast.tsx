@@ -3,7 +3,7 @@ import { createSignal, For, Match, Switch, untrack } from "solid-js"
 import HourlyPrecipChart from "./HourlyPrecipForecast.tsx"
 import HourlyTempsChart from "./HourlyTempsChart.tsx"
 import HourlyWindChart from "./HourlyWindChart.tsx"
-import HourlyWindGustChart from "./HourlyWindGustChart.tsx"
+import HourlySnowChart from "./HourlySnowChart.tsx"
 import type { Period } from "./lib/nws.ts"
 
 export interface ForecastType {
@@ -20,13 +20,8 @@ export default function HourlyForecast(props: { periods: Period[] }) {
         { name: "WIND", id: "forecast-wind", isSelected: false },
     ]
 
-    if (periods.some((p) => p.windGust)) {
-        periods.forEach((p) => {
-            if (!p.windGust) {
-                p.windGust = { value: p.windSpeed.value, unitCode: p.windSpeed.unitCode }
-            }
-        })
-        forecastTypes.push({ name: "WIND GUST", id: "forecast-wind-gust", isSelected: false })
+    if (periods.some((p) => (p.snowInches ?? 0) >= 0.05)) {
+        forecastTypes.push({ name: "SNOW", id: "forecast-snow", isSelected: false })
     }
     const [forecastType, setForecastType] = createSignal<ForecastType[]>(forecastTypes)
 
@@ -50,8 +45,8 @@ export default function HourlyForecast(props: { periods: Period[] }) {
                 <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-wind"}>
                     <HourlyWindChart periods={periods} />
                 </Match>
-                <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-wind-gust"}>
-                    <HourlyWindGustChart periods={periods} />
+                <Match when={forecastType().find((f) => f.isSelected)?.id === "forecast-snow"}>
+                    <HourlySnowChart periods={periods} />
                 </Match>
             </Switch>
             <div class="btn-group btn-group-sm mb-4 bg-body" role="group" aria-label="Forecast type selector">
