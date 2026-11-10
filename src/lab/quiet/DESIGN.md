@@ -1,110 +1,108 @@
 # Strata Quiet
 
-The forecast is a painting, said calmly. Color appears only where a temperature is the point: the current
-temperature as one flat band, and the week as seven. One color per 5°F, the same everywhere, every day, so it
-can be learned and read across a room. Everything else sits on a plain ground, and every number is printed.
+Every 5°F has its own color, used like a paint chip: a flat swatch with dark ink, laid on a plain ground. The
+current temperature is one swatch; the week is a range bar per day built from the same chips. Everything else
+is plain type on the ground, and every number is printed. Not a broadcast panel: no full-bleed color bars, no
+white type on saturated blue, no banners, no condensed numerals.
 
 ## Principles
 
-1. **Color means temperature, and only where it's needed.** Now and the week carry color, as do the Day
-   screen's hero and its temperature chart. Hourly blocks, Best day, My Spots and forecast text sit on the ground.
-2. **Warnings are black and white**, which no temperature ever is, so they stand out on any day's color.
-3. **Sentences sit on the ground, numbers sit on their color.** A caption says what is happening; the band
-   below carries the numbers.
-4. **One band, one job, three lines.** A fourth line means the detail belongs on the Day screen or in a sheet.
+1. **Color means temperature, and only where it's the point.** Home has the Now swatch and the week's range
+   bars. The Day screen has its swatch and its temperature chart. Nothing else is colored.
+2. **Chips, not backgrounds.** Color sits inside the margins as a swatch with dark ink, never edge to edge.
+3. **Sentences sit on the ground.** A caption says what is happening; the numbers follow it.
+4. **One block, one job, three lines.** A fourth line means the detail belongs on the Day screen or in a sheet.
 5. **The first screen answers six questions**: temperature now, what's happening, rain or snow in the next 12
    hours, best day, any warning, tomorrow's high.
-6. **No ornament.** No texture, pattern, gradient, shadow, radius, card, icon or legend. The cat is the only drawing.
+6. **No ornament.** No texture, gradient, shadow, radius, card, icon or legend. The cat is the only drawing.
 
 ## Color (`ramp.ts`)
 
-- Ground `#fff` with ink `#000`; dark theme ground `#000` with ink `#fff`.
-- `paintTemp(t, theme)`: Strata's 28 hand-tuned steps, hard edges every 5°F, never interpolated. The dark
-  column keeps each hue (same OKLCH hue angle) at lower lightness, comfortable as a full-width band at night.
-- `inkOn(bg)` picks black or white text per band. Every step passes 4.5:1.
-- `paintDay(day)` paints a day with its high (its low when there's no high).
-- `alertBand`: black with white text in both themes, framed by 2px white rules so it also reads on black.
-- `avalancheScale`: the North American standard, exactly. Never retune it.
-- CSS reads only `--b` (band) and `--k` (ink), set through `paintVars`.
+- Ground `#fff` with ink `#111`; dark theme ground `#0d0d0d` with ink `#f0f0f0`. Tracks are `--sq-track`.
+- `paintTemp(t, theme)`: 28 steps, hard edges every 5°F, never interpolated. Designed in OKLCH as paint-chip
+  tints: violet and periwinkle below 10°F, ice and glacier blues to 35°F, teal and sage to 50°F, then green,
+  citron, apricot, coral and rose. Neighbors alternate lighter and darker so each 5° stays distinct. The cold
+  end avoids saturated broadcast blue.
+- `inkOn(bg)`: dark ink `#111` wherever it passes 4.5:1, which is every step from −10°F to 105°F in both
+  themes. The dark column keeps each hue at lower lightness, still with dark ink.
+- `rampSteps(low, high)` returns the 5° segments between two temperatures, for range bars.
+- `avalancheScale`: the North American standard, exactly. Never retune it. Shown as a chip inside its alert.
 
 ## Type
 
-Chivo for everything (tabular figures by default). League Gothic only for Home's current temperature.
-Two weights, 400 and 700. No tracked caps, no italics, no condensed text. Four sizes per screen:
+Chivo for everything, tabular figures, two weights (400, 700). No condensed face, no tracked caps, no italics.
 
-| Token     | Size   | Use                                                                        |
-| --------- | ------ | -------------------------------------------------------------------------- |
-| `--sq-s`  | 14px   | hour labels, severity words, the age line, small print                     |
-| `--sq-m`  | 18px   | body, captions, day names (bold), conditions                               |
-| `--sq-l`  | 32px   | key numbers, the condition now, Extreme alert titles, the score            |
-| numeral   | fitted | Home's current temperature in League Gothic                                |
-| `--sq-xl` | 88px   | the day's high and low in Chivo (Day screen only, in place of the numeral) |
+| Token     | Size   | Use                                                                         |
+| --------- | ------ | --------------------------------------------------------------------------- |
+| `--sq-s`  | 14px   | hour labels, severity words, "Low"/"High" heads, score label, small print   |
+| `--sq-m`  | 18px   | body, captions, day names (bold), condition words, the score's value        |
+| `--sq-l`  | 32px   | key numbers, highs, the condition now, Extreme alert titles                 |
+| numeral   | fitted | Home's current temperature: Chivo 400, tracked −0.04em, sized to the swatch |
+| `--sq-xl` | 88px   | the Day screen's high                                                       |
 
-## Space and structure
+`numeralFit(text)` uses Chivo's measured figure widths (and `TRACKING`) so CSS sizes the numeral with
+`100cqi / var(--em)`, capped at 26svh. On a busy phone screen `HomeScreen` shrinks it so tomorrow's high still
+makes the first screen. A regular-width numeral read as a printed number in testing; League Gothic read as a
+scoreboard.
 
-- Gutter `--sq-gut`: 20px phone, 32px from 600px, 40px from 1024px. Every left edge sits on it.
-- Bands are full-bleed and separated by 2px of ground (`border-bottom` on `.sq-band`), so two days of the
-  same color never merge. Nothing else draws a line except the alert frame, chart baseline and search rule.
-- The 12-hour blocks sit on a three-column grid aligned to the gutter.
-- From 1024px the masthead and alerts run full width. Below them, the lead (Now, or the day's hero) holds
-  still in the left half while the list scrolls on the right.
+## Alerts (`Alerts`, `AlertRow`)
 
-## The numeral
+Printed notices inside the margins, strongest first, directly under the masthead. Each is a button that opens
+its sheet and prints its severity in words.
 
-The condition always sits beside the numeral, in a column of at least 166px. The numeral takes the rest of the
-width up to half the band, and at most 40svh of font size (about 30% of the screen's height). On a busy phone
-screen, `HomeScreen` shrinks it further so that tomorrow's high still clears the bottom of the first screen.
+- Extreme: 5px ink frame, title at 32px. Severe: 2px ink frame, 18px bold.
+- Avalanche danger 3 or higher: 2px frame with the standard color as a chip, "High avalanche danger · 4 of 5".
+  Lower ratings sit below the week in the same form.
+- Moderate and Minor: plain rows, regular weight, with an arrow.
+  The sheet header keeps the notice's frame.
 
-## Home, in order
+## The week (`Week`, `DayRow`, `RangeBar`)
 
-1. Masthead on the ground: Condies, Search, Spots, Map, theme.
-2. Alerts (`Alerts`, `AlertRow`), strongest first, each a full-width button that opens its sheet:
-    - Extreme: black band, title at 32px. Severe: black band, title at 18px bold.
-    - Avalanche danger 3 or higher: the standard color, "High avalanche danger · 4 of 5".
-    - Moderate and Minor: quiet rows on the ground, regular weight.
-    - Every row prints its severity in words and ends with an arrow.
-3. Now: "Right meow in {place}" with Star, then the numeral beside condition, feels like (if 3° off), wind
-   and the age.
-4. Next 12 hours, from now: one caption and three 4-hour blocks (time, temp, what falls), read from the same
-   hours. The caption's snow total is the sum of the blocks, and it names when the span ends ("Snow until 1 AM ·
-   17.5″"). A storm that runs past the span, or starts later, gets a second line with its own span.
-5. Best day: day, window, high and the score. "No standout day this week" when nothing qualifies.
-6. The week: seven bands in the color of each day's high: day, one condition word (or POW DAY / PRIMO), snow
-   if any, high in bold and low in regular. A missing high reads "Low 10°", never "– 10°".
-7. Below the week: week snow total, lower avalanche ratings, snow depth, sunrise and sunset.
+On the ground. A head row reads "This week · Low · High" once. Each row: day name (bold), low (regular), range
+bar, high (32px bold), and under them one condition word or POW DAY / PRIMO, and the snow amount if any. All
+rows share one scale for the week, so warm days sit right and cold days left. The bar is the ramp's own 5°
+steps as hard segments from low to high, on a thin track. A day missing its low shows a short tick at its high,
+and its low column stays empty. Columns align through CSS subgrid.
 
-## The Condies score
+## The Condies score (`Score`)
 
-`Score` is the only treatment: a 68px square of ink with "Condies" and the number knocked out in the ground
-color. It only ever sits on the ground, so it never takes a temperature color, and it has no degree sign. It
-appears on Best day, the Day screen and My Spots. If there's no score, there's no square.
+One treatment everywhere (Best day, the Day screen, My Spots), on one line:
+"Condies score", an ink meter (a 0–100 track with an ink fill, never a temperature color), then
+"84/100 Great". Grades from `grade()`: 90+ Epic, 75+ Great, 60+ Good, 40+ Fair, below Poor. It is a button;
+tapping it shows `scoreHelp`, one sentence on what the score measures. Never near a degree sign, never in the
+temperatures' size. No score, no line.
+
+## Other blocks
+
+- Next 12 hours: a caption ("Snow until 1 AM · 17.5″") and three 4-hour blocks from the same hours, so the
+  numbers agree. A storm that runs past them gets its own line with its own span.
+- Best day: "Best day Saturday 1 PM–5 PM", then the score line.
+- Day screen: swatch with "High 26°" and "Low 10°" in words, best window and score, facts, the snow line,
+  the hourly chart (temperature columns in ramp colors, other views in ink), the forecast text on the ground.
+- My Spots: rows on the ground ranked by score: name, day and window, snow, then the score line.
 
 ## Chart grammar (`Hourly`)
 
-One series at a time, one column per hour on a baseline, with direct labels at the ends and extremes only.
-Temperature columns are painted from the ramp, with heights relative to the day's range. Precipitation, wind
-and snow are ink. Gusts are a short ink mark above each wind column, labeled in words. A sentence above the
-chart states the reading and is also its text alternative. No legends, no gridlines.
+One series at a time, one column per hour on a baseline, direct labels at the ends and extremes only. A
+sentence above states the reading and is the chart's text alternative. No legends, no gridlines.
 
-## Navigation
+## Layout
 
-One masthead everywhere. Every week band is a link to its day. The Day screen adds a plain pager of the
-neighboring days ("← Now 25°" on the first). Alert detail, avalanche detail and search open in a sheet.
+Gutter `--sq-gut`: 20px, 32px from 600px, 40px from 1024px. From 1024px the masthead and alerts run full
+width; below them the swatch holds still on the left and the list scrolls on the right.
 
 ## Motion
 
-Nothing slides, fades in or bounces. When the theme or the data changes, a band's color shifts over 0.4s, and
-chart columns grow from the baseline when switching views. Loading steps through the ramp, cold to hot, in hard
-cuts. `prefers-reduced-motion` turns all of it off.
+Nothing slides or fades in. A swatch's color shifts over 0.4s when data or theme changes; chart columns grow
+from the baseline. Loading steps a swatch through the ramp in hard cuts. `prefers-reduced-motion` turns it off.
 
 ## Voice
 
-Plain sentences. Mountain-town words live only in "Right meow", POW DAY and PRIMO. Warning and avalanche text
-is the agency's own, with no jokes anywhere near it.
+Plain sentences. Mountain-town words live only in "Right meow", POW DAY, PRIMO and the score's grades. Warning
+and avalanche text is the agency's own, with no jokes near it.
 
 ## Extending
 
-- New datum: decide whether it is a sentence (ground) or a number. Give it a color only if its temperature is
-  the point of that screen. If it is neither, it belongs on the Day screen.
+- New datum: give it color only if its temperature is the point of that screen. Otherwise it's type.
 - New color: don't. If something needs a key, redesign it.
-- Prefix classes with `sq-`. Resets live in `:where(.sq-root)` so they never outrank band colors.
+- Prefix classes with `sq-`. Resets live in `:where(.sq-root)` so they never outrank swatch colors.

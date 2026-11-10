@@ -1,16 +1,17 @@
-/* Strata Quiet. Flat bands whose color is the temperature, said calmly. */
+/* Strata Quiet. Every 5°F has its own color, used like a paint chip: a flat swatch with dark ink. */
 
 html[data-design="quiet"] {
     background: #fff;
 }
 
 html[data-design="quiet"][data-theme="dark"] {
-    background: #000;
+    background: #0d0d0d;
 }
 
 .sq-root {
     --sq-ground: #fff;
-    --sq-ink: #000;
+    --sq-ink: #111;
+    --sq-track: #e3e3e3;
     --b: var(--sq-ground);
     --k: var(--sq-ink);
     --sq-gut: 20px;
@@ -19,7 +20,6 @@ html[data-design="quiet"][data-theme="dark"] {
     --sq-l: 32px;
     --sq-xl: 88px;
     --sq-text: "Chivo Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --sq-display: "League Gothic Variable", "Arial Narrow", sans-serif;
 
     min-height: 100vh;
     min-height: 100svh;
@@ -31,8 +31,9 @@ html[data-design="quiet"][data-theme="dark"] {
 }
 
 .sq-root[data-theme="dark"] {
-    --sq-ground: #000;
-    --sq-ink: #fff;
+    --sq-ground: #0d0d0d;
+    --sq-ink: #f0f0f0;
+    --sq-track: #333;
     color-scheme: dark;
 }
 
@@ -54,19 +55,16 @@ html[data-design="quiet"][data-theme="dark"] {
     font: inherit;
 }
 
-/* Surfaces: a band of color, or the ground. Bands never touch: two pixels of ground keep two days of the
-   same color from reading as one. */
-
-.sq-band {
-    display: block;
-    border-bottom: 2px solid var(--sq-ground);
-    background: var(--b);
-    color: var(--k);
-}
+/* Surfaces: the ground, and chips of temperature color laid on it. */
 
 .sq-ground {
     --b: var(--sq-ground);
     --k: var(--sq-ink);
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-chip {
     background: var(--b);
     color: var(--k);
 }
@@ -110,16 +108,13 @@ html[data-design="quiet"][data-theme="dark"] {
     outline-offset: 2px;
 }
 
-.sq-root .sq-band:focus-visible,
-.sq-root .sq-alert:focus-visible,
+.sq-root .sq-day:focus-visible,
 .sq-root .sq-close:focus-visible,
-.sq-root .sq-blocks-link:focus-visible,
-.sq-root .sq-best:focus-visible,
-.sq-root .sq-spot:focus-visible {
-    outline-offset: -6px;
+.sq-root .sq-blocks-link:focus-visible {
+    outline-offset: -3px;
 }
 
-/* Masthead: on the ground, the same on every screen. */
+/* Masthead */
 
 .sq-mast {
     display: flex;
@@ -151,9 +146,15 @@ html[data-design="quiet"][data-theme="dark"] {
     padding: 0 10px;
 }
 
-/* Alerts: one component under the nav, strongest first. Extreme and Severe are black bands framed in white,
-   which no temperature ever is, so they stand out on any day's color and on either ground. Extreme is set
-   larger. Avalanche danger keeps its standard color. Moderate and Minor are quiet rows on the ground. */
+/* Alerts: printed notices inside the margins, never banners. The frame's weight carries the severity with the
+   word: a heavy frame for Extreme, a light one for Severe and avalanche danger, none for Moderate and Minor. */
+
+.sq-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px var(--sq-gut) 10px;
+}
 
 .sq-alert {
     display: flex;
@@ -162,29 +163,20 @@ html[data-design="quiet"][data-theme="dark"] {
     gap: 6px;
     width: 100%;
     min-height: 48px;
-    padding: 12px var(--sq-gut);
-    background: var(--b);
-    color: var(--k);
+    padding: 10px;
+    border: 2px solid var(--sq-ink);
 }
 
-.sq-alert[data-tone="extreme"],
-.sq-alert[data-tone="severe"] {
-    --b: #000;
-    --k: #fff;
+.sq-alert-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-weight: 700;
 }
 
-.sq-alert:not([data-tone="quiet"]) {
-    border-block: 2px solid #fff;
-}
-
-.sq-alert:not([data-tone="quiet"]) + .sq-alert:not([data-tone="quiet"]) {
-    border-top: 0;
-}
-
 .sq-alert[data-tone="extreme"] {
-    min-height: 68px;
-    padding-block: 16px;
+    padding: 12px 14px;
+    border-width: 5px;
 }
 
 .sq-alert[data-tone="extreme"] .sq-alert-title {
@@ -193,28 +185,37 @@ html[data-design="quiet"][data-theme="dark"] {
     letter-spacing: -0.015em;
 }
 
-.sq-alert[data-tone="avalanche"] {
-    font-weight: 700;
+.sq-alert[data-tone="quiet"] {
+    min-height: 44px;
+    padding: 4px 0;
+    border: 0;
 }
 
-.sq-alert[data-tone="quiet"] {
-    --b: var(--sq-ground);
-    --k: var(--sq-ink);
-    min-height: 44px;
-    padding-block: 10px;
+.sq-alert[data-tone="quiet"] .sq-alert-title {
+    font-weight: 400;
 }
 
 .sq-alert-note {
     flex: none;
     font-size: var(--sq-s);
-    font-weight: 400;
 }
 
-/* Now */
+.sq-alert[data-tone="avalanche"] {
+    align-items: center;
+}
+
+.sq-avy-chip {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+/* Now: the current temperature as a paint chip. */
 
 .sq-now {
     container-type: inline-size;
-    padding: 12px var(--sq-gut) 18px;
+    margin: 0 var(--sq-gut);
+    padding: 10px 16px 12px;
 }
 
 .sq-place-row {
@@ -250,42 +251,37 @@ html[data-design="quiet"][data-theme="dark"] {
 .sq-star {
     margin-right: -10px;
     padding-inline: 10px;
+    font-size: var(--sq-m);
 }
 
-/* The numeral is at most half the column wide and about a third of the screen tall, with the words beside it. */
-.sq-now-main {
-    --sq-words: 166px;
-    display: grid;
-    grid-template-columns: auto minmax(var(--sq-words), 1fr);
-    align-items: end;
-    column-gap: 14px;
-    margin-top: 18px;
-}
-
-/* The words keep their column, and the numeral takes the rest of the width, up to half of it. */
+/* Chivo at regular weight, not a condensed display face: a printed number, not a scoreboard. Its ink spans the
+   chip, up to about a fifth of the screen's height. The tracking must match TRACKING in words.ts. */
 .sq-numeral {
-    margin-left: calc(var(--lsb) * -1em);
-    font-family: var(--sq-display);
+    margin: 10px 0 8px calc(var(--lsb) * -1em);
+    font-family: var(--sq-text);
+    font-size: min(calc(100cqi / var(--em)), 26svh, var(--fit, 1000px));
     font-weight: 400;
-    font-size: min(calc(min(50cqi, 100cqi - var(--sq-words) - 14px) / var(--em)), 40svh, var(--fit, 1000px));
     line-height: 1;
+    letter-spacing: -0.04em;
     white-space: nowrap;
     text-box: trim-both cap alphabetic;
 }
 
 .sq-cond {
     font-size: var(--sq-l);
-    font-weight: 700;
     line-height: 1.05;
     letter-spacing: -0.015em;
 }
 
-.sq-cond + .sq-now-line {
-    margin-top: 8px;
+.sq-now-line {
+    margin-top: 6px;
 }
 
 .sq-age {
-    margin-top: 10px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 8px;
     font-size: var(--sq-s);
 }
 
@@ -309,7 +305,7 @@ html[data-design="quiet"][data-theme="dark"] {
     min-height: 44px;
 }
 
-/* Next 12 hours: a sentence, then the same hours in three columns, all on the ground. */
+/* Next 12 hours: a sentence, then the same hours in three columns. */
 
 .sq-caption {
     padding: 12px var(--sq-gut) 11px;
@@ -317,6 +313,10 @@ html[data-design="quiet"][data-theme="dark"] {
 
 .sq-caption + .sq-later {
     margin-top: -10px;
+}
+
+.sq-next {
+    padding-top: 8px;
 }
 
 .sq-next .sq-caption {
@@ -327,7 +327,6 @@ html[data-design="quiet"][data-theme="dark"] {
     display: block;
 }
 
-/* Three spans of four hours on the page's own three-column grid, so their words line up with the gutter. */
 .sq-blocks {
     --sq-third: calc((100% - 2 * var(--sq-gut)) / 3);
     display: grid;
@@ -338,7 +337,18 @@ html[data-design="quiet"][data-theme="dark"] {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 8px 8px 14px 0;
+    padding: 6px 8px 10px 0;
+}
+
+.sq-block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 6px;
+}
+
+.sq-block-head > * {
+    white-space: nowrap;
 }
 
 .sq-block:first-child {
@@ -349,86 +359,138 @@ html[data-design="quiet"][data-theme="dark"] {
     padding-right: var(--sq-gut);
 }
 
-/* Best day, and the score's one treatment */
+/* The Condies score: one line of label, ink meter and value out of 100 with a word. Never a temperature color. */
 
-.sq-best {
-    display: flex;
+.sq-score {
+    display: grid;
+    grid-template-columns: max-content minmax(40px, 1fr) max-content;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 10px var(--sq-gut) 16px;
+    column-gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 6px;
 }
 
-.sq-best-text {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+.sq-score-label {
+    font-size: var(--sq-s);
+}
+
+.sq-score-value strong {
+    font-weight: 700;
+}
+
+.sq-meter {
+    position: relative;
+    height: 8px;
+    background: var(--sq-track);
+}
+
+.sq-meter i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--sq-ink);
+}
+
+.sq-score-help {
+    margin-top: 4px;
+}
+
+.sq-best {
+    padding: 10px var(--sq-gut) 12px;
 }
 
 .sq-best-head {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    column-gap: 10px;
+    column-gap: 8px;
 }
 
-.sq-score {
-    display: inline-flex;
-    flex: none;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 68px;
-    height: 68px;
-    padding: 8px 8px 9px;
-    background: var(--sq-ink);
-    color: var(--sq-ground);
+/* The week: on the ground, one range bar per day on a scale shared by the whole week. The rows share their
+   columns through subgrid so every bar starts and ends on the same scale. */
+
+.sq-week {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+    column-gap: 12px;
+    padding: 6px var(--sq-gut) 6px;
 }
 
-.sq-score-word {
-    font-size: var(--sq-s);
-    line-height: 1;
+.sq-week-head,
+.sq-days,
+.sq-days > li,
+.sq-day {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
 }
 
-.sq-score-num {
-    font-size: var(--sq-l);
-    font-weight: 700;
-    line-height: 0.9;
-    letter-spacing: -0.03em;
+.sq-week-head {
+    align-items: baseline;
+    padding-bottom: 0;
 }
-
-/* The week */
 
 .sq-day {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 72px;
-    padding: 12px var(--sq-gut);
-}
-
-.sq-day-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.sq-temps {
-    display: flex;
-    flex: none;
     align-items: baseline;
-    gap: 12px;
+    padding: 10px 0 11px;
 }
 
-.sq-temps .sq-num {
-    min-width: 2.6ch;
+.sq-day-name {
+    grid-column: 1;
+}
+
+.sq-day-low {
+    grid-column: 2;
     text-align: right;
 }
 
-.sq-temps-word {
+.sq-range {
+    position: relative;
+    grid-column: 3;
     align-self: center;
+    height: 12px;
+}
+
+.sq-range::before {
+    position: absolute;
+    top: 5px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--sq-track);
+    content: "";
+}
+
+.sq-range i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.sq-range-tick {
+    width: 6px;
+    margin-left: -3px;
+}
+
+.sq-day-high {
+    grid-column: 4;
+    text-align: right;
+}
+
+.sq-day .sq-day-high {
+    font-size: var(--sq-l);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-day-cond {
+    grid-column: 1 / 4;
+}
+
+.sq-week > .sq-caption {
+    grid-column: 1 / -1;
+    padding-inline: 0;
 }
 
 /* Facts: a big number, then plain words. */
@@ -482,14 +544,16 @@ html[data-design="quiet"][data-theme="dark"] {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 24px var(--sq-gut) 28px;
+    margin: 4px var(--sq-gut) 0;
+    padding: 18px 16px 20px;
 }
 
 .sq-dayhero-temps {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: 24px;
-    margin: 18px 0 14px;
+    column-gap: 28px;
+    margin: 14px 0 10px;
 }
 
 .sq-marker {
@@ -497,9 +561,6 @@ html[data-design="quiet"][data-theme="dark"] {
 }
 
 .sq-scorerow {
-    display: flex;
-    align-items: center;
-    gap: 16px;
     padding: 24px var(--sq-gut) 0;
 }
 
@@ -635,11 +696,7 @@ html[data-design="quiet"][data-theme="dark"] {
 }
 
 .sq-spot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 14px var(--sq-gut);
+    padding: 12px var(--sq-gut) 8px;
 }
 
 .sq-spot-text {
@@ -697,13 +754,21 @@ html[data-design="quiet"][data-theme="dark"] {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 8px var(--sq-gut) 26px;
+    padding: 8px var(--sq-gut) 22px;
     background: var(--b);
     color: var(--k);
 }
 
-.sq-sheet-head[data-loud] {
-    border-bottom: 2px solid #fff;
+/* The alert's detail keeps its notice's frame. */
+.sq-sheet-head[data-tone="extreme"],
+.sq-sheet-head[data-tone="severe"] {
+    margin: 0 var(--sq-gut);
+    padding: 14px 14px 18px;
+    border: 2px solid var(--sq-ink);
+}
+
+.sq-sheet-head[data-tone="extreme"] {
+    border-width: 5px;
 }
 
 .sq-sheet-body {
@@ -778,10 +843,12 @@ html[data-design="quiet"][data-theme="dark"] {
     display: flex;
     flex-direction: column;
     min-height: 100svh;
+    padding-top: var(--sq-gut);
 }
 
 .sq-loading-band {
-    height: 62svh;
+    height: 56svh;
+    margin: 0 var(--sq-gut);
     background: var(--c1);
 }
 
@@ -831,11 +898,11 @@ html[data-design="quiet"][data-theme="dark"] {
     min-height: 44px;
 }
 
-/* Motion: nothing slides or fades in. A band's color shifts when the data or the theme changes, and chart
+/* Motion: nothing slides or fades in. A chip's color shifts when the data or the theme changes, and chart
    columns grow from the baseline. */
 
 @media (prefers-reduced-motion: no-preference) {
-    .sq-band {
+    .sq-chip {
         transition:
             background-color 0.4s ease,
             color 0.4s ease;
@@ -859,6 +926,10 @@ html[data-design="quiet"][data-theme="dark"] {
         padding: 0 6px;
         font-size: var(--sq-s);
     }
+
+    .sq-week {
+        column-gap: 8px;
+    }
 }
 
 @media (min-width: 600px) {
@@ -867,7 +938,7 @@ html[data-design="quiet"][data-theme="dark"] {
     }
 }
 
-/* Wide: the masthead and the alerts run across the top. Below them the lead (Now, or the day) holds still on
+/* Wide: the masthead and the alerts run across the top. Below them the chip (Now, or the day) holds still on
    the left while the list scrolls on the right. */
 @media (min-width: 1024px) {
     .sq-root {
@@ -883,22 +954,17 @@ html[data-design="quiet"][data-theme="dark"] {
     .sq-lead {
         position: sticky;
         top: 0;
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+        padding-bottom: var(--sq-gut);
     }
 
     .sq-now,
     .sq-dayhero {
-        flex: 1;
+        min-height: min(70vh, 640px);
+        margin-right: 0;
     }
 
     .sq-numeral {
-        font-size: min(calc(min(50cqi, 100cqi - var(--sq-words) - 14px) / var(--em)), 42vh);
-    }
-
-    .sq-spots-head {
-        min-height: 0;
+        font-size: min(calc(100cqi / var(--em)), 30vh);
     }
 
     .sq-sheet {

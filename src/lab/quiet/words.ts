@@ -158,7 +158,7 @@ function caption(f: LabForecast, hours: Period[], blocks: Block[]) {
             b.probabilityOfPrecipitation.value > a.probabilityOfPrecipitation.value ? b : a,
         )
         const chance = wettest.probabilityOfPrecipitation.value
-        return chance >= 20 ? `Mostly dry · ${chance}% chance of ${kindOf(wettest)}` : "Dry for the next 12 hours"
+        return chance >= 20 ? `Mostly dry, ${chance}% chance of ${kindOf(wettest)}` : "Dry for the next 12 hours"
     }
     const last = wet.lastIndexOf(true)
     const endsAt = f.hours[last + 1]?.hourString ?? "later"
@@ -173,7 +173,7 @@ function caption(f: LabForecast, hours: Period[], blocks: Block[]) {
 
     const snow = sum(blocks.map((b) => b.snow))
     if (snow >= 0.1) {
-        return `Snow ${when} · ${snow.toFixed(1)}″`
+        return `Snow ${when}, ${snow.toFixed(1)}″`
     }
     const span = hours.slice(first, last + 1)
     const kind = span.some((h) => kindOf(h) === "storms") ? "Storms" : "Rain"
@@ -181,7 +181,7 @@ function caption(f: LabForecast, hours: Period[], blocks: Block[]) {
     const chance = Math.max(...span.map((h) => h.probabilityOfPrecipitation.value))
     const amount =
         rain === undefined ? `${chance}% chance` : `${formatRain(rain)}${kind === "Storms" ? " of rain" : ""}`
-    return `${kind} ${when} · ${amount}`
+    return `${kind} ${when}, ${amount}`
 }
 
 export const severityRank: Record<LabAlert["severity"], number> = {
@@ -210,27 +210,49 @@ export function snowLine(day: DaySummary) {
     }
 }
 
-// Advance widths of League Gothic's figures in thousandths of an em, and the left side bearing of each, so
-// that the numeral can be sized to its column in CSS with no measuring.
-const figures: Record<string, [number, number]> = {
-    "0": [354, 33],
-    "1": [240, 20],
-    "2": [363, 35],
-    "3": [352, 30],
-    "4": [351, 18],
-    "5": [342, 30],
-    "6": [342, 30],
-    "7": [307, 18],
-    "8": [340, 26],
-    "9": [342, 30],
-    "°": [229, 40],
-    "−": [379, 36],
-    "–": [300, 30],
+// Chivo's tabular figures in thousandths of an em: advance, left and right side bearing. With them the numeral
+// is sized to its swatch in CSS (100cqi / em) so that its ink spans the width, with no measuring at runtime.
+const figures: Record<string, [number, number, number]> = {
+    "0": [615, 69, 70],
+    "1": [615, 89, 65],
+    "2": [615, 65, 69],
+    "3": [615, 59, 62],
+    "4": [615, 49, 55],
+    "5": [615, 71, 66],
+    "6": [615, 76, 63],
+    "7": [615, 71, 61],
+    "8": [615, 66, 66],
+    "9": [615, 72, 67],
+    "°": [381, 40, 40],
+    "−": [615, 52, 52],
+    "–": [500, 0, 0],
 }
+
+// Must match the numeral's letter-spacing in quiet.css.
+const TRACKING = -0.04
 
 export function numeralFit(text: string) {
     const chars = [...text]
-    const of = (c?: string) => (c && figures[c]) || [340, 20]
-    const width = (sum(chars.map((c) => of(c)[0])) - of(chars[0])[1] - of(chars.at(-1))[1]) / 1000
+    const of = (c?: string) => (c && figures[c]) || [615, 60, 60]
+    const advance = sum(chars.map((c) => of(c)[0])) / 1000 + TRACKING * (chars.length - 1)
+    const width = advance - of(chars[0])[1] / 1000 - of(chars.at(-1))[2] / 1000
     return { em: width, lsb: of(chars[0])[1] / 1000 }
 }
+
+// Plain words for the Condies score, so a newcomer knows what a number means without being told.
+export function grade(score: number) {
+    if (score >= 90) {
+        return "Epic"
+    }
+    if (score >= 75) {
+        return "Great"
+    }
+    if (score >= 60) {
+        return "Good"
+    }
+    return score >= 40 ? "Fair" : "Poor"
+}
+
+// What `scoreDay` in lib/score.ts measures, in one sentence.
+export const scoreHelp =
+    "How good the best few hours of the day are for being outside, from 0 to 100. Fresh snow and sun raise it; cold, heat, wind and rain lower it."

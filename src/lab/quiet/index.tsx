@@ -1,5 +1,4 @@
 import "@fontsource-variable/chivo/wght.css"
-import "@fontsource-variable/league-gothic/standard.css"
 import "./quiet.css"
 
 import { createMemo, createSignal, flush, For, Match, onSettled, Show, Switch } from "solid-js"
@@ -10,16 +9,18 @@ import type { Period } from "../../lib/nws.ts"
 import { formatAge } from "../../lib/util.ts"
 import { type DesignProps, type LabAlert, type LabForecast, rankSpots } from "../data.ts"
 
-import { alertBand, avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampWalk } from "./ramp.ts"
+import { avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampSteps, rampWalk } from "./ramp.ts"
 import {
     conditionWord,
     dayName,
     degrees,
     feelsLike,
+    grade,
     highlightWord,
     isLoud,
     nextHours,
     numeralFit,
+    scoreHelp,
     sentence,
     severityRank,
     shortDate,
@@ -46,15 +47,31 @@ function Cat() {
     )
 }
 
-// The one treatment of the Condies score: a square of ink with the number knocked out in the ground color.
-// It only ever sits on the ground, so it can never take a temperature's color.
+// The one treatment of the Condies score, the same on Best day, the Day screen and My Spots. It is labeled,
+// out of 100, graded in a word and drawn as an ink meter, so it can never be read as a temperature. Tapping it
+// explains it. It is one line: label, meter, value.
 function Score(props: { score?: number }) {
+    const [open, setOpen] = createSignal(false)
     return (
         <Show when={props.score !== undefined}>
-            <span class="sq-score" role="img" aria-label={`Condies score ${props.score} out of 100`}>
-                <span class="sq-score-word">Condies</span>
-                <span class="sq-score-num">{props.score}</span>
-            </span>
+            <button
+                type="button"
+                class="sq-score"
+                aria-expanded={open() ? "true" : "false"}
+                aria-label={`Condies score ${props.score} out of 100, ${grade(props.score!)}. What this means`}
+                onClick={() => setOpen(!open())}
+            >
+                <span class="sq-score-label">Condies score</span>
+                <span class="sq-meter" aria-hidden="true">
+                    <i style={{ width: `${props.score}%` }} />
+                </span>
+                <span class="sq-score-value">
+                    <strong>{props.score}</strong>/100 <strong>{grade(props.score!)}</strong>
+                </span>
+            </button>
+            <Show when={open()}>
+                <p class="sq-score-help">{scoreHelp}</p>
+            </Show>
         </Show>
     )
 }
@@ -88,21 +105,24 @@ function Masthead(props: Ctx) {
 
 type Tone = "extreme" | "severe" | "avalanche" | "quiet"
 
-// One component for every warning. Extreme and Severe are black bands, Extreme in larger type. Avalanche
-// danger uses its standard color. Moderate and Minor are quiet rows on the ground. All say how serious in words.
-function AlertRow(props: { tone: Tone; title: string; note: string; paint?: Paint; onOpen: () => void }) {
+// One component for every warning, set like a printed notice rather than a banner: framed plates inside the
+// margins. Extreme has the heaviest frame and the largest type, Severe a lighter frame, avalanche danger
+// carries its standard color as a chip, and Moderate and Minor are plain rows. All say how serious in words.
+// A framed plate reads as a button on its own; a plain row gets an arrow so it does too.
+function AlertRow(props: { tone: Tone; title: string; note: string; chip?: Paint; onOpen: () => void }) {
     return (
-        <button
-            type="button"
-            class="sq-alert"
-            data-tone={props.tone}
-            style={props.paint ? paintVars(props.paint) : undefined}
-            onClick={() => props.onOpen()}
-        >
-            <span class="sq-alert-title">{props.title}</span>
+        <button type="button" class="sq-alert" data-tone={props.tone} onClick={() => props.onOpen()}>
+            <span class="sq-alert-title">
+                <Show when={props.chip}>
+                    {(chip) => <i class="sq-avy-chip" style={{ background: chip().bg }} aria-hidden="true" />}
+                </Show>
+                {props.title}
+            </span>
             <span class="sq-alert-note">
                 {props.note}
-                <span aria-hidden="true">{" →"}</span>
+                <Show when={props.tone === "quiet"}>
+                    <span aria-hidden="true">→</span>
+                </Show>
             </span>
         </button>
     )
@@ -127,7 +147,7 @@ function AvalancheRow(props: Ctx & { avalanche: Avalanche }) {
                     tone="avalanche"
                     title={`${rating().name} avalanche danger`}
                     note={`${rating().level} of 5`}
-                    paint={avalancheScale[rating().level]}
+                    chip={avalancheScale[rating().level]}
                     onOpen={() => props.open({ kind: "avalanche", avalanche: props.avalanche })}
                 />
             )}
@@ -151,7 +171,7 @@ function Alerts(props: Ctx) {
     )
     return (
         <Show when={sorted().length || risenAvalanche(f())}>
-            <section class="sq-alerts" aria-label="Alerts">
+            <section class="sq-ground sq-alerts" aria-label="Alerts">
                 <For each={sorted().filter(isLoud)}>{row}</For>
                 <Show when={risenAvalanche(f())}>{(a) => <AvalancheRow {...props} avalanche={a()} />}</Show>
                 <For each={sorted().filter((a) => !isLoud(a))}>{row}</For>
@@ -160,6 +180,7 @@ function Alerts(props: Ctx) {
     )
 }
 
+// Now is a paint chip: the current temperature's own color as a swatch inside the margins, with dark ink.
 function Now(props: Ctx & { fit?: number; numeral: (el: HTMLElement) => void }) {
     const f = () => props.app.forecast
     const paint = () => paintTemp(f().current.temperature, props.app.theme)
@@ -169,14 +190,39 @@ function Now(props: Ctx & { fit?: number; numeral: (el: HTMLElement) => void }) 
     const [refreshed, setRefreshed] = createSignal(false)
     const age = () => (refreshed() ? "just now" : formatAge(f().now - Date.parse(f().updatedAt)))
     const place = () => [f().place.city, f().place.state].filter(Boolean).join(", ")
+    const details = () =>
+        [
+            feelsLike(f().current) !== undefined ? `Feels like ${degrees(feelsLike(f().current))}` : "",
+            windLine(f().current),
+        ]
+            .filter(Boolean)
+            .join(" · ")
 
     return (
-        <section class="sq-band sq-now" style={paintVars(paint())} aria-label="Right now">
+        <section class="sq-chip sq-now" style={paintVars(paint())} aria-label="Right now">
             <div class="sq-place-row">
                 <h1 class="sq-place">
                     <Cat />
                     <span>Right meow in {place()}</span>
                 </h1>
+            </div>
+            <p
+                ref={props.numeral}
+                class="sq-numeral"
+                style={{
+                    "--em": fit().em.toFixed(3),
+                    "--lsb": fit().lsb.toFixed(3),
+                    "--fit": props.fit ? `${props.fit}px` : undefined,
+                }}
+            >
+                {text()}
+            </p>
+            <p class="sq-cond">{conditionWord(f().current.shortForecast)}</p>
+            <p class="sq-now-line">{details()}</p>
+            <div class="sq-age">
+                <button type="button" class="sq-link" onClick={() => setRefreshed(true)}>
+                    Updated {age()}
+                </button>
                 <button
                     type="button"
                     class="sq-star"
@@ -186,31 +232,6 @@ function Now(props: Ctx & { fit?: number; numeral: (el: HTMLElement) => void }) 
                 >
                     {starred() ? "Starred" : "Star"}
                 </button>
-            </div>
-            <div class="sq-now-main">
-                <p
-                    ref={props.numeral}
-                    class="sq-numeral"
-                    style={{
-                        "--em": fit().em.toFixed(3),
-                        "--lsb": fit().lsb.toFixed(3),
-                        "--fit": props.fit ? `${props.fit}px` : undefined,
-                    }}
-                >
-                    {text()}
-                </p>
-                <div class="sq-now-words">
-                    <p class="sq-cond">{conditionWord(f().current.shortForecast)}</p>
-                    <Show when={feelsLike(f().current) !== undefined}>
-                        <p class="sq-now-line">Feels like {degrees(feelsLike(f().current))}</p>
-                    </Show>
-                    <p class="sq-now-line">{windLine(f().current)}</p>
-                    <p class="sq-age">
-                        <button type="button" class="sq-link" onClick={() => setRefreshed(true)}>
-                            Updated {age()}
-                        </button>
-                    </p>
-                </div>
             </div>
         </section>
     )
@@ -236,8 +257,10 @@ function NextHours(props: Ctx) {
                     <For each={next().blocks}>
                         {(block) => (
                             <li class="sq-block">
-                                <span class="sq-small">{block.label}</span>
-                                <span class="sq-num">{degrees(block.temperature)}</span>
+                                <span class="sq-block-head">
+                                    <span class="sq-small">{block.label}</span>
+                                    <span class="sq-num">{degrees(block.temperature)}</span>
+                                </span>
                                 <span>{block.precip}</span>
                             </li>
                         )}
@@ -253,39 +276,51 @@ function Best(props: Ctx) {
     return (
         <Show when={f().best} fallback={<p class="sq-ground sq-caption sq-strong">No standout day this week</p>}>
             {(best) => (
-                <a class="sq-ground sq-best" {...props.app.link({ name: "day", date: best().day.date })}>
-                    <span class="sq-best-text">
-                        <span class="sq-best-head">
-                            <span>Best day</span> <span class="sq-num">{dayName(best().day, best().index)}</span>
-                        </span>
-                        <span>
-                            {best().day.condies!.bestWindow}
-                            <Show when={best().day.high !== undefined}>, high {degrees(best().day.high)}</Show>
-                        </span>
-                    </span>
+                <section class="sq-ground sq-best" aria-label="Best day">
+                    <a class="sq-best-head" {...props.app.link({ name: "day", date: best().day.date })}>
+                        <span class="sq-small">Best day</span>
+                        <span class="sq-num">{dayName(best().day, best().index)}</span>
+                        <span>{best().day.condies!.bestWindow}</span>
+                    </a>
                     <Score score={best().day.condies!.score} />
-                </a>
+                </section>
             )}
         </Show>
     )
 }
 
-// High in bold, low in regular. A missing high is named rather than dashed, since "– 10°" reads as minus ten.
-function Temps(props: { high?: number; low?: number; size?: "xl" }) {
-    const cls = () => (props.size === "xl" ? "sq-xl" : "sq-num")
+// Low on the left, high on the right, on one scale shared by the whole week, so warm days sit to the right.
+// The bar is made of the ramp's own 5° steps, so its color comes from the data. A day missing one end shows a
+// short mark at the end it has.
+function RangeBar(props: { low?: number; high?: number; min: number; max: number; theme: DesignProps["theme"] }) {
+    const span = () => props.max - props.min || 1
+    const at = (t: number) => `${((t - props.min) / span()) * 100}%`
+    const segments = () => {
+        const low = props.low ?? props.high!
+        const high = props.high ?? props.low!
+        return low < high ? rampSteps(low, high, props.theme) : []
+    }
+    const only = () => (props.low === undefined || props.high === undefined ? (props.high ?? props.low) : undefined)
     return (
-        <>
-            <Show when={props.high !== undefined} fallback={<span class="sq-temps-word">Low</span>}>
-                <span class={cls()}>{degrees(props.high)}</span>
+        <span class="sq-range" aria-hidden="true">
+            <For each={segments()}>
+                {(s) => (
+                    <i style={{ left: at(s.from), width: `calc(${at(s.to)} - ${at(s.from)})`, background: s.bg }} />
+                )}
+            </For>
+            <Show when={only() !== undefined}>
+                <i
+                    class="sq-range-tick"
+                    style={{ left: at(only()!), background: paintTemp(only()!, props.theme).bg }}
+                />
             </Show>
-            <Show when={props.low !== undefined}>
-                <span class={`${cls()} sq-low`}>{degrees(props.low)}</span>
-            </Show>
-        </>
+        </span>
     )
 }
 
-function DayRow(props: Ctx & { day: DaySummary; index: number; anchor?: (el: HTMLElement) => void }) {
+function DayRow(
+    props: Ctx & { day: DaySummary; index: number; min: number; max: number; anchor?: (el: HTMLElement) => void },
+) {
     const name = () => dayName(props.day, props.index)
     const period = () => props.day.day ?? props.day.night
     const marker = () => highlightWord(props.day.highlight)
@@ -298,27 +333,33 @@ function DayRow(props: Ctx & { day: DaySummary; index: number; anchor?: (el: HTM
             `${name()}, ${shortDate(props.day.date)}`,
             condition(),
             snow(),
-            `high ${props.day.high ?? "not available"}, low ${props.day.low ?? "not available"}`,
+            props.day.low !== undefined ? `low ${props.day.low}°` : undefined,
+            props.day.high !== undefined ? `high ${props.day.high}°` : undefined,
         ]
             .filter(Boolean)
             .join(". ")
     return (
         <li>
-            <a
-                class="sq-band sq-day"
-                style={paintVars(paintDay(props.day, props.app.theme))}
-                aria-label={label()}
-                {...props.app.link({ name: "day", date: props.day.date })}
-            >
-                <span class="sq-day-text" aria-hidden="true">
-                    <span class="sq-strong">{name()}</span>
-                    <span>
-                        <span class={marker() ? "sq-strong" : undefined}>{condition()}</span>
-                        <Show when={snow()}> · {snow()}</Show>
-                    </span>
+            <a class="sq-day" aria-label={label()} {...props.app.link({ name: "day", date: props.day.date })}>
+                <span class="sq-day-name sq-strong" aria-hidden="true">
+                    {name()}
                 </span>
-                <span ref={(el: HTMLElement) => props.anchor?.(el)} class="sq-temps" aria-hidden="true">
-                    <Temps high={props.day.high} low={props.day.low} />
+                <span class="sq-day-low" aria-hidden="true">
+                    {props.day.low === undefined ? "" : degrees(props.day.low)}
+                </span>
+                <RangeBar
+                    low={props.day.low}
+                    high={props.day.high}
+                    min={props.min}
+                    max={props.max}
+                    theme={props.app.theme}
+                />
+                <span ref={(el: HTMLElement) => props.anchor?.(el)} class="sq-day-high" aria-hidden="true">
+                    {props.day.high === undefined ? "" : degrees(props.day.high)}
+                </span>
+                <span class="sq-day-cond" aria-hidden="true">
+                    <span class={marker() ? "sq-strong" : undefined}>{condition()}</span>
+                    <Show when={snow()}>, {snow()}</Show>
                 </span>
             </a>
         </li>
@@ -328,8 +369,20 @@ function DayRow(props: Ctx & { day: DaySummary; index: number; anchor?: (el: HTM
 function Week(props: Ctx & { anchor: (el: HTMLElement) => void }) {
     const f = () => props.app.forecast
     const anchorIndex = () => Math.min(1, f().days.length - 1)
+    const temps = () =>
+        f()
+            .days.flatMap((d) => [d.low, d.high])
+            .filter((t): t is number => t !== undefined)
+    const min = () => Math.min(...temps())
+    const max = () => Math.max(...temps())
     return (
-        <section class="sq-week" aria-label="This week">
+        <section class="sq-ground sq-week" aria-label="This week">
+            <div class="sq-week-head" aria-hidden="true">
+                <span class="sq-strong">This week</span>
+                <span class="sq-day-low sq-small">Low</span>
+                <span />
+                <span class="sq-day-high sq-small">High</span>
+            </div>
             <ol class="sq-days">
                 <For each={f().days}>
                     {(day, i) => (
@@ -337,13 +390,15 @@ function Week(props: Ctx & { anchor: (el: HTMLElement) => void }) {
                             {...props}
                             day={day}
                             index={i()}
+                            min={min()}
+                            max={max()}
                             anchor={i() === anchorIndex() ? props.anchor : undefined}
                         />
                     )}
                 </For>
             </ol>
             <Show when={f().weekSnow >= 1}>
-                <p class="sq-ground sq-caption">
+                <p class="sq-caption">
                     <strong>{formatSnow(f().weekSnow)}</strong> of snow this week.
                 </p>
             </Show>
@@ -356,7 +411,13 @@ function Mountain(props: Ctx) {
     const calmAvalanche = () => (risenAvalanche(f()) ? undefined : f().avalanche)
     return (
         <>
-            <Show when={calmAvalanche()}>{(avalanche) => <AvalancheRow {...props} avalanche={avalanche()} />}</Show>
+            <Show when={calmAvalanche()}>
+                {(avalanche) => (
+                    <div class="sq-ground sq-alerts">
+                        <AvalancheRow {...props} avalanche={avalanche()} />
+                    </div>
+                )}
+            </Show>
             <Show when={f().snowDepth}>
                 {(depth) => (
                     <section class="sq-ground sq-stats" aria-label="Snow on the ground">
@@ -390,12 +451,12 @@ function Mountain(props: Ctx) {
 }
 
 // Tomorrow's high must clear the bottom of the first screen by this much.
-const PEEK = 14
-const MIN_NUMERAL = 120
+const PEEK = 8
+const MIN_NUMERAL = 84
 
 function HomeScreen(props: Ctx) {
-    // CSS sizes the numeral to at most half the column and about a third of the screen's height. On a busy
-    // day with several warnings, it shrinks further so that tomorrow's high still makes the first screen.
+    // CSS sizes the numeral to the swatch's width and about a fifth of the screen's height. On a busy day with
+    // several warnings it shrinks further, so that tomorrow's high still makes the first screen.
     const [size, setSize] = createSignal<number>()
     let numeral: HTMLElement | undefined
     let anchor: HTMLElement | undefined
@@ -686,15 +747,24 @@ function DayView(props: Ctx & { day: DaySummary; index: number }) {
             <Pager {...props} index={props.index} />
             <div class="sq-split">
                 <div class="sq-lead">
-                    <section class="sq-band sq-dayhero" style={paintVars(paintDay(props.day, props.app.theme))}>
+                    <section class="sq-chip sq-dayhero" style={paintVars(paintDay(props.day, props.app.theme))}>
                         <h1 class="sq-num">{name()}</h1>
                         <p>
                             {shortDate(props.day.date, true)} · {f().place.city}
                         </p>
                         <p class="sq-dayhero-temps">
-                            <Temps high={props.day.high} low={props.day.low} size="xl" />
+                            <Show when={props.day.high !== undefined}>
+                                <span>
+                                    High <span class="sq-xl">{degrees(props.day.high)}</span>
+                                </span>
+                            </Show>
+                            <Show when={props.day.low !== undefined}>
+                                <span>
+                                    Low <span class="sq-num sq-low">{degrees(props.day.low)}</span>
+                                </span>
+                            </Show>
                         </p>
-                        <p class="sq-strong">{sentence(period()?.shortForecast ?? "")}</p>
+                        <p>{sentence(period()?.shortForecast ?? "")}</p>
                         <Show when={marker()}>
                             <p class="sq-num sq-marker">{marker()}</p>
                         </Show>
@@ -704,12 +774,11 @@ function DayView(props: Ctx & { day: DaySummary; index: number }) {
                     <Show when={props.day.condies}>
                         {(condies) => (
                             <section class="sq-ground sq-scorerow" aria-label="Condies score">
-                                <Score score={condies().score} />
-                                <p>
-                                    Best window
-                                    <br />
+                                <p class="sq-best-head">
+                                    <span class="sq-small">Best window</span>
                                     <span class="sq-num">{condies().bestWindow}</span>
                                 </p>
+                                <Score score={condies().score} />
                             </section>
                         )}
                     </Show>
@@ -825,8 +894,8 @@ function SpotsScreen(props: Ctx) {
                                     const index = () => (spot.day ? spot.days.indexOf(spot.day) : -1)
                                     return (
                                         <li>
-                                            <a class="sq-ground sq-spot" {...props.app.link({ name: "home" })}>
-                                                <span class="sq-spot-text">
+                                            <div class="sq-ground sq-spot">
+                                                <a class="sq-spot-text" {...props.app.link({ name: "home" })}>
                                                     <span class="sq-strong">{spot.name}</span>
                                                     <Show when={day()} fallback={<span>No forecast for this day</span>}>
                                                         {(d) => (
@@ -837,19 +906,15 @@ function SpotsScreen(props: Ctx) {
                                                                         , {d().condies!.bestWindow}
                                                                     </Show>
                                                                 </span>
-                                                                <span>
-                                                                    High {degrees(d().high ?? d().low)}
-                                                                    <Show when={hasSnow(d())}>
-                                                                        {" "}
-                                                                        · {formatSnow(d().snow!)} snow
-                                                                    </Show>
-                                                                </span>
+                                                                <Show when={hasSnow(d())}>
+                                                                    <span>{formatSnow(d().snow!)} snow</span>
+                                                                </Show>
                                                             </>
                                                         )}
                                                     </Show>
-                                                </span>
+                                                </a>
                                                 <Score score={day()?.condies?.score} />
-                                            </a>
+                                            </div>
                                         </li>
                                     )
                                 }}
@@ -886,14 +951,11 @@ function SheetFrame(props: ParentProps<{ label: string; onClose: () => void; pai
 }
 
 function AlertSheet(props: { alert: LabAlert; onClose: () => void }) {
-    const paint = () => (isLoud(props.alert) ? alertBand : undefined)
+    // The detail reads like the notice it opened from: framed, heavier for Extreme, plain for the quieter ones.
+    const tone = () => (props.alert.severity === "Extreme" ? "extreme" : isLoud(props.alert) ? "severe" : "quiet")
     return (
-        <SheetFrame label={props.alert.event} onClose={props.onClose} paint={paint()} title={props.alert.severity}>
-            <div
-                class="sq-sheet-head"
-                data-loud={paint() ? "" : undefined}
-                style={paint() ? paintVars(paint()!) : undefined}
-            >
+        <SheetFrame label={props.alert.event} onClose={props.onClose} title={props.alert.severity}>
+            <div class="sq-sheet-head" data-tone={tone()}>
                 <h2 class="sq-num">{props.alert.event}</h2>
                 <p>{props.alert.headline}</p>
             </div>
