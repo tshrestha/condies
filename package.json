@@ -11,7 +11,8 @@
         "preview": "vite preview",
         "fmt": "oxfmt",
         "test": "vitest run",
-        "test:e2e": "vite build && playwright test"
+        "test:e2e": "vite build && playwright test",
+        "lab": "vite --open /condies/lab.html"
     },
     "dependencies": {
         "@solid-primitives/scheduled": "2.0.0-next.4",
@@ -24,12 +25,22 @@
         "solid-js": "2.0.0-rc.21"
     },
     "devDependencies": {
+        "@fontsource-variable/anybody": "^5.3.0",
+        "@fontsource-variable/big-shoulders-display": "^5.3.0",
+        "@fontsource-variable/chivo": "^5.3.0",
+        "@fontsource-variable/doto": "^5.3.0",
+        "@fontsource-variable/league-gothic": "^5.3.0",
+        "@fontsource-variable/overpass": "^5.3.0",
+        "@fontsource/b612-mono": "^5.3.0",
+        "@fontsource/knewave": "^5.3.0",
+        "@fontsource/sedgwick-ave-display": "^5.3.0",
         "@playwright/test": "^1.65.0",
         "@solidjs/vite-plugin": "3.0.0-next.57",
         "@types/bootstrap": "^5.2.10",
         "@types/d3": "^7.4.3",
         "@types/geojson": "^7946.0.16",
         "@types/node": "^25.0.10",
+        "axe-core": "^4.14.0",
         "oxfmt": "^0.78.0",
         "oxlint": "^1.93.0",
         "typescript": "^5.9.3",

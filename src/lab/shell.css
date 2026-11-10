@@ -1,0 +1,98 @@
+/* Only a reset and the review strip. Every design brings all of its own styling. */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure {
+    margin: 0;
+    padding: 0;
+}
+
+ul,
+ol {
+    list-style: none;
+}
+
+button,
+input {
+    font: inherit;
+    color: inherit;
+}
+
+button {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+a {
+    color: inherit;
+}
+
+img,
+svg {
+    display: block;
+}
+
+.lab-strip {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    overflow-x: auto;
+    padding: 6px 10px;
+    background: #000;
+    color: #fff;
+    font:
+        500 11px/1.2 ui-monospace,
+        Menlo,
+        monospace;
+    white-space: nowrap;
+    scrollbar-width: none;
+}
+
+.lab-group {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+}
+
+.lab-group a,
+.lab-group button {
+    padding: 4px 6px;
+    border-radius: 3px;
+    color: #aaa;
+    font: inherit;
+    text-decoration: none;
+}
+
+.lab-group a[aria-current="true"],
+.lab-group button[aria-current="true"] {
+    background: #fff;
+    color: #000;
+}
+
+.lab-message {
+    padding: 2rem;
+    font:
+        14px/1.4 ui-monospace,
+        Menlo,
+        monospace;
+}
