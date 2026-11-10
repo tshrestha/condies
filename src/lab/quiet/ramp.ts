@@ -101,5 +101,35 @@ export const avalancheScale: Record<number, Paint> = {
 
 export const paintVars = (paint: Paint) => ({ "--b": paint.bg, "--k": paint.ink })
 
+const mixHex = (a: string, b: string, amountOfA: number) =>
+    `#${[1, 3, 5]
+        .map((i) => {
+            const v = parseInt(a.slice(i, i + 2), 16) * amountOfA + parseInt(b.slice(i, i + 2), 16) * (1 - amountOfA)
+            return Math.round(v).toString(16).padStart(2, "0")
+        })
+        .join("")}`
+
+// How opaque the glass is. The rest of what shows is whatever scrolls behind it.
+export const GLASS_OPACITY = 0.86
+
+// The dock's glass: the temperature's color as milk glass by day (dark ink, lifted toward white) and smoked
+// glass by night (light ink, sunk toward the dark ground). The labels must pass AA even when the darkest or
+// lightest page content shows through, so the extreme steps get more milk or smoke until they do.
+export function glassPaint(t: number, theme: Theme): Paint {
+    const chip = paintTemp(t, theme).bg
+    const [toward, ink] = theme === "dark" ? ["#0d0d0d", "#f0f0f0"] : ["#ffffff", INK]
+    const worst = (tint: string) =>
+        Math.min(
+            ...["#111111", "#0d0d0d", "#ffffff", "#f0f0f0"].map((behind) =>
+                contrast(mixHex(tint, behind, GLASS_OPACITY), ink),
+            ),
+        )
+    let amount = theme === "dark" ? 0.45 : 0.65
+    while (amount > 0.05 && worst(mixHex(chip, toward, amount)) < 4.5) {
+        amount -= 0.05
+    }
+    return { bg: mixHex(chip, toward, amount), ink }
+}
+
 // Loading has no temperature yet, so it walks the ramp from cold to hot.
 export const rampWalk = (theme: Theme) => [10, 25, 40, 55, 70, 85].map((t) => paintTemp(t, theme).bg)

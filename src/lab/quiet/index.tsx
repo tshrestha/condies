@@ -9,7 +9,7 @@ import type { Period } from "../../lib/nws.ts"
 import { formatAge } from "../../lib/util.ts"
 import { type DesignProps, type LabAlert, type LabForecast, rankSpots } from "../data.ts"
 
-import { avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampSteps, rampWalk } from "./ramp.ts"
+import { avalancheScale, glassPaint, type Paint, paintDay, paintTemp, paintVars, rampSteps, rampWalk } from "./ramp.ts"
 import {
     conditionWord,
     dayName,
@@ -76,8 +76,80 @@ function Score(props: { score?: number }) {
     )
 }
 
+// Icons are only for controls. Weather is always told in words. One drawing style: 24px, 2px strokes, round
+// joins, in the ink of whatever they sit on.
+function SearchIcon() {
+    return (
+        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="M15.5 15.5 21 21" />
+        </svg>
+    )
+}
+
+// The same star saves a place in the swatch and stands for My Spots in the dock.
+function StarIcon(props: { filled?: boolean }) {
+    return (
+        <svg class={props.filled ? "sq-icon sq-icon-filled" : "sq-icon"} viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3l2.35 6.26 6.69.3-5.24 4.18 1.78 6.45L12 16.5l-5.58 3.69 1.78-6.45-5.24-4.18 6.69-.3z" />
+        </svg>
+    )
+}
+
+function MapIcon() {
+    return (
+        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" />
+        </svg>
+    )
+}
+
+let horizonCount = 0
+
+// The theme switch is a horizon. In light mode the sun is up. Switching sets the sun and raises a crescent moon,
+// with two stars coming out; switching back is a sunrise. It shows the current theme, like a light switch.
+function ThemeToggle(props: { app: DesignProps; class?: string }) {
+    const id = `sq-horizon-${++horizonCount}`
+    const dark = () => props.app.theme === "dark"
+    return (
+        <button
+            type="button"
+            class={`sq-theme ${props.class ?? ""}`}
+            aria-label="Dark mode"
+            aria-pressed={dark() ? "true" : "false"}
+            onClick={() => props.app.setTheme(dark() ? "light" : "dark")}
+        >
+            <svg class={dark() ? "sq-horizon sq-horizon-dark" : "sq-horizon"} viewBox="0 0 28 28" aria-hidden="true">
+                <defs>
+                    <clipPath id={`${id}-sky`}>
+                        <rect width="28" height="19" />
+                    </clipPath>
+                    <mask id={`${id}-cut`}>
+                        <rect width="28" height="28" fill="#fff" />
+                        <circle cx="17.5" cy="10.5" r="4.6" fill="#000" />
+                    </mask>
+                </defs>
+                <g clip-path={`url(#${id}-sky)`}>
+                    <g class="sq-horizon-sun">
+                        <circle cx="14" cy="14.5" r="4.5" />
+                        <path d="M14 6.5V8M8.34 8.84l1.06 1.06M19.66 8.84l-1.06 1.06M6 14.5h1.5M20.5 14.5H22" />
+                    </g>
+                    <g class="sq-horizon-moon">
+                        <circle cx="14" cy="12.5" r="5.5" mask={`url(#${id}-cut)`} />
+                    </g>
+                </g>
+                <path class="sq-horizon-line" d="M3.5 20h21" />
+                <g class="sq-horizon-stars">
+                    <circle cx="6.5" cy="6.5" r="1.1" />
+                    <circle cx="22.5" cy="5" r="1" />
+                </g>
+            </svg>
+        </button>
+    )
+}
+
+// On a wide screen the controls sit in this top bar. On a phone the dock takes them, and this bar is hidden.
 function Masthead(props: Ctx) {
-    const other = () => (props.app.theme === "light" ? "dark" : "light")
     return (
         <header class="sq-ground sq-mast">
             <a class="sq-brand" {...props.app.link({ name: "home" })}>
@@ -91,15 +163,40 @@ function Masthead(props: Ctx) {
                 <button type="button" aria-label="Open the map">
                     Map
                 </button>
-                <button
-                    type="button"
-                    aria-label={`Switch to ${other()} theme`}
-                    onClick={() => props.app.setTheme(other())}
-                >
-                    {other() === "dark" ? "Dark" : "Light"}
-                </button>
+                <ThemeToggle app={props.app} />
             </nav>
         </header>
+    )
+}
+
+// The phone's controls, within thumb reach. Glass in this app's own material: square chips tinted with the
+// temperature right now, milk glass by day and smoked glass by night, so a little of the present follows you to
+// every screen. The page shows through, softened, but the edge stays square like every other chip.
+function Dock(props: Ctx) {
+    const paint = () => glassPaint(props.app.forecast.current.temperature, props.app.theme)
+    const current = (name: string) => (props.app.screen.name === name ? "page" : undefined)
+    return (
+        <div class="sq-dock" style={paintVars(paint())}>
+            <nav class="sq-dock-nav sq-glass" aria-label="Main">
+                <a class="sq-dock-item" aria-current={current("home")} {...props.app.link({ name: "home" })}>
+                    <Cat />
+                    <span>Now</span>
+                </a>
+                <button type="button" class="sq-dock-item" onClick={() => props.open({ kind: "search" })}>
+                    <SearchIcon />
+                    <span>Search</span>
+                </button>
+                <a class="sq-dock-item" aria-current={current("spots")} {...props.app.link({ name: "spots" })}>
+                    <StarIcon filled={props.app.screen.name === "spots"} />
+                    <span>Spots</span>
+                </a>
+                <button type="button" class="sq-dock-item" aria-label="Open the map">
+                    <MapIcon />
+                    <span>Map</span>
+                </button>
+            </nav>
+            <ThemeToggle app={props.app} class="sq-glass sq-dock-theme" />
+        </div>
     )
 }
 
@@ -205,6 +302,15 @@ function Now(props: Ctx & { fit?: number; numeral: (el: HTMLElement) => void }) 
                     <Cat />
                     <span>Right meow in {place()}</span>
                 </h1>
+                <button
+                    type="button"
+                    class="sq-star"
+                    aria-pressed={starred() ? "true" : "false"}
+                    aria-label={`Save ${f().place.city} to My Spots`}
+                    onClick={() => setStarred(!starred())}
+                >
+                    <StarIcon filled={starred()} />
+                </button>
             </div>
             <p
                 ref={props.numeral}
@@ -222,15 +328,6 @@ function Now(props: Ctx & { fit?: number; numeral: (el: HTMLElement) => void }) 
             <div class="sq-age">
                 <button type="button" class="sq-link" onClick={() => setRefreshed(true)}>
                     Updated {age()}
-                </button>
-                <button
-                    type="button"
-                    class="sq-star"
-                    aria-pressed={starred() ? "true" : "false"}
-                    aria-label={starred() ? `Remove ${f().place.city} from My Spots` : `Star ${f().place.city}`}
-                    onClick={() => setStarred(!starred())}
-                >
-                    {starred() ? "Starred" : "Star"}
                 </button>
             </div>
         </section>
@@ -552,7 +649,11 @@ function HomeScreen(props: Ctx) {
             }
             const current = parseFloat(getComputedStyle(numeral).fontSize)
             const ratio = numeral.getBoundingClientRect().height / current
-            const slack = innerHeight - PEEK - (anchor.getBoundingClientRect().bottom + scrollY)
+            // On a phone the dock covers the bottom of the screen, so tomorrow has to clear the dock instead.
+            const dock = document.querySelector<HTMLElement>(".sq-dock")
+            const bottom =
+                dock && getComputedStyle(dock).display !== "none" ? dock.getBoundingClientRect().top : innerHeight
+            const slack = bottom - PEEK - (anchor.getBoundingClientRect().bottom + scrollY)
             if (slack < 0) {
                 setSize(Math.floor(Math.max(MIN_NUMERAL, current + slack / ratio)))
             }
@@ -1166,6 +1267,7 @@ function Ready(props: { app: DesignProps }) {
                     <SpotsScreen {...ctx} />
                 </Match>
             </Switch>
+            <Dock {...ctx} />
             <Switch>
                 <Match when={sheet()?.kind === "alert" && sheet()}>
                     {(s) => <AlertSheet alert={(s() as { alert: LabAlert }).alert} onClose={close} />}

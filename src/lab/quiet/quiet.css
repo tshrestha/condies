@@ -148,6 +148,196 @@ html[data-design="quiet"][data-theme="dark"] {
     padding: 0 10px;
 }
 
+/* Control icons: 24px, 2px strokes, round joins, in the ink of whatever they sit on. */
+
+.sq-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sq-icon-filled {
+    fill: currentColor;
+}
+
+/* The theme switch: a horizon. The sun sets below the line as the moon rises, and two stars come out. */
+
+.sq-theme {
+    display: inline-grid;
+    place-items: center;
+}
+
+.sq-horizon {
+    width: 28px;
+    height: 28px;
+    overflow: visible;
+}
+
+.sq-horizon-sun,
+.sq-horizon-moon,
+.sq-horizon-stars {
+    fill: currentColor;
+}
+
+.sq-horizon-sun path,
+.sq-horizon-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.sq-horizon-moon {
+    transform: translateY(14px);
+}
+
+.sq-horizon-stars {
+    opacity: 0;
+}
+
+.sq-horizon-dark .sq-horizon-sun {
+    transform: translateY(14px);
+}
+
+.sq-horizon-dark .sq-horizon-moon {
+    transform: none;
+}
+
+.sq-horizon-dark .sq-horizon-stars {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sq-horizon-sun,
+    .sq-horizon-moon {
+        transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+    }
+
+    .sq-horizon-dark .sq-horizon-moon,
+    .sq-horizon:not(.sq-horizon-dark) .sq-horizon-sun {
+        transition-delay: 0.15s;
+    }
+
+    .sq-horizon-stars {
+        transition: opacity 0.3s ease 0.45s;
+    }
+
+    .sq-horizon:not(.sq-horizon-dark) .sq-horizon-stars {
+        transition-delay: 0s;
+    }
+}
+
+/* The dock: phones only. Glass in Strata's own material: square chips of the temperature right now, milk glass
+   by day and smoked glass by night (`glassPaint` in ramp.ts), with the page softened behind. The 86% must match
+   GLASS_OPACITY, which the label contrast is computed for. Where blur isn't available, or the reader asked for
+   less transparency, it's simply the solid chip. */
+
+.sq-dock {
+    display: none;
+}
+
+.sq-glass {
+    background: color-mix(in srgb, var(--b) 86%, transparent);
+    color: var(--k);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--k) 18%, transparent),
+        inset 0 1px 0 color-mix(in srgb, #fff 50%, transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+}
+
+.sq-root[data-theme="dark"] .sq-glass {
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--k) 16%, transparent),
+        inset 0 1px 0 color-mix(in srgb, #fff 14%, transparent);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sq-glass {
+        background: var(--b);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sq-glass {
+        background: var(--b);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+.sq-dock-nav {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sq-dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 58px;
+    padding: 6px 2px 7px;
+    font-size: var(--sq-s);
+    line-height: 1;
+}
+
+.sq-dock-item .sq-cat {
+    width: 22px;
+    height: 22px;
+}
+
+.sq-dock-item[aria-current="page"] {
+    font-weight: 700;
+}
+
+.sq-dock-item[aria-current="page"] span {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.sq-dock-theme {
+    flex: none;
+    width: 58px;
+}
+
+.sq-dock-theme .sq-horizon {
+    width: 36px;
+    height: 36px;
+    margin-top: -4px;
+}
+
+.sq-root .sq-dock :focus-visible {
+    outline-offset: -4px;
+}
+
+@media (max-width: 767.98px) {
+    .sq-mast {
+        display: none;
+    }
+
+    .sq-root {
+        padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .sq-dock {
+        position: fixed;
+        right: max(12px, env(safe-area-inset-right, 0px));
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        left: max(12px, env(safe-area-inset-left, 0px));
+        z-index: 20;
+        display: flex;
+        gap: 8px;
+    }
+}
+
 /* Alerts: printed notices inside the margins, never banners. The frame's weight carries the severity with the
    word: a heavy frame for Extreme, a light one for Severe and avalanche danger, none for Moderate and Minor. */
 
@@ -222,7 +412,7 @@ html[data-design="quiet"][data-theme="dark"] {
 
 .sq-place-row {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
@@ -240,7 +430,6 @@ html[data-design="quiet"][data-theme="dark"] {
 }
 
 /* Small controls keep a 44px target by reaching into the space around them. */
-.sq-star,
 .sq-age .sq-link {
     flex: none;
     margin-block: -13px;
@@ -251,9 +440,17 @@ html[data-design="quiet"][data-theme="dark"] {
 }
 
 .sq-star {
-    margin-right: -10px;
-    padding-inline: 10px;
-    font-size: var(--sq-m);
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: -10px -12px -10px 0;
+}
+
+.sq-star .sq-icon {
+    width: 26px;
+    height: 26px;
 }
 
 /* Chivo at regular weight, not a condensed display face: a printed number, not a scoreboard. Its ink spans the
