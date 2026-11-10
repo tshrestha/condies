@@ -1,0 +1,1209 @@
+/* Station: the home weather station, redesigned. The page is the device face; readings live in LCD windows. */
+
+html[data-design="station"] {
+    background: #eef0ef;
+}
+
+html[data-design="station"][data-theme="dark"] {
+    background: #1a2228;
+}
+
+.ws-root {
+    /* Face: the case. One ground, one ink. */
+    --ws-face: #eef0ef;
+    --ws-ink: #14191b;
+    /* LCD: the accent. An unlit reflective panel with near-black segments. */
+    --ws-lcd: #c4d0bf;
+    --ws-seg: #0c1a0f;
+    --ws-rule: rgb(12 26 15 / 22%);
+    /* Semantic danger, for NWS alerts only: a fill under white text, and a line or word on the face. */
+    --ws-danger: #c8232f;
+    --ws-danger-line: #c8232f;
+
+    --ws-gap: var(--ws-face);
+    --ws-s: 16px;
+    --ws-m: 22px;
+    --ws-l: 36px;
+    --ws-xl: clamp(56px, 17.5vw, 68px);
+    --ws-radius: 14px;
+    --ws-pad: 14px;
+    --ws-block: 6px;
+    --ws-block-gap: 2px;
+
+    min-height: 100vh;
+    padding: 4px 16px 56px;
+    background: var(--ws-face);
+    color: var(--ws-ink);
+    font-family: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
+    font-size: var(--ws-s);
+    font-weight: 400;
+    line-height: 1.35;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Night: the backlight is on. The panel glows and the segments stay dark, in a dark slate case. */
+.ws-root[data-theme="dark"] {
+    --ws-face: #1a2228;
+    --ws-ink: #dde4e6;
+    --ws-lcd: #5aa79f;
+    --ws-seg: #021512;
+    --ws-rule: rgb(2 21 18 / 28%);
+    --ws-danger-line: #f06b6f;
+    color-scheme: dark;
+}
+
+.ws-root *:focus-visible {
+    outline: 3px solid var(--ws-ink);
+    outline-offset: 3px;
+}
+
+.ws-root [tabindex="-1"]:focus,
+.ws-sheet [tabindex="-1"]:focus {
+    outline: none;
+}
+
+.ws-lcd *:focus-visible {
+    outline-color: var(--ws-seg);
+}
+
+.ws-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.ws-nowrap {
+    white-space: nowrap;
+}
+
+.ws-root a {
+    color: inherit;
+}
+
+/* ── Numerals. Segments for the current temperature and the Condies score only; Atkinson for the rest. ── */
+
+.ws-seg {
+    font-family: "DSEG7 Classic", ui-monospace, monospace;
+    font-weight: 700;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: 0;
+}
+
+.ws-reading {
+    display: inline-flex;
+    align-items: baseline;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.ws-reading[data-size="m"] {
+    font-size: var(--ws-m);
+}
+
+.ws-reading[data-size="l"] {
+    font-size: var(--ws-l);
+}
+
+.ws-reading[data-size="xl"] {
+    font-size: var(--ws-xl);
+}
+
+.ws-unit[data-word] {
+    margin-left: 4px;
+    font-size: var(--ws-s);
+}
+
+.ws-legend,
+.ws-word {
+    font-size: var(--ws-s);
+    font-weight: 400;
+}
+
+.ws-word-l {
+    font-size: var(--ws-m);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.ws-voice {
+    font-weight: 700;
+}
+
+.ws-pair {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+/* ── Icons: one ink, segments separated by the ground color. ── */
+
+.ws-icon {
+    width: 1em;
+    height: 1em;
+    flex: none;
+    fill: currentColor;
+    overflow: visible;
+}
+
+.ws-lcd {
+    --ws-gap: var(--ws-lcd);
+}
+
+.ws-icon .ws-gap {
+    fill: var(--ws-gap);
+    stroke: var(--ws-gap);
+    stroke-width: 2.4;
+}
+
+.ws-icon .ws-gap-fill {
+    fill: var(--ws-gap);
+}
+
+.ws-icon .ws-stroke {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+}
+
+.ws-icon .ws-outline {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+/* ── LCD windows ── */
+
+.ws-lcd {
+    padding: var(--ws-pad);
+    border-radius: var(--ws-radius);
+    background: var(--ws-lcd);
+    color: var(--ws-seg);
+}
+
+/* ── Tabs: every choice is plain text. Selected is bold with a bar under it. ── */
+
+.ws-tab {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 6px;
+    color: var(--ws-ink);
+    font-size: var(--ws-s);
+    font-weight: 400;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.ws-tab[aria-pressed="true"],
+.ws-tab[aria-current] {
+    font-weight: 700;
+}
+
+.ws-tab[aria-pressed="true"]::after,
+.ws-tab[aria-current]::after {
+    content: "";
+    position: absolute;
+    right: 6px;
+    bottom: 7px;
+    left: 6px;
+    height: 3px;
+    border-radius: 2px;
+    background: currentColor;
+}
+
+.ws-tab .ws-icon {
+    font-size: 16px;
+}
+
+.ws-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-inline: -6px;
+}
+
+.ws-nav-group {
+    display: flex;
+    gap: 6px;
+}
+
+.ws-tabs {
+    display: flex;
+    gap: 2px;
+    margin-right: -6px;
+}
+
+/* ── Printed labels on the face ── */
+
+.ws-print-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 8px;
+    min-height: 30px;
+    margin-bottom: 4px;
+}
+
+.ws-print {
+    font-size: var(--ws-s);
+    font-weight: 700;
+}
+
+.ws-fine {
+    margin-top: 8px;
+}
+
+.ws-sub {
+    font-size: var(--ws-s);
+}
+
+.ws-place {
+    font-size: var(--ws-m);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* ── Lamps: one line per warning, the severity word first. ── */
+
+.ws-lamps {
+    display: grid;
+    gap: 6px;
+    margin-bottom: -4px;
+}
+
+.ws-lamps li[data-tier="extreme"] {
+    margin-block: 6px 4px;
+}
+
+.ws-lamp {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 6px 10px 6px 12px;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    color: var(--ws-ink);
+    font-size: var(--ws-s);
+    line-height: 1.15;
+    text-align: left;
+}
+
+.ws-lamp-sev {
+    flex: none;
+    font-weight: 400;
+}
+
+.ws-lamp-text {
+    flex: 1;
+    font-weight: 700;
+}
+
+.ws-lamp .ws-chev {
+    font-size: 18px;
+}
+
+.ws-lamp[data-tier="extreme"],
+.ws-lamp[data-tier="severe"] {
+    --ws-gap: var(--ws-danger);
+    background: var(--ws-danger);
+    border-color: var(--ws-danger);
+    color: #fff;
+}
+
+.ws-lamp[data-tier="extreme"] .ws-lamp-text,
+.ws-lamp[data-tier="severe"] .ws-lamp-text {
+    font-size: var(--ws-m);
+}
+
+/* Extreme is louder than Severe: the same lit lamp inside a second ring. */
+.ws-lamp[data-tier="extreme"] {
+    box-shadow:
+        0 0 0 3px var(--ws-face),
+        0 0 0 6px var(--ws-danger-line);
+}
+
+.ws-lamp[data-tier="extreme"] .ws-lamp-sev {
+    font-weight: 700;
+}
+
+.ws-lamp[data-tier="extreme"]:focus-visible {
+    outline-offset: 8px;
+}
+
+.ws-lamp[data-tier="mid"] {
+    border-color: var(--ws-danger-line);
+}
+
+.ws-lamp[data-tier="mid"] .ws-lamp-sev {
+    color: var(--ws-danger-line);
+    font-weight: 700;
+}
+
+.ws-lamp[data-tier="low"] {
+    border-color: color-mix(in srgb, var(--ws-ink) 40%, transparent);
+}
+
+.ws-lamp[data-tier="low"] .ws-lamp-text {
+    font-weight: 400;
+}
+
+.ws-lamp[data-tier="avalanche"] {
+    padding-left: 0;
+    border-color: var(--ws-ink);
+    overflow: hidden;
+}
+
+.ws-danger {
+    display: grid;
+    place-items: center;
+    align-self: stretch;
+    min-width: 64px;
+    margin: -6px 0;
+    padding: 0 8px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ws-danger-none {
+    border-right: 2px solid var(--ws-ink);
+    font-weight: 400;
+}
+
+.ws-lamp-avy {
+    margin-top: 12px;
+}
+
+/* ── Home ── */
+
+.ws-home,
+.ws-day,
+.ws-spots {
+    display: grid;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.ws-col-a,
+.ws-col-b,
+.ws-col-c,
+.ws-col-wide {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+    min-width: 0;
+}
+
+.ws-col-a {
+    gap: 14px;
+}
+
+.ws-now-group {
+    display: grid;
+    gap: 6px;
+}
+
+.ws-place .ws-star-key {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: -11px -6px -11px 0;
+    vertical-align: middle;
+    font-size: 26px;
+}
+
+.ws-place-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0 12px;
+    min-height: 30px;
+}
+
+.ws-updated {
+    min-height: 44px;
+    margin-block: -5px;
+    padding: 0;
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+}
+
+.ws-meow {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: right;
+}
+
+.ws-meow .ws-cat {
+    font-size: 22px;
+}
+
+.ws-now-top {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    column-gap: 14px;
+}
+
+.ws-now-top .ws-hero {
+    grid-row: 1 / 3;
+}
+
+.ws-now-top .ws-meow {
+    justify-self: end;
+}
+
+.ws-now-cond {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+    text-align: right;
+}
+
+.ws-hero {
+    display: inline-flex;
+    align-items: flex-start;
+}
+
+.ws-hero .ws-seg {
+    font-size: var(--ws-xl);
+}
+
+.ws-hero .ws-unit {
+    margin: 2px 0 0 6px;
+    font-size: var(--ws-m);
+    font-weight: 700;
+    line-height: 1;
+}
+
+.ws-now-icon {
+    font-size: 44px;
+}
+
+.ws-condition {
+    font-size: var(--ws-m);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.ws-now-cond .ws-condition {
+    margin-bottom: -3px;
+}
+
+.ws-now-cond .ws-condition[data-long] {
+    font-size: var(--ws-s);
+}
+
+.ws-now-more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    margin-top: 12px;
+}
+
+/* ── Hourly window ── */
+
+.ws-hourly-lcd {
+    padding-bottom: 10px;
+}
+
+.ws-readout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+}
+
+.ws-readout-words {
+    display: grid;
+    line-height: 1.2;
+}
+
+.ws-readout .ws-voice {
+    margin-left: auto;
+}
+
+.ws-bars {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    align-items: end;
+    padding-top: 6px;
+    border-bottom: 2px solid var(--ws-seg);
+}
+
+.ws-bars[data-labels] {
+    padding-top: 22px;
+}
+
+.ws-readout + .ws-bars {
+    margin-top: 10px;
+}
+
+.ws-col {
+    position: relative;
+    display: grid;
+    grid-template-rows: repeat(8, var(--ws-block));
+    row-gap: var(--ws-block-gap);
+    justify-items: center;
+    padding-bottom: 3px;
+    animation: ws-on 1ms steps(1, end) both;
+    animation-delay: calc(var(--i) * 26ms + 40ms);
+}
+
+.ws-block {
+    width: 70%;
+    max-width: 22px;
+    height: var(--ws-block);
+    border-radius: 1px;
+    visibility: hidden;
+}
+
+.ws-block[data-on="lit"] {
+    visibility: visible;
+    background: var(--ws-seg);
+}
+
+.ws-block[data-on="peak"] {
+    visibility: visible;
+    box-shadow: inset 0 0 0 2px var(--ws-seg);
+}
+
+.ws-bar-label {
+    position: absolute;
+    bottom: calc(var(--top) * (var(--ws-block) + var(--ws-block-gap)) + 7px);
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.ws-bar-label[data-align="center"] {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.ws-bar-label[data-align="start"] {
+    left: 0;
+}
+
+.ws-bar-label[data-align="end"] {
+    right: 0;
+}
+
+.ws-axis {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    padding: 4px var(--ws-pad) 0;
+    line-height: 1.2;
+}
+
+.ws-tick {
+    display: flex;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.ws-tick[data-edge="start"] {
+    justify-content: flex-start;
+}
+
+/* ── Week window ── */
+
+.ws-week-lcd {
+    padding-block: 8px 4px;
+}
+
+/* The best day is lit: segment ink on, panel-colored type, like an LCD's highlighted line. */
+.ws-root .ws-best {
+    display: grid;
+    gap: 2px;
+    margin: 0 -6px 4px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--ws-seg);
+    color: var(--ws-lcd);
+    text-decoration: none;
+}
+
+.ws-best:focus-visible {
+    outline-color: var(--ws-seg);
+}
+
+.ws-best-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ws-best-why {
+    font-weight: 700;
+}
+
+.ws-best-day {
+    font-size: var(--ws-m);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.ws-best-score {
+    display: inline-flex;
+    flex: none;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.ws-week-rows {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    column-gap: 12px;
+}
+
+.ws-week-rows[data-snow] {
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+}
+
+.ws-week-rows li,
+.ws-week-row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+}
+
+.ws-week-row {
+    min-height: 44px;
+    text-decoration: none;
+}
+
+.ws-week-rows li + li .ws-week-row {
+    border-top: 1.5px solid var(--ws-rule);
+}
+
+.ws-week-day {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+}
+
+.ws-week-day .ws-pointer {
+    margin-left: -4px;
+    font-size: 14px;
+}
+
+.ws-week-icon .ws-icon {
+    font-size: 28px;
+}
+
+.ws-week-high,
+.ws-week-low,
+.ws-week-snow {
+    justify-self: end;
+}
+
+.ws-week-snow .ws-reading {
+    font-size: var(--ws-s);
+}
+
+.ws-notes {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.ws-notes li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.ws-notes .ws-icon {
+    margin-top: 1px;
+    font-size: 20px;
+}
+
+/* ── Condies score: segment digits, its legend printed beside it. ── */
+
+.ws-score {
+    font-size: var(--ws-m);
+}
+
+.ws-score[data-size="l"] {
+    font-size: var(--ws-l);
+}
+
+/* ── Mountain ── */
+
+.ws-depth-lcd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px 28px;
+}
+
+/* ── Day ── */
+
+.ws-day-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.ws-day-nav {
+    display: flex;
+    gap: 2px;
+    margin-right: -6px;
+}
+
+.ws-day-title {
+    min-width: 0;
+}
+
+.ws-step {
+    font-weight: 700;
+}
+
+.ws-day-lcd .ws-condition {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ws-cond-icon {
+    font-size: 40px;
+}
+
+.ws-day-temps {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: start;
+    align-items: baseline;
+    gap: 6px 40px;
+    margin-top: 14px;
+}
+
+.ws-day-score {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-top: 18px;
+}
+
+.ws-score-text {
+    display: grid;
+}
+
+.ws-facts dl {
+    display: grid;
+}
+
+.ws-fact {
+    display: grid;
+    grid-template-columns: 4.5em 1fr;
+    align-items: baseline;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1.5px solid var(--ws-rule);
+}
+
+.ws-fact:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.ws-fact:last-child {
+    padding-bottom: 0;
+}
+
+.ws-fact dd,
+.ws-part dd {
+    margin: 0;
+}
+
+.ws-fact dd {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.ws-period + .ws-period {
+    margin-top: 18px;
+}
+
+.ws-period h3 {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0 12px;
+    font-size: var(--ws-s);
+    font-weight: 700;
+}
+
+.ws-period p {
+    max-width: 38em;
+    margin-top: 4px;
+}
+
+.ws-period-temp {
+    font-weight: 400;
+}
+
+/* ── Spots ── */
+
+.ws-filter {
+    display: flex;
+    gap: 2px;
+    margin-inline: -16px;
+    padding-inline: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.ws-filter .ws-tab {
+    flex: none;
+}
+
+.ws-spots-lcd {
+    padding-block: 4px;
+}
+
+.ws-spot {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 72px;
+    padding: 10px 0;
+    text-decoration: none;
+}
+
+.ws-spot-score {
+    min-width: calc(3 * 0.816 * var(--ws-l));
+    text-align: right;
+}
+
+.ws-spot-rows li + li .ws-spot {
+    border-top: 1.5px solid var(--ws-rule);
+}
+
+.ws-spot-text {
+    display: grid;
+    gap: 2px;
+}
+
+.ws-spot-name {
+    font-size: var(--ws-m);
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+.ws-spot-snow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ws-spot-snow .ws-icon {
+    font-size: 22px;
+}
+
+.ws-empty-lcd {
+    display: grid;
+    justify-items: start;
+    gap: 10px;
+}
+
+.ws-empty-lcd .ws-star {
+    font-size: 36px;
+}
+
+/* ── Sheets ── */
+
+.ws-sheet {
+    --ws-gap: var(--ws-face);
+    width: min(560px, 100% - 24px);
+    max-height: calc(100% - 32px);
+    margin: auto;
+    padding: 6px 18px 28px;
+    border: 2px solid var(--ws-ink);
+    border-radius: 18px;
+    background: var(--ws-face);
+    color: var(--ws-ink);
+    font-family: "Atkinson Hyperlegible Next Variable", system-ui, sans-serif;
+    font-size: var(--ws-s);
+    line-height: 1.4;
+}
+
+.ws-sheet::backdrop {
+    background: rgb(4 8 9 / 62%);
+}
+
+.ws-sheet-top {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 -6px 6px 0;
+}
+
+.ws-sheet-lamp {
+    margin: 6px 0 14px;
+}
+
+.ws-sheet-sev {
+    margin-bottom: 14px;
+}
+
+.ws-sheet-title {
+    font-size: var(--ws-m);
+    font-weight: 700;
+}
+
+.ws-parts {
+    display: grid;
+    gap: 14px;
+}
+
+.ws-part dt {
+    font-weight: 700;
+}
+
+.ws-instruction {
+    margin-top: 18px;
+}
+
+.ws-avy {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.ws-avy .ws-lamp-avy {
+    margin-top: 0;
+}
+
+.ws-link {
+    font-weight: 700;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.ws-search {
+    display: grid;
+    gap: 8px;
+}
+
+.ws-input {
+    width: 100%;
+    min-height: 52px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--ws-lcd);
+    color: var(--ws-seg);
+    font-size: var(--ws-m);
+}
+
+.ws-input::placeholder {
+    color: var(--ws-seg);
+    opacity: 0.72;
+}
+
+.ws-input:focus-visible {
+    outline: 3px solid var(--ws-ink);
+    outline-offset: 2px;
+}
+
+.ws-results {
+    margin-top: 10px;
+}
+
+.ws-results li + li {
+    border-top: 1.5px solid var(--ws-rule);
+}
+
+.ws-result {
+    display: grid;
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 0;
+    text-align: left;
+}
+
+.ws-result-name {
+    font-weight: 700;
+}
+
+/* ── States ── */
+
+.ws-offline {
+    margin-top: 6px;
+    font-weight: 700;
+}
+
+.ws-state {
+    display: grid;
+    gap: 12px;
+    max-width: 560px;
+    padding-top: 28px;
+}
+
+.ws-state-actions {
+    display: flex;
+    gap: 12px;
+    margin-left: -6px;
+}
+
+.ws-state-actions .ws-tab {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.ws-blank {
+    display: grid;
+    gap: 22px;
+    margin-top: 12px;
+}
+
+.ws-blank-bars {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    align-items: end;
+    height: 120px;
+}
+
+.ws-blank-bars i {
+    justify-self: center;
+    width: 70%;
+    max-width: 22px;
+    height: var(--ws-block);
+    background: var(--ws-seg);
+    border-radius: 1px;
+}
+
+.ws-blank[data-blink] .ws-seg,
+.ws-blank[data-blink] .ws-blank-bars i {
+    animation: ws-blink 1.2s steps(1, end) infinite;
+}
+
+.ws-blank[data-blink] .ws-blank-bars i {
+    animation-delay: calc(var(--i) * 100ms);
+}
+
+@keyframes ws-on {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes ws-blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ws-col,
+    .ws-blank[data-blink] .ws-seg,
+    .ws-blank[data-blink] .ws-blank-bars i {
+        animation: none;
+    }
+}
+
+/* ── Phone: one column, in reading order. The mountain window comes after the week. ── */
+
+@media (max-width: 959px) {
+    .ws-home .ws-col-a,
+    .ws-home .ws-col-b,
+    .ws-home .ws-col-c {
+        display: contents;
+    }
+
+    .ws-home .ws-mountain {
+        order: 1;
+    }
+}
+
+/* ── Small phones ── */
+
+@media (max-width: 360px) {
+    .ws-root {
+        --ws-pad: 12px;
+        padding-inline: 12px;
+    }
+
+    .ws-week-rows {
+        column-gap: 8px;
+    }
+
+    .ws-nav-group {
+        gap: 0;
+    }
+}
+
+/* ── Wide: the device turns landscape, three columns of windows. ── */
+
+@media (min-width: 960px) {
+    .ws-root {
+        padding: 12px 40px 64px;
+    }
+
+    .ws-root > * {
+        max-width: 1240px;
+        margin-inline: auto;
+    }
+
+    .ws-home,
+    .ws-day {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 40px;
+        align-items: start;
+        margin-top: 12px;
+    }
+
+    .ws-spots {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        gap: 40px;
+        align-items: start;
+    }
+
+    .ws-filter {
+        flex-wrap: wrap;
+        margin-inline: -6px;
+        padding-inline: 0;
+    }
+
+    /* The landscape face has room for a taller graph, in the same grammar. */
+    .ws-hourly {
+        --ws-block: 14px;
+        --ws-block-gap: 4px;
+    }
+}

@@ -1,0 +1,908 @@
+/* Strata Quiet. Flat bands whose color is the temperature, said calmly. */
+
+html[data-design="quiet"] {
+    background: #fff;
+}
+
+html[data-design="quiet"][data-theme="dark"] {
+    background: #000;
+}
+
+.sq-root {
+    --sq-ground: #fff;
+    --sq-ink: #000;
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    --sq-gut: 20px;
+    --sq-s: 14px;
+    --sq-m: 18px;
+    --sq-l: 32px;
+    --sq-xl: 88px;
+    --sq-text: "Chivo Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --sq-display: "League Gothic Variable", "Arial Narrow", sans-serif;
+
+    min-height: 100vh;
+    min-height: 100svh;
+    background: var(--sq-ground);
+    color: var(--sq-ink);
+    font: 400 var(--sq-m) / 1.3 var(--sq-text);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
+
+.sq-root[data-theme="dark"] {
+    --sq-ground: #000;
+    --sq-ink: #fff;
+    color-scheme: dark;
+}
+
+:where(.sq-root) a {
+    color: inherit;
+    text-decoration: none;
+}
+
+:where(.sq-root) button {
+    color: inherit;
+    text-align: inherit;
+}
+
+:where(.sq-root) h1,
+:where(.sq-root) h2,
+:where(.sq-root) dl,
+:where(.sq-root) dd {
+    margin: 0;
+    font: inherit;
+}
+
+/* Surfaces: a band of color, or the ground. Bands never touch: two pixels of ground keep two days of the
+   same color from reading as one. */
+
+.sq-band {
+    display: block;
+    border-bottom: 2px solid var(--sq-ground);
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-ground {
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    background: var(--b);
+    color: var(--k);
+}
+
+/* Type: four sizes, two weights. */
+
+.sq-strong {
+    font-weight: 700;
+}
+
+.sq-small {
+    font-size: var(--sq-s);
+}
+
+.sq-num {
+    font-size: var(--sq-l);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-xl {
+    font-size: var(--sq-xl);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.sq-low {
+    font-weight: 400;
+}
+
+.sq-link {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+.sq-root :focus-visible {
+    outline: 3px solid var(--k);
+    outline-offset: 2px;
+}
+
+.sq-root .sq-band:focus-visible,
+.sq-root .sq-alert:focus-visible,
+.sq-root .sq-close:focus-visible,
+.sq-root .sq-blocks-link:focus-visible,
+.sq-root .sq-best:focus-visible,
+.sq-root .sq-spot:focus-visible {
+    outline-offset: -6px;
+}
+
+/* Masthead: on the ground, the same on every screen. */
+
+.sq-mast {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 52px;
+    padding: 4px calc(var(--sq-gut) - 10px);
+}
+
+.sq-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+.sq-nav {
+    display: flex;
+}
+
+.sq-nav > * {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 10px;
+}
+
+/* Alerts: one component under the nav, strongest first. Extreme and Severe are black bands framed in white,
+   which no temperature ever is, so they stand out on any day's color and on either ground. Extreme is set
+   larger. Avalanche danger keeps its standard color. Moderate and Minor are quiet rows on the ground. */
+
+.sq-alert {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px var(--sq-gut);
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-alert[data-tone="extreme"],
+.sq-alert[data-tone="severe"] {
+    --b: #000;
+    --k: #fff;
+    font-weight: 700;
+}
+
+.sq-alert:not([data-tone="quiet"]) {
+    border-block: 2px solid #fff;
+}
+
+.sq-alert:not([data-tone="quiet"]) + .sq-alert:not([data-tone="quiet"]) {
+    border-top: 0;
+}
+
+.sq-alert[data-tone="extreme"] {
+    min-height: 68px;
+    padding-block: 16px;
+}
+
+.sq-alert[data-tone="extreme"] .sq-alert-title {
+    font-size: var(--sq-l);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-alert[data-tone="avalanche"] {
+    font-weight: 700;
+}
+
+.sq-alert[data-tone="quiet"] {
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    min-height: 44px;
+    padding-block: 10px;
+}
+
+.sq-alert-note {
+    flex: none;
+    font-size: var(--sq-s);
+    font-weight: 400;
+}
+
+/* Now */
+
+.sq-now {
+    container-type: inline-size;
+    padding: 12px var(--sq-gut) 18px;
+}
+
+.sq-place-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.sq-place {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.sq-place .sq-cat {
+    flex: none;
+    align-self: center;
+}
+
+/* Small controls keep a 44px target by reaching into the space around them. */
+.sq-star,
+.sq-age .sq-link {
+    flex: none;
+    margin-block: -13px;
+    padding-block: 13px;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+.sq-star {
+    margin-right: -10px;
+    padding-inline: 10px;
+}
+
+/* The numeral is at most half the column wide and about a third of the screen tall, with the words beside it. */
+.sq-now-main {
+    --sq-words: 166px;
+    display: grid;
+    grid-template-columns: auto minmax(var(--sq-words), 1fr);
+    align-items: end;
+    column-gap: 14px;
+    margin-top: 18px;
+}
+
+/* The words keep their column, and the numeral takes the rest of the width, up to half of it. */
+.sq-numeral {
+    margin-left: calc(var(--lsb) * -1em);
+    font-family: var(--sq-display);
+    font-weight: 400;
+    font-size: min(calc(min(50cqi, 100cqi - var(--sq-words) - 14px) / var(--em)), 40svh, var(--fit, 1000px));
+    line-height: 1;
+    white-space: nowrap;
+    text-box: trim-both cap alphabetic;
+}
+
+.sq-cond {
+    font-size: var(--sq-l);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-cond + .sq-now-line {
+    margin-top: 8px;
+}
+
+.sq-age {
+    margin-top: 10px;
+    font-size: var(--sq-s);
+}
+
+.sq-cat {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+.sq-avy-none {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 24px var(--sq-gut);
+}
+
+.sq-avy-none .sq-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+/* Next 12 hours: a sentence, then the same hours in three columns, all on the ground. */
+
+.sq-caption {
+    padding: 12px var(--sq-gut) 11px;
+}
+
+.sq-caption + .sq-later {
+    margin-top: -10px;
+}
+
+.sq-next .sq-caption {
+    padding-bottom: 4px;
+}
+
+.sq-blocks-link {
+    display: block;
+}
+
+/* Three spans of four hours on the page's own three-column grid, so their words line up with the gutter. */
+.sq-blocks {
+    --sq-third: calc((100% - 2 * var(--sq-gut)) / 3);
+    display: grid;
+    grid-template-columns: calc(var(--sq-gut) + var(--sq-third)) var(--sq-third) minmax(0, 1fr);
+}
+
+.sq-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 8px 14px 0;
+}
+
+.sq-block:first-child {
+    padding-left: var(--sq-gut);
+}
+
+.sq-block:last-child {
+    padding-right: var(--sq-gut);
+}
+
+/* Best day, and the score's one treatment */
+
+.sq-best {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px var(--sq-gut) 16px;
+}
+
+.sq-best-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.sq-best-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+}
+
+.sq-score {
+    display: inline-flex;
+    flex: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 68px;
+    height: 68px;
+    padding: 8px 8px 9px;
+    background: var(--sq-ink);
+    color: var(--sq-ground);
+}
+
+.sq-score-word {
+    font-size: var(--sq-s);
+    line-height: 1;
+}
+
+.sq-score-num {
+    font-size: var(--sq-l);
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+}
+
+/* The week */
+
+.sq-day {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 72px;
+    padding: 12px var(--sq-gut);
+}
+
+.sq-day-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sq-temps {
+    display: flex;
+    flex: none;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.sq-temps .sq-num {
+    min-width: 2.6ch;
+    text-align: right;
+}
+
+.sq-temps-word {
+    align-self: center;
+}
+
+/* Facts: a big number, then plain words. */
+
+.sq-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 22px var(--sq-gut);
+}
+
+.sq-stats .sq-small,
+.sq-sunline {
+    margin-top: 4px;
+}
+
+.sq-sun {
+    padding-bottom: 40px;
+}
+
+/* Day */
+
+.sq-pager {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0 calc(var(--sq-gut) - 10px);
+}
+
+.sq-page {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 48px;
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+.sq-page-next {
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.sq-page-end {
+    justify-content: flex-end;
+    font-size: var(--sq-s);
+    font-weight: 400;
+    text-align: right;
+}
+
+.sq-dayhero {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 24px var(--sq-gut) 28px;
+}
+
+.sq-dayhero-temps {
+    display: flex;
+    align-items: baseline;
+    gap: 24px;
+    margin: 18px 0 14px;
+}
+
+.sq-marker {
+    margin-top: 10px;
+}
+
+.sq-scorerow {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px var(--sq-gut) 0;
+}
+
+.sq-insight {
+    padding: 0 var(--sq-gut) 22px;
+}
+
+.sq-hourly {
+    padding: 22px var(--sq-gut) 32px;
+}
+
+.sq-hourly-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: 16px;
+}
+
+.sq-tabs {
+    display: flex;
+    margin-right: -10px;
+}
+
+.sq-tab {
+    min-height: 44px;
+    padding: 0 10px;
+}
+
+.sq-tab[aria-pressed="true"] {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.35em;
+}
+
+.sq-chart-summary {
+    margin: 4px 0 8px;
+}
+
+.sq-cols {
+    display: flex;
+    gap: 2px;
+    height: 150px;
+    padding-top: 30px;
+    border-bottom: 2px solid var(--sq-ink);
+    box-sizing: content-box;
+}
+
+.sq-col {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.sq-bar,
+.sq-gust {
+    position: absolute;
+    right: 0;
+    left: 0;
+    background: var(--sq-ink);
+}
+
+.sq-bar {
+    bottom: 0;
+    height: calc(var(--h) * 100%);
+}
+
+.sq-gust {
+    bottom: calc(var(--g) * 100%);
+    height: 3px;
+}
+
+.sq-col-label {
+    position: absolute;
+    bottom: calc(var(--t) * 100% + 6px);
+    left: 50%;
+    font-weight: 700;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.sq-col[data-align="start"] .sq-col-label {
+    left: 0;
+    transform: none;
+}
+
+.sq-col[data-align="end"] .sq-col-label {
+    right: 0;
+    left: auto;
+    transform: none;
+}
+
+.sq-axis {
+    display: flex;
+    gap: 2px;
+    margin-top: 6px;
+    font-size: var(--sq-s);
+}
+
+.sq-axis li {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.sq-periods {
+    padding-bottom: 32px;
+}
+
+.sq-period {
+    padding: 16px var(--sq-gut) 4px;
+}
+
+.sq-period-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+/* My Spots */
+
+.sq-spots-head {
+    padding: 8px var(--sq-gut) 12px;
+}
+
+.sq-filters {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 10px -10px 0;
+}
+
+.sq-spot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px var(--sq-gut);
+}
+
+.sq-spot-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sq-empty {
+    padding: 8px var(--sq-gut) 32px;
+}
+
+/* Sheets */
+
+.sq-sheet {
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    border: 0;
+    background: var(--sq-ground);
+    color: var(--sq-ink);
+}
+
+.sq-sheet::backdrop {
+    background: rgb(0 0 0 / 0.6);
+}
+
+.sq-sheet-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 56px;
+    padding: 4px calc(var(--sq-gut) - 10px) 4px var(--sq-gut);
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-close {
+    min-height: 44px;
+    padding: 0 10px;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+.sq-sheet-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px var(--sq-gut) 26px;
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-sheet-head[data-loud] {
+    border-bottom: 2px solid #fff;
+}
+
+.sq-sheet-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px var(--sq-gut) 40px;
+}
+
+.sq-parts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sq-sheet-body .sq-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+.sq-search {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.sq-input {
+    width: 100%;
+    min-height: 56px;
+    padding: 4px 0;
+    border: 0;
+    border-bottom: 3px solid currentColor;
+    border-radius: 0;
+    background: transparent;
+    font-size: var(--sq-l);
+}
+
+/* Focus thickens the field's own rule instead of drawing a second box around it. */
+.sq-root .sq-input:focus-visible {
+    outline: 0;
+    border-bottom-width: 6px;
+}
+
+.sq-input::placeholder {
+    color: inherit;
+    opacity: 0.62;
+}
+
+.sq-results {
+    width: 100%;
+}
+
+.sq-result {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 0;
+}
+
+/* States */
+
+.sq-offline {
+    padding: 12px var(--sq-gut);
+}
+
+.sq-loading {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+}
+
+.sq-loading-band {
+    height: 62svh;
+    background: var(--c1);
+}
+
+.sq-loading-text {
+    padding: 20px var(--sq-gut);
+    font-size: var(--sq-l);
+    font-weight: 700;
+}
+
+@keyframes sq-walk {
+    0% {
+        background: var(--c0);
+    }
+    16% {
+        background: var(--c1);
+    }
+    33% {
+        background: var(--c2);
+    }
+    50% {
+        background: var(--c3);
+    }
+    66% {
+        background: var(--c4);
+    }
+    83% {
+        background: var(--c5);
+    }
+}
+
+.sq-error {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 100svh;
+    padding: 72px var(--sq-gut);
+}
+
+.sq-error-actions {
+    display: flex;
+    gap: 28px;
+}
+
+.sq-error-actions > * {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+/* Motion: nothing slides or fades in. A band's color shifts when the data or the theme changes, and chart
+   columns grow from the baseline. */
+
+@media (prefers-reduced-motion: no-preference) {
+    .sq-band {
+        transition:
+            background-color 0.4s ease,
+            color 0.4s ease;
+    }
+
+    .sq-bar {
+        transition:
+            height 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
+            background-color 0.35s ease;
+    }
+
+    .sq-loading-band {
+        animation: sq-walk 9s step-end infinite;
+    }
+}
+
+/* Widths */
+
+@media (max-width: 379px) {
+    .sq-nav > * {
+        padding: 0 6px;
+        font-size: var(--sq-s);
+    }
+}
+
+@media (min-width: 600px) {
+    .sq-root {
+        --sq-gut: 32px;
+    }
+}
+
+/* Wide: the masthead and the alerts run across the top. Below them the lead (Now, or the day) holds still on
+   the left while the list scrolls on the right. */
+@media (min-width: 1024px) {
+    .sq-root {
+        --sq-gut: 40px;
+    }
+
+    .sq-split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .sq-lead {
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    .sq-now,
+    .sq-dayhero {
+        flex: 1;
+    }
+
+    .sq-numeral {
+        font-size: min(calc(min(50cqi, 100cqi - var(--sq-words) - 14px) / var(--em)), 42vh);
+    }
+
+    .sq-spots-head {
+        min-height: 0;
+    }
+
+    .sq-sheet {
+        width: 560px;
+        margin-left: auto;
+    }
+}

@@ -1,0 +1,1327 @@
+/* Mile Marker: the forecast, signed like a highway. Every color is a sign color with its MUTCD meaning. */
+
+.mm-root {
+    /* Ground and ink: open daylight. */
+    --ground: #ffffff;
+    --ink: #101010;
+    --ink-2: #4f4f4f;
+    --focus: #101010;
+    --edge: #c4c4c4;
+
+    /* Sign colors, by NWS severity and MUTCD meaning. Green guides. Yellow warns (Extreme and Severe).
+       Orange is Moderate. White states a fact or a Minor alert. Brown is a place to play. */
+
+    --green: #006a4e;
+    --yellow: #ffcd00;
+    --orange: #ea7a1f;
+    --white: #ffffff;
+    --brown: #683c1e;
+
+    --gap: 16px;
+    --radius: 12px;
+
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--ground);
+    color: var(--ink);
+    color-scheme: light;
+    font-family: "Overpass Variable", "Overpass", sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.35;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Signs at night: the ground goes black and legends glow, as retroreflective sheeting does under headlights. */
+.mm-root[data-theme="dark"] {
+    --ground: #000000;
+    --ink: #f3f3f3;
+    --ink-2: #b2b2b2;
+    --focus: #ffffff;
+    --edge: transparent;
+    --green: #00452f;
+    --yellow: #f2c400;
+    --orange: #e0701a;
+    --white: #e6e6e6;
+    --brown: #55301a;
+    color-scheme: dark;
+}
+
+/* Four sizes, two weights. */
+.mm-t1 {
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+.mm-t2 {
+    font-size: 24px;
+    line-height: 1.2;
+}
+
+.mm-t3 {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.05;
+}
+
+.mm-strong {
+    font-weight: 700;
+}
+
+/* Warning, temporary and regulatory legends are set in capitals, as they are on the road. */
+.mm-legend-caps {
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.mm-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.mm-root :focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+
+/* ---------- The sign ---------- */
+
+.mm-sign {
+    --mm-panel: var(--green);
+    --mm-legend: #ffffff;
+    --mm-line: #ffffff;
+    display: block;
+    width: 100%;
+    padding: 14px 20px 16px;
+    border-radius: var(--radius);
+    background: var(--mm-panel);
+    color: var(--mm-legend);
+    text-align: left;
+    text-decoration: none;
+    /* The border line sits inset from the edge, the way it does on a real panel. */
+    box-shadow:
+        inset 0 0 0 4px var(--mm-panel),
+        inset 0 0 0 6px var(--mm-line);
+}
+
+.mm-sign[data-tone="warn"] {
+    --mm-panel: var(--yellow);
+    --mm-legend: #000000;
+    --mm-line: #000000;
+}
+
+.mm-sign[data-tone="temp"] {
+    --mm-panel: var(--orange);
+    --mm-legend: #000000;
+    --mm-line: #000000;
+}
+
+.mm-sign[data-tone="reg"] {
+    --mm-panel: var(--white);
+    --mm-legend: #000000;
+    --mm-line: #000000;
+    /* A white panel on daylight ground needs its own edge, or only the border line shows. */
+    box-shadow:
+        inset 0 0 0 4px var(--mm-panel),
+        inset 0 0 0 6px var(--mm-line),
+        0 0 0 1px var(--edge);
+}
+
+.mm-sign[data-tone="rec"] {
+    --mm-panel: var(--brown);
+}
+
+.mm-signlink {
+    cursor: pointer;
+}
+
+.mm-sign:focus-visible,
+.mm-signlink:focus-visible {
+    outline-offset: 3px;
+}
+
+.mm-arrow {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+.mm-sym {
+    flex: none;
+    width: 28px;
+    height: 28px;
+}
+
+.mm-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.mm-link {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+/* ---------- Top bar ---------- */
+
+.mm-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 4px 10px 0 16px;
+}
+
+.mm-brand {
+    font-size: 24px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.mm-bar-nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.mm-iconbtn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    color: var(--ink);
+}
+
+.mm-spotslink {
+    --mm-panel: var(--brown);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    margin: 0 4px;
+    padding: 0 14px 0 11px;
+    border-radius: 8px;
+    background: var(--brown);
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow:
+        inset 0 0 0 3px var(--brown),
+        inset 0 0 0 5px #ffffff;
+}
+
+.mm-spotslink .mm-icon {
+    width: 18px;
+    height: 18px;
+}
+
+@media (max-width: 359px) {
+    .mm-spotslink {
+        padding: 0 13px;
+    }
+
+    .mm-spotslink span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+}
+
+.mm-spotslink[aria-current="page"] {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ---------- Layout ---------- */
+
+.mm-home,
+.mm-day,
+.mm-spots,
+.mm-error {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 12px 16px 56px;
+}
+
+.mm-home {
+    display: grid;
+    gap: var(--gap);
+}
+
+.mm-col {
+    display: grid;
+    gap: var(--gap);
+    align-content: start;
+    min-width: 0;
+}
+
+.mm-caption {
+    color: var(--ink-2);
+}
+
+/* ---------- Now ---------- */
+
+.mm-now {
+    container-type: inline-size;
+}
+
+.mm-now-sign {
+    padding: 8px 10px 14px 20px;
+}
+
+.mm-now-place {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.mm-now-place h1 {
+    padding-top: 8px;
+    font-weight: 700;
+}
+
+.mm-star {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+}
+
+.mm-now-read {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-right: 10px;
+}
+
+.mm-now-temp {
+    flex: none;
+    font-size: 88px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    /* Overpass sits low in its line box, so lift it to centre the figures. */
+    padding-top: 6px;
+}
+
+.mm-now-text {
+    min-width: 0;
+}
+
+.mm-now-cond {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+@container (max-width: 300px) {
+    .mm-now-read {
+        flex-wrap: wrap;
+        row-gap: 0;
+    }
+}
+
+/* A tab sits flush on top of its sign, as an exit number does on a guide sign. It carries the app's voice:
+   Right meow, POW DAY and PRIMO. */
+.mm-tabbed > .mm-sign,
+.mm-sign[data-tabbed] {
+    border-top-left-radius: 0;
+}
+
+.mm-tabrow {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: -6px;
+}
+
+.mm-tab {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: -6px;
+    padding: 7px 16px 11px 14px;
+    border-radius: 10px 10px 0 0;
+    background: var(--green);
+    color: #ffffff;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow:
+        inset 0 0 0 4px var(--green),
+        inset 0 0 0 6px #ffffff;
+    clip-path: inset(0 0 6px 0);
+}
+
+.mm-tabrow .mm-tab {
+    margin-bottom: 0;
+}
+
+.mm-cat {
+    width: 22px;
+    height: 22px;
+    margin-top: -1px;
+}
+
+.mm-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 44px;
+    margin-bottom: 0;
+    color: var(--ink-2);
+}
+
+.mm-updated .mm-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.mm-updated > span {
+    white-space: nowrap;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+@media (max-width: 359px) {
+    .mm-updated-word {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+    }
+}
+
+/* ---------- Alerts ---------- */
+
+.mm-alerts {
+    display: grid;
+    gap: 8px;
+}
+
+.mm-alert {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 46px;
+    padding: 7px 14px 6px 16px;
+    border-radius: 10px;
+}
+
+.mm-alert[data-tier="high"] {
+    min-height: 52px;
+}
+
+/* Extreme outranks Severe: a taller sign, a bigger diamond and a legend a size up. */
+.mm-alert[data-tier="extreme"] {
+    min-height: 60px;
+    padding-block: 7px 6px;
+}
+
+.mm-alert-event {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mm-alert[data-tier="extreme"] .mm-alert-event {
+    font-size: 24px;
+    line-height: 1.1;
+}
+
+.mm-alert-sev {
+    flex: none;
+}
+
+.mm-diamond {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    margin-left: -4px;
+}
+
+.mm-alert[data-tier="extreme"] .mm-diamond {
+    width: 40px;
+    height: 40px;
+}
+
+.mm-chip {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding-top: 3px;
+    border-radius: 4px;
+    font-size: 24px;
+    font-weight: 700;
+    box-shadow: inset 0 0 0 2px #000000;
+}
+
+.mm-norating {
+    display: grid;
+    gap: 2px;
+}
+
+.mm-norating .mm-link {
+    justify-self: start;
+    padding: 10px 0;
+}
+
+/* ---------- Next 12 hours ---------- */
+
+.mm-outlook {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    align-items: center;
+    column-gap: 18px;
+    padding: 10px 18px 8px 20px;
+}
+
+.mm-outlook-text {
+    display: grid;
+}
+
+.mm-outlook .mm-chart {
+    margin: 0;
+}
+
+/* ---------- Chart ---------- */
+
+.mm-chart {
+    margin: 0;
+}
+
+.mm-chart-title {
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+
+.mm-chart-plot {
+    position: relative;
+}
+
+.mm-chart-svg {
+    display: block;
+    width: 100%;
+    overflow: visible;
+}
+
+.mm-chart-bar {
+    fill: currentColor;
+}
+
+.mm-chart-gust {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+}
+
+.mm-chart-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.mm-chart-base {
+    stroke: currentColor;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+}
+
+.mm-chart-dot {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    z-index: 1;
+    transform: translate(-50%, -50%);
+}
+
+.mm-chart-val {
+    position: absolute;
+    padding: 0 4px 9px;
+    background: var(--mm-panel);
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    transform: translate(-50%, -100%);
+}
+
+.mm-chart-val[data-align="start"] {
+    transform: translate(-12px, -100%);
+}
+
+.mm-chart-val[data-align="end"] {
+    transform: translate(calc(-100% + 12px), -100%);
+}
+
+.mm-chart-val[data-below] {
+    padding: 7px 4px 0;
+    transform: translate(-50%, 0);
+}
+
+.mm-chart-val[data-below][data-align="start"] {
+    transform: translate(-12px, 0);
+}
+
+.mm-chart-val[data-below][data-align="end"] {
+    transform: translate(calc(-100% + 12px), 0);
+}
+
+.mm-chart-ticks {
+    position: relative;
+    height: 22px;
+    margin-top: 3px;
+}
+
+.mm-chart-ticks span {
+    position: absolute;
+    top: 0;
+    white-space: nowrap;
+    transform: translateX(-50%);
+}
+
+.mm-chart-ticks span[data-align="start"] {
+    transform: translateX(-8px);
+}
+
+.mm-chart-ticks span[data-align="end"] {
+    transform: translateX(calc(-100% + 8px));
+}
+
+/* ---------- Best day, the exit sign ---------- */
+
+.mm-best-wrap {
+    display: grid;
+    justify-items: start;
+}
+
+.mm-best {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px 12px 20px;
+}
+
+.mm-best-text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.mm-best-none {
+    display: grid;
+}
+
+/* ---------- Plate: the Condies score, always out of 100 ---------- */
+
+.mm-plate {
+    display: inline-grid;
+    flex: none;
+    padding: 8px 14px 6px;
+    border-radius: 8px;
+    background: var(--white);
+    color: #000000;
+    box-shadow:
+        inset 0 0 0 3px var(--white),
+        inset 0 0 0 5px #000000;
+}
+
+.mm-plate-label {
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mm-plate-read {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.mm-plate-num {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    padding-top: 2px;
+}
+
+/* ---------- Week, the distance sign ---------- */
+
+.mm-week {
+    display: grid;
+    gap: 10px;
+}
+
+/* Rows share their columns through subgrid, so names sit left and numbers line up right, as on a distance sign. */
+.mm-distance {
+    display: grid;
+    grid-template-columns:
+        minmax(4.4em, max-content) 30px minmax(0, 1fr) minmax(2.2em, max-content)
+        minmax(2.1em, max-content);
+    column-gap: 8px;
+    padding: 6px 8px;
+    font-size: 24px;
+}
+
+.mm-distance li {
+    display: contents;
+}
+
+.mm-row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+    min-height: 46px;
+    padding: 4px 10px 1px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.mm-row:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: -3px;
+}
+
+.mm-row-day,
+.mm-row-hi {
+    font-weight: 700;
+}
+
+.mm-row-extra,
+.mm-row-hi,
+.mm-row-lo {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.mm-row-sym {
+    width: 30px;
+    height: 30px;
+    margin-top: -3px;
+}
+
+@media (max-width: 359px) {
+    .mm-distance {
+        grid-template-columns:
+            minmax(3.2em, max-content) 24px minmax(0, 1fr) minmax(2.2em, max-content)
+            minmax(2.1em, max-content);
+        column-gap: 6px;
+        padding: 6px 4px;
+    }
+
+    .mm-row {
+        padding: 4px 8px 1px;
+    }
+
+    .mm-row-sym {
+        width: 24px;
+        height: 24px;
+    }
+
+    .mm-row-extra {
+        font-size: 16px;
+    }
+}
+
+.mm-nowrap {
+    white-space: nowrap;
+}
+
+.mm-storm {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.mm-storm > span {
+    display: grid;
+}
+
+.mm-storm-sym {
+    width: 40px;
+    height: 40px;
+}
+
+/* ---------- On the mountain ---------- */
+
+.mm-mountain {
+    display: grid;
+    gap: 14px;
+}
+
+.mm-depth {
+    display: grid;
+    gap: 8px;
+}
+
+.mm-depth-sign {
+    display: grid;
+    justify-self: start;
+    width: auto;
+    min-width: 200px;
+    padding: 14px 22px 14px 20px;
+}
+
+/* ---------- Day ---------- */
+
+.mm-day {
+    display: grid;
+    gap: 20px;
+}
+
+.mm-daynav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Previous and next are plain links: a small word for direction over the day itself. */
+.mm-daystep {
+    display: inline-grid;
+    justify-self: start;
+    min-height: 44px;
+    padding: 2px 0;
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+.mm-daystep .mm-strong {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.mm-daystep-dir {
+    color: var(--ink-2);
+}
+
+.mm-daystep[data-next] {
+    justify-self: end;
+    text-align: right;
+}
+
+.mm-homelink {
+    text-align: center;
+}
+
+.mm-day-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.mm-day-grid .mm-col {
+    gap: 20px;
+}
+
+.mm-dayhead {
+    padding: 14px 20px 16px;
+}
+
+.mm-dayhead-title {
+    display: grid;
+    font-weight: 400;
+}
+
+.mm-dayhead-read {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0 20px;
+    margin-top: 6px;
+}
+
+.mm-dayhead-sym {
+    width: 32px;
+    height: 32px;
+    margin-top: -4px;
+}
+
+.mm-dayhead-lo {
+    display: grid;
+    padding-top: 6px;
+}
+
+.mm-dayhead-lo .mm-t3 {
+    font-weight: 400;
+}
+
+.mm-dayhead-cond {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.mm-window {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+/* The day's facts use the distance sign's rows: what on the left, how much on the right. */
+.mm-distance.mm-facts {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    margin: 0;
+}
+
+.mm-facts dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.mm-facts .mm-facts-note {
+    grid-column: 1 / -1;
+    margin-top: -6px;
+    padding-bottom: 4px;
+    font-size: 16px;
+    font-weight: 400;
+    text-align: left;
+}
+
+.mm-hours {
+    display: grid;
+    gap: 10px;
+}
+
+.mm-views {
+    display: grid;
+    grid-auto-columns: 1fr;
+    grid-auto-flow: column;
+    gap: 8px;
+}
+
+.mm-views button,
+.mm-filter button {
+    min-height: 44px;
+    padding: 4px 6px 0;
+    border-radius: 8px;
+    color: var(--ink);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+.mm-views button[aria-pressed="true"],
+.mm-filter button[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--ground);
+}
+
+.mm-periods {
+    display: grid;
+    gap: 20px;
+    padding-top: 4px;
+}
+
+.mm-period h2 {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mm-period p {
+    margin-top: 4px;
+    max-width: 36em;
+}
+
+/* ---------- My Spots ---------- */
+
+.mm-spots {
+    display: grid;
+    gap: 20px;
+    align-content: start;
+}
+
+.mm-spots-title {
+    padding-top: 4px;
+}
+
+.mm-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mm-filter button {
+    flex: 1 0 auto;
+    min-width: 64px;
+    padding: 4px 12px 0;
+}
+
+.mm-spotlist {
+    display: grid;
+    gap: 14px;
+}
+
+.mm-spot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px 14px 16px;
+}
+
+.mm-spot-text {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+}
+
+.mm-spots-empty {
+    display: grid;
+    gap: 4px;
+    justify-items: start;
+    padding: 20px 22px;
+}
+
+.mm-spots-empty .mm-icon {
+    width: 32px;
+    height: 32px;
+}
+
+/* ---------- Sheets ---------- */
+
+.mm-sheet {
+    width: 100%;
+    max-width: 560px;
+    max-height: 92dvh;
+    margin: auto auto 0;
+    padding: 0;
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: inherit;
+    font-family: "Overpass Variable", "Overpass", sans-serif;
+}
+
+.mm-sheet::backdrop {
+    background: rgb(0 0 0 / 0.55);
+}
+
+.mm-sheet-body {
+    display: grid;
+    gap: 16px;
+    padding: 8px 16px 32px;
+}
+
+.mm-sheet-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-right: -6px;
+}
+
+.mm-sheet-sign {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.mm-sheet-sign > span {
+    display: grid;
+}
+
+.mm-sheet-headline {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.mm-sheet-parts {
+    display: grid;
+    gap: 14px;
+}
+
+.mm-sheet-parts dt,
+.mm-sheet-do h3 {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.mm-sheet-parts dd {
+    margin: 0;
+}
+
+.mm-sheet-do {
+    padding-top: 14px;
+    border-top: 2px solid var(--ink);
+}
+
+.mm-search {
+    display: grid;
+    gap: 8px;
+}
+
+.mm-input {
+    min-height: 52px;
+    padding: 6px 14px 2px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--white);
+    color: #000000;
+    font-size: 24px;
+    box-shadow:
+        inset 0 0 0 3px var(--white),
+        inset 0 0 0 5px #000000;
+}
+
+.mm-input::placeholder {
+    color: #595959;
+}
+
+.mm-results {
+    padding: 6px;
+}
+
+.mm-result {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px 8px 14px;
+    color: inherit;
+    font-size: 16px;
+}
+
+.mm-result-text {
+    display: grid;
+    text-align: left;
+}
+
+/* ---------- States ---------- */
+
+.mm-offline {
+    max-width: 528px;
+    margin: 4px auto 0;
+    width: calc(100% - 32px);
+    padding: 9px 18px 8px;
+}
+
+.mm-loading {
+    display: grid;
+    gap: var(--gap);
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 64px 16px;
+}
+
+.mm-blank {
+    border-radius: var(--radius);
+    background: var(--green);
+    box-shadow:
+        inset 0 0 0 4px var(--green),
+        inset 0 0 0 6px #ffffff;
+    animation: mm-blank 1.6s ease-in-out infinite alternate;
+}
+
+.mm-blank-group {
+    display: grid;
+    justify-items: start;
+}
+
+.mm-blank-tab {
+    width: 150px;
+    height: 40px;
+    margin-bottom: -6px;
+    border-radius: 10px 10px 0 0;
+    clip-path: inset(0 0 6px 0);
+}
+
+.mm-blank-now {
+    width: 100%;
+    height: 170px;
+    border-top-left-radius: 0;
+}
+
+.mm-blank-mid {
+    height: 150px;
+    animation-delay: 0.2s;
+}
+
+.mm-blank-low {
+    height: 110px;
+    animation-delay: 0.4s;
+}
+
+@keyframes mm-blank {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0.55;
+    }
+}
+
+.mm-error {
+    display: grid;
+    gap: 16px;
+    padding-top: 64px;
+}
+
+.mm-error-sign {
+    display: grid;
+    gap: 4px;
+    padding: 18px 22px 20px;
+}
+
+.mm-error-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.mm-error-actions .mm-sign {
+    display: inline-flex;
+    width: auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 10px 18px 8px 16px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+
+/* ---------- Motion: sheets rise; nothing else moves. ---------- */
+
+.mm-sheet[open] {
+    animation: mm-rise 0.2s ease-out;
+}
+
+@keyframes mm-rise {
+    from {
+        transform: translateY(24px);
+        opacity: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mm-sheet[open],
+    .mm-blank {
+        animation: none;
+    }
+}
+
+/* ---------- Wide screens: a sign bridge, the groups side by side like gantries. ---------- */
+
+@media (min-width: 960px) {
+    .mm-root {
+        --gap: 28px;
+    }
+
+    .mm-g-now {
+        grid-area: now;
+    }
+
+    .mm-g-ahead {
+        grid-area: ahead;
+    }
+
+    .mm-g-week {
+        grid-area: week;
+    }
+
+    .mm-g-mtn {
+        grid-area: mtn;
+    }
+
+    .mm-bar {
+        max-width: 1240px;
+        padding: 20px 40px 8px;
+    }
+
+    .mm-home,
+    .mm-day,
+    .mm-spots {
+        max-width: 1240px;
+        padding: 24px 40px 80px;
+    }
+
+    .mm-home {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+            "now ahead"
+            "now week"
+            "mtn week";
+        grid-template-rows: auto auto 1fr;
+        column-gap: 48px;
+        align-items: start;
+    }
+
+    .mm-day-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        column-gap: 48px;
+        align-items: start;
+    }
+}
+
+@media (min-width: 1180px) {
+    .mm-home {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-areas:
+            "now ahead week"
+            "now mtn week";
+        grid-template-rows: auto 1fr;
+        column-gap: 40px;
+    }
+}
+
+@media (min-width: 960px) {
+    .mm-spots {
+        grid-template-columns: 260px minmax(0, 1fr);
+        column-gap: 56px;
+    }
+
+    .mm-spots-title {
+        grid-column: 1 / -1;
+    }
+
+    .mm-filter {
+        grid-template-columns: 1fr 1fr;
+        align-content: start;
+    }
+
+    .mm-spots-empty {
+        grid-column: 1 / -1;
+        max-width: 520px;
+    }
+
+    .mm-offline {
+        max-width: 1080px;
+    }
+}

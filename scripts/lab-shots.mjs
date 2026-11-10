@@ -71,6 +71,8 @@ for (const { name, query, viewport } of shots) {
     // Lets entrance animations finish, so a screenshot shows the settled design.
     await page.waitForTimeout(1800)
     await page.screenshot({ path: join(outDir, `${name}.png`), fullPage: true })
+    // What a person sees before scrolling, for judging the first glance.
+    await page.screenshot({ path: join(outDir, `${name}-fold.png`) })
 
     const overflow = await page.evaluate(() => {
         const limit = document.documentElement.clientWidth
