@@ -184,7 +184,7 @@
     }
 }
 
-/* Wide: the day's chip holds still on the left, like Now on Home (home.css has the split itself). */
+/* Wide: the day's chip is the split's lead (components.css), like Now on Home. */
 @media (min-width: 1024px) {
     .sq-dayhero {
         min-height: min(70vh, 640px);

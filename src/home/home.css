@@ -347,21 +347,8 @@
     }
 }
 
-/* Wide: the masthead and the alerts run across the top. Below them the chip (Now, or the day) holds still on
-   the left while the list scrolls on the right. The split is shared with the Day screen and My Spots. */
+/* Wide: Now is the split's lead (components.css). */
 @media (min-width: 1024px) {
-    .sq-split {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        align-items: start;
-    }
-
-    .sq-lead {
-        position: sticky;
-        top: 0;
-        padding-bottom: var(--sq-gut);
-    }
-
     .sq-now {
         min-height: min(70vh, 640px);
         margin-right: 0;

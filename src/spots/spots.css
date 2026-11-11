@@ -1,0 +1,41 @@
+/* My Spots: the head with the day filter, then one row per spot on the ground. Load after components.css. The
+   spec is DESIGN.md. */
+
+.sq-spots-head {
+    padding: 8px var(--sq-gut) 12px;
+}
+
+.sq-filters {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 10px -10px 0;
+}
+
+.sq-spot {
+    padding: 12px var(--sq-gut) 8px;
+}
+
+.sq-spot-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sq-empty {
+    padding: 8px var(--sq-gut) 32px;
+}
+
+/* Wide: the head is the split's lead, so it ends like the other leads do. */
+@media (min-width: 1024px) {
+    .sq-spots-head {
+        padding-bottom: var(--sq-gut);
+    }
+}
+
+/* Waiting: the filter row as one bar, at the height of its tabs. */
+.sq-ph-filters {
+    align-items: center;
+    min-height: 44px;
+    margin-inline: 0;
+}

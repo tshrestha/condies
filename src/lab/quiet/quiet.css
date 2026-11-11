@@ -7,30 +7,3 @@ html[data-design="quiet"] {
 html[data-design="quiet"][data-theme="dark"] {
     background: #0d0d0d;
 }
-
-/* My Spots */
-
-.sq-spots-head {
-    padding: 8px var(--sq-gut) 12px;
-}
-
-.sq-filters {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 10px -10px 0;
-}
-
-.sq-spot {
-    padding: 12px var(--sq-gut) 8px;
-}
-
-.sq-spot-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.sq-empty {
-    padding: 8px var(--sq-gut) 32px;
-}

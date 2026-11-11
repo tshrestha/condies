@@ -32,12 +32,14 @@ choose a scenario or Live NWS. Delete this file when the port is done.
     - `sections.tsx`: Home's sections and `HomeScreen`, driven by a `HomeCtx` of the forecast, the theme, a day
       link and two callbacks for opening sheets.
     - `sheets.tsx` (alert and avalanche sheets), `Placeholder.tsx` (waiting shapes) and `home.css`.
-    - `home.css` also holds the wide two-column split that the Day screen and My Spots use.
 - `src/day/` (since phase 4), shared the same way: `sections.tsx` (`DayView` and its pager, driven by a `DayCtx`),
   `chart.tsx` (`Hourly`), `Placeholder.tsx` and `day.css`.
 - `src/forecastData.ts`: `getForecastData` and `createForecastView`, which Home and the Day screen both build
   their view with, extras included.
-- The My Spots layout is still in `src/lab/quiet/quiet.css` and `index.tsx`. It moves into the app in phase 5.
+- `src/spots/` (since phase 5): `sections.tsx` (`SpotsView`, driven by a `SpotsCtx` of the spots and a link for
+  each), `Placeholder.tsx` and `spots.css`.
+- The wide two-column split that Home, the Day screen and My Spots share is in `components.css`.
+- What's left in `src/lab/quiet/` is the lab's own wiring, its search sample and the page background.
 
 ## Component map
 
@@ -158,7 +160,22 @@ chip.
         - an axe check of the Day screen on phone and desktop, light and dark, with chart views and the score
           explanation open
         - live NWS for Alta, with no page errors
-5. **My Spots.**
+5. **My Spots. Done.**
+    - What's in place:
+        - `Spots.tsx` renders `SpotsView` on the saved spots, with one placeholder row per spot while they load.
+        - Each row links to the spot's forecast, as before.
+        - `loadSpot` stays in `Spots.tsx` for the map.
+    - My Spots' head no longer depends on stylesheet order for its wide padding: it says so itself. That let the
+      split move to `components.css`.
+    - Behavior change: a spot whose forecast fails keeps its row, which says "Couldn’t load its forecast",
+      instead of vanishing from the list.
+    - Removed: the Bootstrap My Spots markup and `ForecastPlaceholder`. `scoreColor` stays for the map's pins
+      until phase 7.
+    - Verified:
+        - the lab's 100 screenshots byte-identical
+        - an axe check of My Spots on phone and desktop, light and dark, empty and with a failed spot
+        - all tests pass: 93 end-to-end tests on two runs in a row, My Spots' rewritten to roles and text, plus
+          a new one for a failed spot
 6. **Search: done in phase 2.**
 7. **Map.** Review point: the map was never prototyped, so it gets its own look before moving on.
 8. **Removal.**

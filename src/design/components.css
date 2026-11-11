@@ -386,6 +386,23 @@
     margin-left: -3px;
 }
 
+/* Layout. Wide: the masthead and the alerts run across the top. Below them the lead (Now, the day, or My Spots'
+   head) holds still on the left while the list scrolls on the right. */
+
+@media (min-width: 1024px) {
+    .sq-split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .sq-lead {
+        position: sticky;
+        top: 0;
+        padding-bottom: var(--sq-gut);
+    }
+}
+
 /* Tabs: a row of words where the chosen one is bold and underlined. The hourly chart's views and My Spots' day
    filter. */
 

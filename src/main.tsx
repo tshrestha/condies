@@ -7,6 +7,7 @@ import "./design/tokens.css"
 import "./design/components.css"
 import "./home/home.css"
 import "./day/day.css"
+import "./spots/spots.css"
 import "./transition.css"
 
 import { render } from "@solidjs/web"

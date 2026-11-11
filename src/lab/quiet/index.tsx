@@ -1,23 +1,22 @@
 import "@fontsource-variable/chivo/wght.css"
 import "../../design/tokens.css"
 import "../../design/components.css"
-import "./quiet.css"
-// After quiet.css, so the split's wide padding still wins over My Spots' head as it did before Home moved out.
 import "../../home/home.css"
 import "../../day/day.css"
+import "../../spots/spots.css"
+import "./quiet.css"
 
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
 
 import { Dock as DesignDock, Masthead as DesignMasthead } from "../../design/nav.tsx"
-import { Score, Sheet as SheetFrame } from "../../design/parts.tsx"
+import { Sheet as SheetFrame } from "../../design/parts.tsx"
 import { ErrorState, LoadingState, OfflineNotice } from "../../design/states.tsx"
 import { paintTemp } from "../../design/ramp.ts"
-import { dayName } from "../../design/words.ts"
 import { type DayCtx, DayView } from "../../day/sections.tsx"
 import { type Avalanche, type HomeCtx, HomeScreen as Home } from "../../home/sections.tsx"
 import { AlertSheet, AvalancheSheet } from "../../home/sheets.tsx"
-import { formatSnow, getDayLabel, hasSnow } from "../../lib/daily.ts"
-import { type AlertView, rankSpots } from "../../lib/forecastView.ts"
+import { SpotsView } from "../../spots/sections.tsx"
+import type { AlertView } from "../../lib/forecastView.ts"
 import { formatAge } from "../../lib/util.ts"
 import type { DesignProps } from "../data.ts"
 
@@ -119,85 +118,12 @@ function DayScreen(props: Ctx) {
     )
 }
 
-// Ranked by score, so the rows sit on the ground: a color here would read as a ranking.
+// My Spots is shared with the app. In the lab every spot links to Home.
 function SpotsScreen(props: Ctx) {
-    const [date, setDate] = createSignal<string>()
-    const ranked = createMemo(() => rankSpots(props.app.spots, date()))
-    const filterDays = () => props.app.spots[0]?.days ?? []
-
     return (
-        <div class="sq-spotsview">
+        <SpotsView spots={props.app.spots} spotLink={() => props.app.link({ name: "home" })}>
             <Masthead {...props} />
-            <div class="sq-split">
-                <div class="sq-lead sq-ground sq-spots-head">
-                    <h1 class="sq-num">My Spots</h1>
-                    <Show when={props.app.spots.length}>
-                        <div class="sq-filters" role="group" aria-label="Which day">
-                            <button
-                                type="button"
-                                class="sq-tab"
-                                aria-pressed={date() === undefined ? "true" : "false"}
-                                onClick={() => setDate(undefined)}
-                            >
-                                This week
-                            </button>
-                            <For each={filterDays()}>
-                                {(day, i) => (
-                                    <button
-                                        type="button"
-                                        class="sq-tab"
-                                        aria-pressed={date() === day.date ? "true" : "false"}
-                                        onClick={() => setDate(day.date)}
-                                    >
-                                        {getDayLabel(day, i(), "short")}
-                                    </button>
-                                )}
-                            </For>
-                        </div>
-                    </Show>
-                </div>
-                <div class="sq-rest">
-                    <Show
-                        when={props.app.spots.length}
-                        fallback={<p class="sq-ground sq-empty">Tap the star on any forecast to add it here.</p>}
-                    >
-                        <ol class="sq-spots">
-                            <For each={ranked()}>
-                                {(spot) => {
-                                    const day = () => spot.day
-                                    const index = () => (spot.day ? spot.days.indexOf(spot.day) : -1)
-                                    return (
-                                        <li>
-                                            <div class="sq-ground sq-spot">
-                                                <a class="sq-spot-text" {...props.app.link({ name: "home" })}>
-                                                    <span class="sq-strong">{spot.name}</span>
-                                                    <Show when={day()} fallback={<span>No forecast for this day</span>}>
-                                                        {(d) => (
-                                                            <>
-                                                                <span>
-                                                                    {dayName(d(), index())}
-                                                                    <Show when={d().condies}>
-                                                                        , {d().condies!.bestWindow}
-                                                                    </Show>
-                                                                </span>
-                                                                <Show when={hasSnow(d())}>
-                                                                    <span>{formatSnow(d().snow!)} snow</span>
-                                                                </Show>
-                                                            </>
-                                                        )}
-                                                    </Show>
-                                                </a>
-                                                <Score score={day()?.condies?.score} />
-                                            </div>
-                                        </li>
-                                    )
-                                }}
-                            </For>
-                        </ol>
-                    </Show>
-                </div>
-            </div>
-        </div>
+        </SpotsView>
     )
 }
 
