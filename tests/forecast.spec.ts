@@ -24,7 +24,7 @@ test("shows the forecast for the user's location", async ({ page }) => {
     await page.goto("#/")
 
     await expect(heading(page)).toHaveText(place("Place 40.1234"))
-    await expect(nextHours(page).getByRole("link", { name: /^Next 12 hours: / })).toBeVisible()
+    await expect(nextHours(page).getByRole("link", { name: /^Now \d+°, .*\. Open hour by hour\.$/ })).toBeVisible()
     await expect(page.getByRole("region", { name: "Daylight" })).toContainText("Sunrise 6:45 AM, sunset 4:55 PM.")
     await expect(days(page)).toHaveCount(7)
 })

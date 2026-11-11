@@ -40,7 +40,7 @@ function Pager(props: DayCtx & { index: number }) {
                 {(day) => (
                     <a
                         class="sq-page"
-                        aria-label={`Previous day, ${dayName(day(), props.index - 1)}`}
+                        aria-label={`Previous day, ${dayName(day(), props.index - 1)} ${degrees(day().high ?? day().low)}`}
                         {...props.dayLink(day().date)}
                     >
                         <span aria-hidden="true">←</span> {dayName(day(), props.index - 1)}{" "}
@@ -52,7 +52,7 @@ function Pager(props: DayCtx & { index: number }) {
                 {(day) => (
                     <a
                         class="sq-page sq-page-next"
-                        aria-label={`Next day, ${dayName(day(), props.index + 1)}`}
+                        aria-label={`Next day, ${dayName(day(), props.index + 1)} ${degrees(day().high ?? day().low)}`}
                         {...props.dayLink(day().date)}
                     >
                         {dayName(day(), props.index + 1)} {degrees(day().high ?? day().low)}{" "}

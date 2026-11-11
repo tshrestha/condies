@@ -271,7 +271,7 @@ test.describe("week outlook", () => {
         await page.goto("#/")
 
         const best = page.getByRole("region", { name: "Best day" })
-        await expect(best.getByRole("button", { name: /^Condies score \d+ out of 100, / })).toBeVisible()
+        await expect(best.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
         await best.getByRole("link", { name: /^Best day / }).click()
         await expect(page).toHaveURL(/\/day\//)
     })

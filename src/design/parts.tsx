@@ -14,13 +14,14 @@ export function Score(props: { score?: number }) {
                 type="button"
                 class="sq-score"
                 aria-expanded={open() ? "true" : "false"}
-                aria-label={`Condies score ${props.score} out of 100, ${grade(props.score!)}. What this means`}
                 onClick={() => setOpen(!open())}
             >
-                <span class="sq-score-label">Condies score</span>
+                {/* The spaces between the parts are for the button's name, which is its visible text. The grid
+                    doesn't lay them out. */}
+                <span class="sq-score-label">Condies score</span>{" "}
                 <span class="sq-meter" aria-hidden="true">
                     <i style={{ width: `${props.score}%` }} />
-                </span>
+                </span>{" "}
                 <span class="sq-score-value">
                     <strong>{props.score}</strong>/100 <strong>{grade(props.score!)}</strong>
                 </span>

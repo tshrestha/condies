@@ -3,7 +3,9 @@ import { expect, type Page, test } from "@playwright/test"
 import { dateAt, gridFixture, mockApis, week } from "./fixtures.ts"
 
 const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
-const score = (page: Page) => page.getByRole("button", { name: /^Condies score \d+ out of 100, / })
+// Each day's row reads as a sentence: the day and date (its link), low, high, then the conditions.
+const rows = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("listitem")
+const score = (page: Page) => page.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })
 const details = (page: Page) => page.getByRole("region", { name: "Details" })
 const snowLine = (page: Page) => page.getByRole("region", { name: "Rain and snow line" })
 
@@ -14,7 +16,7 @@ test("rows and the Snow section show real snow totals", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 4.5 }]) })
     await page.goto("#/")
 
-    await expect(days(page).nth(1)).toHaveAccessibleName(/\. 4\.5″ snow\./)
+    await expect(rows(page).nth(1)).toContainText("4.5″ snow")
     const snow = page.getByRole("region", { name: "Snow" })
     await expect(snow.getByRole("term")).toHaveText(["Next 7 days"])
     await expect(snow.getByRole("definition")).toHaveText(["4.5″"])
@@ -30,7 +32,7 @@ test("POW DAY comes from measured snow, not the forecast wording", async ({ page
     await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 8 }]) })
     await page.goto("#/")
 
-    await expect(days(page).nth(1)).toHaveAccessibleName(/^Tomorrow, .*\. POW DAY\. /)
+    await expect(rows(page).nth(1)).toHaveText(/^Tomorrow, .*\. POW DAY/)
 })
 
 test("the day page says whether it's snow or rain at this elevation", async ({ page }) => {
@@ -61,9 +63,7 @@ test("each day gets a Condies score and best window", async ({ page }) => {
     await expect(score(page)).toBeVisible()
     await days(page).nth(1).click()
     const condies = page.getByRole("region", { name: "Condies score" })
-    await expect(
-        condies.getByRole("button", { name: /^Condies score \d+ out of 100, \w+\. What this means$/ }),
-    ).toBeVisible()
+    await expect(condies.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
     await expect(condies.getByText("Best window", { exact: true })).toBeVisible()
     await expect(condies.getByText(/^\d+ [AP]M–\d+ [AP]M$/)).toBeVisible()
 })
@@ -97,7 +97,7 @@ test("My Spots ranks saved places and filters by day", async ({ page }) => {
     const rows = page.getByRole("listitem")
     await expect(rows).toHaveCount(2)
     await expect(rows.getByRole("link")).toHaveText([/^Vail/, /^Alta/])
-    await expect(rows.first().getByRole("button", { name: /^Condies score \d+ out of 100, \w+/ })).toBeVisible()
+    await expect(rows.first().getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
 
     const days = page.getByRole("group", { name: "Which day" }).getByRole("button")
     await expect(days.first()).toHaveText("This week")

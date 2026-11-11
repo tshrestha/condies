@@ -3,6 +3,8 @@ import { expect, type Page, test } from "@playwright/test"
 import { dateAt, gridFixture, hourly, mockApis, period, timeAt, week } from "./fixtures.ts"
 
 const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
+// Each day's row reads as a sentence: the day and date (its link), low, high, then the conditions.
+const rows = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("listitem")
 const here = { latitude: 40.1234, longitude: -105.5678 }
 // How Home writes a date, as in "Nov 10".
 const short = (date: string) =>
@@ -28,7 +30,7 @@ test("groups the forecast into one row per day", async ({ page }) => {
 
     await expect(days(page)).toHaveCount(7)
     // The day's high and the night's low, in one row.
-    await expect(days(page).first()).toHaveAccessibleName(`Today, ${short(dateAt(0))}. Sunny. low 20°. high 40°`)
+    await expect(rows(page).first()).toHaveText(`Today, ${short(dateAt(0))}, low 20°, high 40°. Sunny`)
 
     // The rain chance and wind range across both periods are on that day's own screen.
     await days(page).first().click()
@@ -40,7 +42,7 @@ test("an evening load starts with Tonight and has no high", async ({ page }) => 
     await mockApis(page, { daily: week().slice(1) })
     await page.goto("#/")
 
-    await expect(days(page).first()).toHaveAccessibleName(`Tonight, ${short(dateAt(0))}. Clear. low 20°`)
+    await expect(rows(page).first()).toHaveText(`Tonight, ${short(dateAt(0))}, low 20°. Clear`)
 })
 
 test("a period that already ended is dropped", async ({ page }) => {
@@ -51,7 +53,7 @@ test("a period that already ended is dropped", async ({ page }) => {
     await page.goto("#/")
 
     await expect(days(page)).toHaveCount(6)
-    await expect(days(page).first()).toHaveAccessibleName(/high 43°$/)
+    await expect(rows(page).first()).toContainText("high 43°")
 })
 
 test("POW DAY and PRIMO days are marked", async ({ page }) => {
@@ -74,10 +76,10 @@ test("POW DAY and PRIMO days are marked", async ({ page }) => {
     })
     await page.goto("#/")
 
-    await expect(days(page).nth(1)).toHaveAccessibleName(/^Tomorrow, .*\. POW DAY\. 12″\./)
+    await expect(rows(page).nth(1)).toHaveText(/^Tomorrow, .*\. POW DAY, 12″$/)
     // The morning after the storm, fresh snow under clear calm skies scores 100.
-    await expect(days(page).nth(2)).toHaveAccessibleName(/^\w+, .*\. PRIMO\./)
-    await expect(days(page).nth(3)).not.toHaveAccessibleName(/PRIMO|POW DAY/)
+    await expect(rows(page).nth(2)).toHaveText(/^\w+, .*\. PRIMO/)
+    await expect(rows(page).nth(3)).not.toHaveText(/PRIMO|POW DAY/)
 })
 
 test("a row opens that day with its detail and hours", async ({ page }) => {
@@ -238,5 +240,5 @@ test("an overnight period doesn't replace the day's own low", async ({ page }) =
     await mockApis(page, { daily })
     await page.goto("#/")
 
-    await expect(days(page).first()).toHaveAccessibleName(/low 22°/)
+    await expect(rows(page).first()).toContainText("low 22°")
 })

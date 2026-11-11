@@ -68,7 +68,7 @@ test("saved spots appear as pins that open their forecast", async ({ page }) => 
     await expect(pin).toHaveText(/^\d+°$/)
     await pin.click()
     const popup = page.locator(".maplibregl-popup-content")
-    await expect(popup.getByRole("button", { name: /^Condies score \d+ out of 100/ })).toBeVisible()
+    await expect(popup.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
     await popup.getByRole("link", { name: /^Here/ }).click()
     await expect(page).toHaveURL(/#\/forecast\/39\.76,-105\.02$/)
 })

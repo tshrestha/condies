@@ -171,6 +171,17 @@ and avalanche text is the agency's own, with no jokes near it. Separators before
   the numeral's minimum size. Everything else answers the six questions on the first screen.
 - `corner-shape: squircle` is Chromium-only so far; other browsers get a capsule. Tested only in Chromium:
   check Safari on iOS for backdrop blur, safe areas and the dock in standalone (installed) mode.
+- Numeral fitting runs after fonts load, on resize, when the connection changes and when the alerts change size.
+  Mobile toolbars change the viewport height as they show and hide, so check it on a real phone.
+- `backdrop-filter` can be slow on low-end Android. The solid glass fallback is one media query away.
+- Solid 2 is a release candidate. In its production builds, a Loading or Errored fallback that is itself a
+  boundary with no element around it hangs the page; Home keeps a wrapper `div` for that reason (see
+  `Forecast.tsx`). Recheck when Solid 2 is final.
+- The map's popups are 260px wide because MapLibre doesn't pull a popup back on screen; wider ones fall off the
+  edge beside pins near it.
+- Accessible names contain each control's visible text, in order, for voice control. Where parts sit side by
+  side in grid or flex, there are spaces between them in the markup so the text reads that way;
+  `tests/a11y.spec.ts` checks this on every screen.
 
 ## Extending
 

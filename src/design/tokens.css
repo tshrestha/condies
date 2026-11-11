@@ -158,7 +158,6 @@ body {
     outline-offset: 2px;
 }
 
-.sq-root .sq-day:focus-visible,
 .sq-root .sq-close:focus-visible,
 .sq-root .sq-blocks-link:focus-visible {
     outline-offset: -3px;

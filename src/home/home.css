@@ -190,12 +190,30 @@
 }
 
 .sq-day {
+    position: relative;
     align-items: baseline;
     padding: 10px 0 11px;
 }
 
 .sq-day-name {
     grid-column: 1;
+}
+
+/* The day's name is the row's link, stretched over all of it, above the range bar. Its focus ring is the row's. */
+.sq-day-name::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: "";
+}
+
+.sq-root .sq-day-name:focus-visible {
+    outline: 0;
+}
+
+.sq-root .sq-day-name:focus-visible::after {
+    outline: 3px solid var(--k);
+    outline-offset: -3px;
 }
 
 .sq-day-low {

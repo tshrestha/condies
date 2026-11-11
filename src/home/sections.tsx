@@ -171,26 +171,28 @@ export function NextHours(props: HomeCtx) {
     const next = createMemo(() => nextHours(f()))
     const summary = () =>
         next()
-            .blocks.map((b) => `${b.label}, ${degrees(b.temperature)}, ${b.precip}`)
-            .join(". ")
+            .blocks.map((b) => `${b.label} ${degrees(b.temperature)}, ${b.precip}`)
+            .join("; ")
     return (
         <section class="sq-ground sq-next" aria-label="Next 12 hours">
             <p class="sq-caption sq-strong">{next().caption}</p>
             <Show when={next().later}>{(storm) => <p class="sq-caption sq-later">{storm()}</p>}</Show>
             <a
                 class="sq-blocks-link"
-                aria-label={`Next 12 hours: ${summary()}. Open hour by hour.`}
+                aria-label={`${summary()}. Open hour by hour.`}
                 {...props.dayLink(f().days[0]?.date ?? "")}
             >
                 <ol class="sq-blocks" aria-hidden="true">
                     <For each={next().blocks}>
                         {(block) => (
                             <li class="sq-block">
+                                {/* Spaces between the parts and the blocks, so the link's text reads "Now 30° Dry 3 AM",
+                                    as its name does. Flex layout doesn't render them. */}
                                 <span class="sq-block-head">
-                                    <span class="sq-small">{block.label}</span>
+                                    <span class="sq-small">{block.label}</span>{" "}
                                     <span class="sq-num">{degrees(block.temperature)}</span>
-                                </span>
-                                <span>{block.precip}</span>
+                                </span>{" "}
+                                <span>{block.precip}</span>{" "}
                             </li>
                         )}
                     </For>
@@ -228,40 +230,32 @@ function DayRow(
     // "Light snow · 6.4″ snow" says snow twice, so the amount drops the word when the condition has it.
     const snow = () =>
         hasSnow(props.day) ? `${formatSnow(props.day.snow!)}${/snow|pow/i.test(condition()) ? "" : " snow"}` : undefined
-    const label = () =>
-        [
-            `${name()}, ${shortDate(props.day.date)}`,
-            condition(),
-            snow(),
-            props.day.low !== undefined ? `low ${props.day.low}°` : undefined,
-            props.day.high !== undefined ? `high ${props.day.high}°` : undefined,
-        ]
-            .filter(Boolean)
-            .join(". ")
+    // The day's name is the link, stretched over the whole row, so voice control can say what it sees. The rest
+    // of the row reads after it as a sentence, with the words a screen reader needs and the screen doesn't.
     return (
-        <li>
-            <a class="sq-day" aria-label={label()} {...props.dayLink(props.day.date)}>
-                <span class="sq-day-name sq-strong" aria-hidden="true">
-                    {name()}
-                </span>
-                <span class="sq-day-low" aria-hidden="true">
-                    {props.day.low === undefined ? "" : degrees(props.day.low)}
-                </span>
-                <RangeBar
-                    low={props.day.low}
-                    high={props.day.high}
-                    min={props.min}
-                    max={props.max}
-                    theme={props.theme}
-                />
-                <span ref={(el: HTMLElement) => props.anchor?.(el)} class="sq-day-high" aria-hidden="true">
-                    {props.day.high === undefined ? "" : degrees(props.day.high)}
-                </span>
-                <span class="sq-day-cond" aria-hidden="true">
-                    <span class={marker() ? "sq-strong" : undefined}>{condition()}</span>
-                    <Show when={snow()}>, {snow()}</Show>
-                </span>
+        <li class="sq-day">
+            <a class="sq-day-name sq-strong" {...props.dayLink(props.day.date)}>
+                {name()}
+                <span class="sq-sr">, {shortDate(props.day.date)}</span>
             </a>
+            <span class="sq-day-low">
+                <Show when={props.day.low !== undefined}>
+                    <span class="sq-sr">, low </span>
+                    {degrees(props.day.low)}
+                </Show>
+            </span>
+            <RangeBar low={props.day.low} high={props.day.high} min={props.min} max={props.max} theme={props.theme} />
+            <span ref={(el: HTMLElement) => props.anchor?.(el)} class="sq-day-high">
+                <Show when={props.day.high !== undefined}>
+                    <span class="sq-sr">, high </span>
+                    {degrees(props.day.high)}
+                </Show>
+            </span>
+            <span class="sq-day-cond">
+                <span class="sq-sr">. </span>
+                <span class={marker() ? "sq-strong" : undefined}>{condition()}</span>
+                <Show when={snow()}>, {snow()}</Show>
+            </span>
         </li>
     )
 }
