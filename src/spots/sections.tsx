@@ -9,9 +9,46 @@ import { rankSpots, type SpotView } from "../lib/forecastView.ts"
 // My Spots, shared by the app and the lab. It takes the spots and a link for each, so each can wire its own
 // navigation. A spot whose forecast didn't load has no days and says so in its row.
 
+export type RankedSpot = ReturnType<typeof rankSpots>[number]
+
 export interface SpotsCtx {
     spots: SpotView[]
     spotLink: (spot: SpotView) => LinkProps
+}
+
+// One spot on the ground: its name, the day being compared with its best window and snow, then the score
+// line. My Spots lists them; the map shows one when a pin is tapped.
+export function SpotRow(props: { spot: RankedSpot; link: LinkProps }) {
+    const day = () => props.spot.day
+    const index = () => (props.spot.day ? props.spot.days.indexOf(props.spot.day) : -1)
+    return (
+        <div class="sq-ground sq-spot">
+            <a class="sq-spot-text" {...props.link}>
+                <span class="sq-strong">{props.spot.name}</span>
+                <Show
+                    when={day()}
+                    fallback={
+                        <span>
+                            {props.spot.days.length ? "No forecast for this day" : "Couldn’t load its forecast"}
+                        </span>
+                    }
+                >
+                    {(d) => (
+                        <>
+                            <span>
+                                {dayName(d(), index())}
+                                <Show when={d().condies}>, {d().condies!.bestWindow}</Show>
+                            </span>
+                            <Show when={hasSnow(d())}>
+                                <span>{formatSnow(d().snow!)} snow</span>
+                            </Show>
+                        </>
+                    )}
+                </Show>
+            </a>
+            <Score score={day()?.condies?.score} />
+        </div>
+    )
 }
 
 // Ranked by score, so the rows sit on the ground: a color here would read as a ranking. The lab passes its own
@@ -59,44 +96,11 @@ export function SpotsView(props: ParentProps<SpotsCtx>) {
                     >
                         <ol class="sq-spots">
                             <For each={ranked()}>
-                                {(spot) => {
-                                    const day = () => spot.day
-                                    const index = () => (spot.day ? spot.days.indexOf(spot.day) : -1)
-                                    return (
-                                        <li>
-                                            <div class="sq-ground sq-spot">
-                                                <a class="sq-spot-text" {...props.spotLink(spot)}>
-                                                    <span class="sq-strong">{spot.name}</span>
-                                                    <Show
-                                                        when={day()}
-                                                        fallback={
-                                                            <span>
-                                                                {spot.days.length
-                                                                    ? "No forecast for this day"
-                                                                    : "Couldn’t load its forecast"}
-                                                            </span>
-                                                        }
-                                                    >
-                                                        {(d) => (
-                                                            <>
-                                                                <span>
-                                                                    {dayName(d(), index())}
-                                                                    <Show when={d().condies}>
-                                                                        , {d().condies!.bestWindow}
-                                                                    </Show>
-                                                                </span>
-                                                                <Show when={hasSnow(d())}>
-                                                                    <span>{formatSnow(d().snow!)} snow</span>
-                                                                </Show>
-                                                            </>
-                                                        )}
-                                                    </Show>
-                                                </a>
-                                                <Score score={day()?.condies?.score} />
-                                            </div>
-                                        </li>
-                                    )
-                                }}
+                                {(spot) => (
+                                    <li>
+                                        <SpotRow spot={spot} link={props.spotLink(spot)} />
+                                    </li>
+                                )}
                             </For>
                         </ol>
                     </Show>

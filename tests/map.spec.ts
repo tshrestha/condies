@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-import { mockApis } from "./fixtures.ts"
+import { gridFixture, mockApis } from "./fixtures.ts"
 
 // Headless browsers need software rendering for WebGL.
 test.use({
@@ -60,11 +60,32 @@ test("saved spots appear as pins that open their forecast", async ({ page }) => 
             ]),
         ),
     )
-    await mockApis(page)
+    await mockApis(page, { grid: gridFixture([]) })
     await page.goto("#/map")
 
-    const pin = page.locator(".spot-pin")
-    await expect(pin).toHaveCount(1)
-    await expect(pin).toHaveAttribute("title", "Here")
-    await expect(pin).toHaveAttribute("href", "#/forecast/39.76,-105.02")
+    // The pin prints the spot's temperature and opens its row, which links to its forecast.
+    const pin = page.getByRole("button", { name: /^Here, (high|low) \d+°$/ })
+    await expect(pin).toHaveText(/^\d+°$/)
+    await pin.click()
+    const popup = page.locator(".maplibregl-popup-content")
+    await expect(popup.getByRole("button", { name: /^Condies score \d+ out of 100/ })).toBeVisible()
+    await popup.getByRole("link", { name: /^Here/ }).click()
+    await expect(page).toHaveURL(/#\/forecast\/39\.76,-105\.02$/)
+})
+
+test("the base map follows the theme, and radar comes back after it changes", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await mockApis(page)
+    const light = page.waitForRequest(/openfreemap\.org\/styles\/positron/)
+    const firstRadar = page.waitForRequest(/conus_bref_qcd/)
+    await page.goto("#/map")
+    await light
+    await firstRadar
+
+    const dark = page.waitForRequest(/openfreemap\.org\/styles\/dark/)
+    const radarAgain = page.waitForRequest(/conus_bref_qcd/)
+    await page.getByRole("button", { name: "Dark mode" }).click()
+    await dark
+    await radarAgain
+    await expect(page.getByRole("button", { name: "Radar" })).toHaveAttribute("aria-pressed", "true")
 })

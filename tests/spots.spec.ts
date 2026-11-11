@@ -103,5 +103,5 @@ test("starred places appear on the map", async ({ page }) => {
     await star(page).click()
 
     await page.goto("#/map")
-    await expect(page.locator(".spot-pin")).toHaveAttribute("title", "Place 39.76")
+    await expect(page.getByRole("button", { name: /^Place 39\.76, (high|low) \d+°$/ })).toBeVisible()
 })

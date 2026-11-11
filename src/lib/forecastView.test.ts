@@ -55,6 +55,11 @@ describe("ranking spots", () => {
         ])
     })
 
+    test("a spot with no scores still shows its first day, so its row doesn't say there's no forecast", () => {
+        expect(rankSpots(spots).at(-1)!.day?.date).toBe("2026-11-10")
+        expect(rankSpots([{ ...spots[2], days: [] }])[0].day).toBeUndefined()
+    })
+
     test("by a chosen date", () => {
         expect(rankSpots(spots, "2026-11-10").map((s) => s.name)).toEqual(["B", "A", "C"])
     })

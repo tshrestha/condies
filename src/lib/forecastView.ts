@@ -100,9 +100,13 @@ export function buildForecast(source: {
     }
 }
 
-// The spot's day to compare: the chosen date, or otherwise its best day this week. Highest score first.
+// The spot's day to compare: the chosen date, or otherwise its best day this week, or its first when no day has
+// a score. Highest score first.
 export function rankSpots(spots: SpotView[], date?: string) {
     return spots
-        .map((spot) => ({ ...spot, day: date ? spot.days.find((d) => d.date === date) : bestDay(spot.days) }))
+        .map((spot) => ({
+            ...spot,
+            day: date ? spot.days.find((d) => d.date === date) : (bestDay(spot.days) ?? spot.days[0]),
+        }))
         .sort((a, b) => (b.day?.condies?.score ?? -1) - (a.day?.condies?.score ?? -1))
 }

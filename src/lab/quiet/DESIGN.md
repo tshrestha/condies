@@ -114,16 +114,21 @@ temperatures' size. No score, no line.
   that place's Now from any day.
 - My Spots: rows on the ground ranked by score: name, day and window, snow, then the score line.
 
-## Map (designed here, not yet in the lab)
+## Map
 
-- Full screen. A quiet base map so the only color is data: OpenFreeMap's Positron style by day and its dark
-  style at night (confirm the dark style's name when porting). NOAA radar on by default, as today.
-- Radar switch: a glass chip at the top right, round because it's a control, "Radar" with a pressed state.
-- Saved spots: square paint chips (printed, so square) in the color of the spot's high today, printing that
-  high in its ink ("26°"). Tapping one opens a popup on the ground with the name, best day and window, and the
-  score line, linking to the forecast. Place names from search or reverse geocoding are plain text, never HTML.
-- Phones: the dock floats over the map. Map controls (zoom, compass, locate) sit on the right edge above the
-  dock; attribution stays compact at the top left. Wide screens: the top bar.
+- Full screen under the top bar. A quiet base map so the only color is data: OpenFreeMap's `positron` style
+  by day and its `dark` style at night, switching with the theme. NOAA radar on by default, as today, and back
+  on after the base map changes.
+- Radar switch: a round glass chip at the top right with the radar icon and "Radar". On, it's ink.
+- Saved spots: square paint chips (printed, so square) in the color of the spot's high today, or its low once
+  only tonight is left, printing that temperature in its ink ("26°"). Each is a 44px button. Tapping one opens a
+  square popup on the ground, 260px wide so it always fits beside the pin, with the spot's row from My Spots:
+  name, best day and window, and the score line, linking to the forecast. A keyboard opens it with focus inside;
+  a tap leaves focus on the map.
+- Tapping elsewhere: "Forecast for Westminster, Colorado", a town and state rather than a street address,
+  linking to that point's forecast. Place names are plain text, never HTML.
+- Phones: the dock floats over the map. Zoom, compass and locate are one glass column on the right edge above
+  the dock; attribution starts collapsed as an ⓘ at the top left. Wide screens: the top bar.
 
 ## Loading in sections
 

@@ -33,11 +33,6 @@
     font-family: var(--bs-font-sans-serif);
 }
 
-#map {
-    height: 100svh !important;
-    width: 100vw;
-}
-
 /* Daily forecast rows */
 .list-group-item.daily-row {
     display: grid;
@@ -614,21 +609,4 @@
     margin-right: 0.375rem;
     vertical-align: middle;
     border-top: 2px dashed currentColor;
-}
-
-/* Saved spots on the map */
-.spot-pin {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    background: #64748b;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
-    color: #fff;
-    font-size: 0.8125rem;
-    font-weight: 700;
-    text-decoration: none;
 }

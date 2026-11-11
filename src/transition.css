@@ -26,17 +26,3 @@ html[data-theme="dark"] body:has(.sq-root:not(.sq-shell)) {
 .sq-root.sq-shell > .sq-loading {
     min-height: 80svh;
 }
-
-/* On phones the dock owns the bottom of the screen, so the map's floating controls sit above it. "html" out-ranks
-   Bootstrap's ".bottom-0", which loads after this file in production builds. */
-@media (max-width: 767.98px) {
-    html .above-dock,
-    html .maplibregl-ctrl-bottom-right {
-        bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-
-    /* Room at the end of the page for the dock and the button above it, so nothing is left underneath. */
-    html .container.mb-5 {
-        margin-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-}

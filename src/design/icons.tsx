@@ -35,3 +35,14 @@ export function MapIcon() {
         </svg>
     )
 }
+
+// A radar scope: two rings and the sweep. The map's radar switch.
+export function RadarIcon() {
+    return (
+        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <circle cx="12" cy="12" r="4.5" />
+            <path d="M12 12l6.4-6.4" />
+        </svg>
+    )
+}

@@ -177,8 +177,32 @@ chip.
         - all tests pass: 93 end-to-end tests on two runs in a row, My Spots' rewritten to roles and text, plus
           a new one for a failed spot
 6. **Search: done in phase 2.**
-7. **Map.** Review point: the map was never prototyped, so it gets its own look before moving on.
+7. **Map. Done, waiting for review.**
+    - What's in place, following DESIGN.md "Map":
+        - `Map.tsx` in its own `.sq-root`, with `src/map/map.css`. The page is a flex column, so the map takes the
+          height the top bar leaves and the dock floats over it.
+        - Base map and radar follow the theme. The radar switch, the glass controls and the collapsed attribution.
+        - Pins as temperature chips, opening the spot's row (`SpotRow`, now exported from `spots/sections.tsx`).
+        - A tap elsewhere names the town and state.
+    - Behavior changes:
+        - Pins show the temperature rather than the score, and open a popup instead of going straight to the
+          forecast.
+        - A spot with no scored day (no forecast grid) shows its first day, in My Spots and on the map, rather
+          than "No forecast for this day".
+    - Removed: the map's rules in `app.css` (`#map`, `.spot-pin`) and the floating-button lifts in
+      `transition.css`, since no Bootstrap screen is left. `scoreColor` is no longer used.
+    - Verified:
+        - live tiles and data on phone and desktop, light and dark, with every popup kept on screen, pins near
+          both edges included
+        - an axe check of the map on phone and desktop, light and dark, with a pin's popup open
+        - the lab's 100 screenshots byte-identical
+        - all tests pass: 94 end-to-end tests on two runs in a row. The pin test is rewritten to roles, and a new
+          one checks the base map follows the theme with radar back on after it changes.
+    - Review point: the map was never prototyped, so the owner looks at it before phase 8.
 8. **Removal.**
+    - Bootstrap provides two global rules Strata Quiet relies on: `box-sizing: border-box` on everything and
+      `margin: 0` on the body. `tokens.css` must take them over before Bootstrap goes, or every padded control
+      grows.
     - `src/transition.css`, the `.container` wrappers in the Bootstrap screens, and the Bootstrap attributes that
       `theme.ts` and `index.html` still set.
     - Bootstrap, Bootstrap Icons, `@types/bootstrap`, d3 and `@types/d3`, the Meteocons assets.
