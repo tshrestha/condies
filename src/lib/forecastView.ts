@@ -32,6 +32,7 @@ export interface ForecastView {
     sun?: SunTimes
     avalanche?: AvalancheStatus
     snowDepth?: SnowDepth
+    // When NWS made the forecast. Empty when it doesn't say.
     updatedAt: string
     grid: Grid | null
 }

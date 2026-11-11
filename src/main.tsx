@@ -5,6 +5,7 @@ import "./app.css"
 import "@fontsource-variable/chivo/wght.css"
 import "./design/tokens.css"
 import "./design/components.css"
+import "./home/home.css"
 import "./transition.css"
 
 import { render } from "@solidjs/web"

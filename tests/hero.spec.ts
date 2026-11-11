@@ -1,39 +1,28 @@
 import { expect, test } from "@playwright/test"
 
-import { gridFixture, hourly, mockApis } from "./fixtures.ts"
+import { dateAt, gridFixture, hourly, mockApis } from "./fixtures.ts"
 
-const sky = ".current-conditions"
+// Hourly charts live on the Day screen. Today's is the one Home's next 12 hours open.
+const today = () => `#/forecast/39.7644,-105.0196/day/${dateAt(0)}`
+// Today's screen shows only the hours left today, so expectations count those.
+const isToday = (hour: { startTime: string }) => hour.startTime.startsWith(dateAt(0))
 
-test("the sky matches the weather", async ({ page }) => {
-    await mockApis(page, { hourly: hourly(14, { shortForecast: "Sunny" }) })
+test("Now shows the temperature, the conditions, the feels-like and the wind", async ({ page }) => {
+    await mockApis(page, {
+        grid: gridFixture([]),
+        hourly: hourly(80, { temperature: 30, windSpeed: { value: 16, unitCode: "wmoUnit:km_h-1" } }),
+    })
     await page.goto("#/")
-    await expect(page.locator(sky)).toHaveClass(/sky-clear-day/)
-    await expect(page.locator(".sky-snowfall")).toHaveCount(0)
-})
 
-test("clear hours at night use the night sky", async ({ page }) => {
-    await mockApis(page, { hourly: hourly(14, { shortForecast: "Clear", isDaytime: false }) })
-    await page.goto("#/")
-    await expect(page.locator(sky)).toHaveClass(/sky-clear-night/)
-})
-
-test("snow falls while it's snowing", async ({ page }) => {
-    await mockApis(page)
-    await page.goto("#/")
-    await expect(page.locator(sky)).toHaveClass(/sky-snow-day/)
-    await expect(page.locator(".sky-snowfall")).toHaveCount(1)
-})
-
-test("falling snow respects reduced motion", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" })
-    await mockApis(page)
-    await page.goto("#/")
-    await expect(page.locator(".sky-snowfall")).toHaveCSS("animation-name", "none")
+    const now = page.getByRole("region", { name: "Right now" })
+    await expect(now.getByText("30°", { exact: true })).toBeVisible()
+    await expect(now.getByText("Snow", { exact: true })).toBeVisible()
+    await expect(now.getByText("Feels like 23° · Wind 10 mph NW", { exact: true })).toBeVisible()
 })
 
 test("the wind chart draws gusts over the wind line", async ({ page }) => {
-    await mockApis(page)
-    await page.goto("#/")
+    await mockApis(page, { hourly: hourly(80, { windGust: { value: 48, unitCode: "wmoUnit:km_h-1" } }) })
+    await page.goto(today())
     await page.locator("label[for=forecast-wind]").click()
 
     await expect(page.locator(".chart-overlay")).toHaveCount(1)
@@ -42,15 +31,19 @@ test("the wind chart draws gusts over the wind line", async ({ page }) => {
 })
 
 test("night hours are shaded", async ({ page }) => {
-    const hours = hourly(14).map((h, i) => ({ ...h, isDaytime: i < 5 }))
+    // Some daylight and some dark in what's left of today, however late it is.
+    const left = hourly(14).filter(isToday).length
+    const hours = hourly(14).map((h, i) => ({ ...h, isDaytime: i < Math.min(5, left - 1) }))
     await mockApis(page, { hourly: hours })
-    await page.goto("#/")
-    await expect(page.locator(".night-bands rect")).toHaveCount(6)
+    await page.goto(today())
+
+    await expect(page.locator(".forecast-chart svg")).toBeVisible()
+    await expect(page.locator(".night-bands rect")).toHaveCount(hours.filter((h) => isToday(h) && !h.isDaytime).length)
 })
 
 test("the snow tab only appears when snow is expected", async ({ page }) => {
-    await mockApis(page, { grid: gridFixture([{ hoursFromNow: 1, inches: 3 }]) })
-    await page.goto("#/")
+    await mockApis(page, { grid: gridFixture([{ hoursFromNow: 0, inches: 3 }]) })
+    await page.goto(today())
     await page.locator("label[for=forecast-snow]").click()
 
     await expect(page.locator(".chart-title")).toHaveText("HOURLY SNOW")
@@ -59,7 +52,7 @@ test("the snow tab only appears when snow is expected", async ({ page }) => {
 
 test("there's no snow tab without snow", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([]) })
-    await page.goto("#/")
+    await page.goto(today())
     await expect(page.locator(".forecast-chart svg")).toBeVisible()
     await expect(page.locator("label[for=forecast-snow]")).toHaveCount(0)
 })
@@ -67,7 +60,7 @@ test("there's no snow tab without snow", async ({ page }) => {
 test("forecast labels stay clear of values at the left edge", async ({ page }) => {
     const rows = hourly(14, { shortForecast: "Sunny", probabilityOfPrecipitation: { value: 0 } })
     await mockApis(page, { hourly: rows })
-    await page.goto("#/")
+    await page.goto(today())
     await page.locator("label[for=forecast-precip]").click()
     await expect(page.locator(".chart-title")).toHaveText("HOURLY PRECIPITATION")
 

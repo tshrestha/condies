@@ -525,7 +525,9 @@
 
 /* States: the full-screen first load, the error page and the offline notice. */
 
-.sq-offline {
+/* The offline notice, and notices like it: a plain line on the ground. */
+.sq-offline,
+.sq-notice {
     padding: 12px var(--sq-gut);
 }
 

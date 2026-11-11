@@ -28,8 +28,13 @@ choose a scenario or Live NWS. Delete this file when the port is done.
 - `src/lib/mountain.ts` (avalanche zones and snow depth) and `src/lib/sun.ts` (sun times, now with
   `sunriseHour` and `sunsetHour` for the Daylight bar). The current `MountainConditions.tsx` and `SunRiseSet.tsx`
   already use them through `query()`.
-- Screen layouts (Now, next hours, week, snow, daylight, Day, Spots, loading, error) are still in
-  `src/lab/quiet/quiet.css` and `index.tsx`. They move into the app with their screens in phases 3–5.
+- `src/home/` (since phase 3), shared by the lab and the app:
+    - `sections.tsx`: Home's sections and `HomeScreen`, driven by a `HomeCtx` of the forecast, the theme, a day
+      link and two callbacks for opening sheets.
+    - `sheets.tsx` (alert and avalanche sheets), `Placeholder.tsx` (waiting shapes) and `home.css`.
+    - `home.css` also holds the wide two-column split that the Day screen and My Spots use.
+- The Day and My Spots layouts are still in `src/lab/quiet/quiet.css` and `index.tsx`. They move into the app with
+  their screens in phases 4 and 5.
 
 ## Component map
 
@@ -85,22 +90,59 @@ chip.
         - an axe check of the shell on phone and desktop, light and dark, with search open
         - the lab's 100 screenshots still byte-identical
     - `theme-color` and manifest colors move to phase 3, so they change with Home's background.
-3. **Home.**
-    - Now, alerts, next 12 hours, best day, week, snow, daylight.
-    - Section placeholders.
-    - Numeral fitting against the dock.
-    - `theme-color` and manifest colors.
+3. **Home. Done, waiting for review.**
+    - What's in place:
+        - `Forecast.tsx` builds a `ForecastView` from what `getForecastData` returns and renders `HomeScreen`
+          in its own `.sq-root`. The lab renders the same `HomeScreen`.
+        - Avalanche danger, snow depth and sun times are lazy fields of that view. Each section that reads one
+          waits behind its own `Loading`, so nothing else waits for them. A failure leaves the section off.
+        - Placeholders: the whole Home while the forecast loads, and Snow and Daylight while theirs do.
+        - The numeral fits again when the alerts change size (avalanche danger arriving late) and when the
+          connection drops or returns, as well as on resize.
+        - The star saves to My Spots for real, and "Updated" reloads with an age that ticks every minute.
+        - One `theme-color` meta that follows the chosen theme, set by the `index.html` script and
+          `theme.ts`. The manifest uses the light ground.
+    - The `.container` column moved out of `Shell.tsx` into the screens still on Bootstrap (Day, My Spots,
+      Map). `transition.css` paints the page ground behind Home.
+    - Bootstrap's stylesheet loads after the app's in production builds (it's in its own vendor chunk), so its
+      bare element rules were beating Quiet's zero-specificity resets: blue underlined links (the dock's,
+      since phase 2), list indents and paragraph margins. The resets in `tokens.css` now sit one element
+      above (`html :where(.sq-root) p`), still below every class.
+    - Removed: `CurrentConditions`, its placeholder, `LastUpdated`, `Alerts`, `SunRiseSet` and its
+      placeholder, `MountainConditions`, `SpotStar` and `DailyForecast`. The Day screen keeps its two icon
+      helpers locally until phase 4.
+    - Fixed along the way:
+        - The save star couldn't be tapped on phones: the numeral's glyphs overflow its trimmed box upward and
+          took the taps. The star now sits above them.
+        - On phones the Day screen's Back button and the map's Radar button were under the dock in production,
+          since Bootstrap's `.bottom-0` loads later. The lift now out-ranks it, and the Bootstrap screens leave
+          room at the end of the page for the dock and the button above it.
+        - "No current avalanche rating" was indented twice. It no longer sits inside the notice frame's padding.
+        - The storm sentence says "Snow from Thu night to Fri morning, 6.0″": a dot before an amount reads as a
+          decimal point.
+    - Behavior changes:
+        - The location fallback is a plain notice above the alerts, in Quiet's wording.
+        - With no hourly forecast, Now and the next 12 hours are left off; with no daily forecast, the week is.
+        - "Updated" is left off when NWS doesn't say when it made the forecast, as before.
+    - Verified:
+        - the lab's 100 screenshots byte-identical after the move
+        - an axe check of Home and the alert sheets on phone and desktop, light and dark
+        - placeholders in both themes, and the numeral refitting when a level 4 avalanche rating arrives late
+        - live NWS for Alta and Telluride, with no page errors
+        - all tests pass: 93 end-to-end tests on three runs in a row, Home's rewritten to roles and text. The four
+          sky tests went with the sky; tests for Now's facts and for a low avalanche rating were added.
     - Review point: the owner looks at Home on real data before going further.
 4. **Day screen,** including its back link (the old floating back button goes).
 5. **My Spots.**
 6. **Search: done in phase 2.**
 7. **Map.** Review point: the map was never prototyped, so it gets its own look before moving on.
 8. **Removal.**
-    - `src/transition.css`, the `.container` wrapper in `Shell.tsx`, and the Bootstrap attributes that
+    - `src/transition.css`, the `.container` wrappers in the Bootstrap screens, and the Bootstrap attributes that
       `theme.ts` and `index.html` still set.
     - Bootstrap, Bootstrap Icons, `@types/bootstrap`, d3 and `@types/d3`, the Meteocons assets.
     - `wicons.ts`, `sky.ts` and `tempColors.ts` and their tests, and `scoreColor` in `score.ts`.
-    - The old components.
+    - The old components, and the `html` prefix on the resets in `tokens.css` once nothing else styles bare
+      elements.
     - The lab, `lab.html`, the `lab` script and `axe-core` if nothing else uses them.
     - Move `DESIGN.md` to `src/design/`.
 9. **Verification.**
@@ -138,6 +180,10 @@ Every spec uses Bootstrap or old class names today:
 - `spots`: `.spot-row`, `.spot-pin`, `#geocodingSearch`, `.search-result`, `.alert-secondary`.
 
 `tests/fixtures.ts` can stay as it is, since it mocks the APIs and not the UI.
+
+Home's specs were rewritten in phase 3. The chart tests now open today's Day screen with its old selectors, and
+are rewritten with it in phase 4, as are the Day screen checks in `daily` and `mountain`. `snow` and
+`spots` still use My Spots' old selectors until phase 5, and `map` until phase 7.
 
 Expected behavior changes that tests must follow:
 

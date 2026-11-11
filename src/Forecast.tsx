@@ -1,25 +1,26 @@
 import { query, useLocation, useParams } from "@solidjs/router"
 import type { Feature } from "geojson"
-import { createMemo, Errored, Loading, Show, untrack } from "solid-js"
+import { createEffect, createMemo, createSignal, Loading, Match, onCleanup, Show, Switch, untrack } from "solid-js"
 
-import { groupIntoDays } from "./lib/daily.ts"
+import { type Avalanche, type HomeCtx, HomeScreen } from "./home/sections.tsx"
+import { HomePlaceholder } from "./home/Placeholder.tsx"
+import { AlertSheet, AvalancheSheet } from "./home/sheets.tsx"
+import { type AlertView, buildForecast, type ForecastView, toAlertView } from "./lib/forecastView.ts"
+import { avalancheAt, getAvalancheZones, getSnowDepth } from "./lib/mountain.ts"
 import { type Alert, getAlerts, getForecast, getGridForecast, getPoint, type Point } from "./lib/nws.ts"
-
-import Alerts from "./Alerts.tsx"
-import DailyForecast from "./DailyForecast.tsx"
-import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
-import HourlyForecast from "./HourlyForecast"
-import CurrentConditions from "./CurrentConditions.tsx"
-import CurrentConditionsPlaceholder from "./CurrentConditionsPlaceholder.tsx"
-import LastUpdated from "./LastUpdated.tsx"
-import MountainConditions from "./MountainConditions.tsx"
-import SunRiseSet from "./SunRiseSet.tsx"
+import { isSpot, toggleSpot } from "./lib/spots.ts"
+import { getSunTimes } from "./lib/sun.ts"
+import { formatAge } from "./lib/util.ts"
+import { setPresentTemperature } from "./present.ts"
+import { theme } from "./theme.ts"
 
 export interface ForecastProps {
     point: {
         lat: string
         lon: string
     }
+    // Said above the forecast, such as why it isn't for where you are.
+    notice?: string
 }
 
 const timeRegex = /(\d+):(\d+)\s(AM|PM)/
@@ -84,6 +85,12 @@ export const getForecastData = query(async (lat, lon) => {
     return { point, forecast, hourlyForecast, allHourlyPeriods, alerts, grid, updatedAt }
 }, "forecast")
 
+// These are extras: each loads on its own after the forecast, and a failure only leaves its section off. The
+// avalanche zones are fetched once and shared by every place.
+const avalancheZones = query(getAvalancheZones, "avalancheZones")
+const snowDepth = query(getSnowDepth, "snowDepth")
+const sunTimes = query(getSunTimes, "sunriseset")
+
 // The router reuses a route's component when only its params change, so key on the location to remount.
 export function ForecastRoute() {
     const params = useParams()
@@ -98,63 +105,128 @@ export function ForecastRoute() {
     )
 }
 
+type Open = { kind: "alert"; alert: AlertView } | { kind: "avalanche"; avalanche: Avalanche }
+
+// Home with its forecast. This is made while the forecast may still be loading, so its body reads only plain
+// props; the forecast is read in the markup, where the Loading boundary catches the wait.
+function Ready(props: { forecast: ForecastView; lat: string; lon: string; notice?: string; fromHome: boolean }) {
+    const { lat, lon, fromHome } = untrack(() => ({ lat: props.lat, lon: props.lon, fromHome: props.fromHome }))
+    const place = { lat: Number(lat), lon: Number(lon) }
+    const [saved, setSaved] = createSignal(isSpot(place))
+    const [open, setOpen] = createSignal<Open>()
+    const [clock, setClock] = createSignal(Date.now())
+    const timer = setInterval(() => setClock(Date.now()), 60_000)
+    onCleanup(() => clearInterval(timer))
+
+    createEffect(
+        () => props.forecast.current?.temperature,
+        (t) => {
+            if (t !== undefined) {
+                setPresentTemperature(t)
+            }
+        },
+    )
+
+    const home: HomeCtx = {
+        get forecast() {
+            return props.forecast
+        },
+        get theme() {
+            return theme()
+        },
+        dayLink: (date) => ({
+            href: `#/forecast/${lat},${lon}/day/${date}${fromHome ? "?from=home" : ""}`,
+        }),
+        openAlert: (alert) => setOpen({ kind: "alert", alert }),
+        openAvalanche: (avalanche) => setOpen({ kind: "avalanche", avalanche }),
+    }
+    const close = () => setOpen(undefined)
+
+    return (
+        <>
+            <HomeScreen
+                {...home}
+                notice={props.notice}
+                saved={saved()}
+                onToggleSave={() =>
+                    setSaved(toggleSpot({ ...place, name: props.forecast.place.city || `${lat}, ${lon}` }))
+                }
+                updated={props.forecast.updatedAt ? formatAge(clock() - Date.parse(props.forecast.updatedAt)) : ""}
+                onRefresh={() => location.reload()}
+            />
+            <Switch>
+                <Match when={open()?.kind === "alert" && open()}>
+                    {(o) => <AlertSheet alert={(o() as { alert: AlertView }).alert} onClose={close} />}
+                </Match>
+                <Match when={open()?.kind === "avalanche" && open()}>
+                    {(o) => <AvalancheSheet avalanche={(o() as { avalanche: Avalanche }).avalanche} onClose={close} />}
+                </Match>
+            </Switch>
+        </>
+    )
+}
+
 export default function Forecast(props: ForecastProps) {
     const location = useLocation()
     // Each mount shows one location, so the coordinates are read once.
     const { lat, lon } = untrack(() => props.point)
+    const fromHome = untrack(() => location.pathname === "/")
 
     const data = createMemo(() => getForecastData(lat, lon))
-    const powDay = createMemo(
-        () =>
-            groupIntoDays(data().forecast?.properties.periods ?? [], {
-                grid: data().grid,
-                hourly: data().allHourlyPeriods,
-            })[0]?.highlight === "pow",
+    const avalanche = createMemo(() =>
+        avalancheZones().then(
+            (zones) => avalancheAt(zones, lat, lon, Date.now()),
+            () => undefined,
+        ),
     )
+    const depth = createMemo(() =>
+        snowDepth(lat, lon).then(
+            (d) => d ?? undefined,
+            () => undefined,
+        ),
+    )
+    const sun = createMemo(() => {
+        const { timeZone } = data().point.properties
+        return sunTimes(lat, lon, timeZone).then(
+            (s) => s ?? undefined,
+            () => undefined,
+        )
+    })
+
+    // Built from what the forecast already returned. The extras are read lazily, so a section only waits on the
+    // one it shows.
+    const view = createMemo((): ForecastView => {
+        const { point, forecast, allHourlyPeriods, alerts, grid, updatedAt } = data()
+        const { relativeLocation, timeZone } = point.properties
+        const now = Date.now()
+        const built = buildForecast({
+            place: {
+                city: relativeLocation?.properties.city ?? "",
+                state: relativeLocation?.properties.state ?? "",
+                lat,
+                lon,
+                timeZone,
+                elevationFeet: grid ? Math.round(grid.elevation * 3.28084) : undefined,
+            },
+            now,
+            periods: forecast?.properties.periods ?? [],
+            hours: allHourlyPeriods,
+            grid: grid ?? null,
+            alerts: (alerts ?? []).map(toAlertView),
+            updatedAt: updatedAt ?? "",
+        })
+        return Object.defineProperties(built, {
+            avalanche: { get: avalanche, enumerable: true },
+            snowDepth: { get: depth, enumerable: true },
+            sun: { get: sun, enumerable: true },
+        })
+    })
 
     return (
-        <>
-            <Loading fallback={<CurrentConditionsPlaceholder />}>
-                <Show when={data()!.hourlyForecast.periods.length}>
-                    <CurrentConditions
-                        point={data()!.point}
-                        period={data()!.hourlyForecast.periods[0]}
-                        next={data()!.hourlyForecast.periods[1]}
-                        powDay={powDay()}
-                        lat={lat}
-                        lon={lon}
-                    />
-                </Show>
-                <Show when={data()!.updatedAt}>
-                    <LastUpdated time={data()!.updatedAt!} />
-                </Show>
+        <div class="sq-root" data-theme={theme()}>
+            <Loading fallback={<HomePlaceholder />}>
+                <Ready forecast={view()} lat={lat} lon={lon} notice={props.notice} fromHome={fromHome} />
             </Loading>
-            <Loading fallback={null}>
-                <Show when={data() && data()!.alerts}>
-                    <Alerts alerts={data()!.alerts} />
-                </Show>
-            </Loading>
-            {/* Sunrise times are optional, so a failed lookup only hides this row. */}
-            <Errored fallback={null}>
-                <SunRiseSet lat={lat} lon={lon} timeZone={data()!.point.properties.timeZone} />
-            </Errored>
-            <Loading fallback={<ForecastPlaceholder />}>
-                <Show when={data()!.hourlyForecast.periods.length}>
-                    <HourlyForecast periods={data()!.hourlyForecast.periods} />
-                </Show>
-                <MountainConditions lat={lat} lon={lon} />
-                <Show when={data()!.forecast}>
-                    <DailyForecast
-                        periods={data()!.forecast!.properties.periods}
-                        grid={data()!.grid}
-                        hourly={data()!.allHourlyPeriods}
-                        lat={lat}
-                        lon={lon}
-                        fromHome={location.pathname === "/"}
-                        timeZone={data()!.point.properties.timeZone}
-                    />
-                </Show>
-            </Loading>
-        </>
+        </div>
     )
 }

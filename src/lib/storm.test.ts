@@ -46,31 +46,31 @@ describe("describeStorm", () => {
 
     it("names the day and part of day at the location", () => {
         expect(describeStorm(storm("2026-11-13T02:00:00Z", "2026-11-13T16:00:00Z", 6), denver, now)).toBe(
-            "Snow from Thu night to Fri morning · 6.0″",
+            "Snow from Thu night to Fri morning, 6.0″",
         )
     })
 
     it("says one thing when the storm fits in one part of the day", () => {
         expect(describeStorm(storm("2026-11-12T01:00:00Z", "2026-11-12T05:00:00Z", 2), denver, now)).toBe(
-            "Snow tonight · 2.0″",
+            "Snow tonight, 2.0″",
         )
     })
 
     it("counts the small hours as the night before", () => {
         expect(describeStorm(storm("2026-11-12T08:00:00Z", "2026-11-12T11:00:00Z", 1.5), denver, now)).toBe(
-            "Snow tonight · 1.5″",
+            "Snow tonight, 1.5″",
         )
     })
 
     it("uses the part of the day the storm ends in, not the hour after", () => {
         expect(describeStorm(storm("2026-11-12T19:00:00Z", "2026-11-13T00:00:00Z", 12), denver, now)).toBe(
-            "Snow Thu afternoon · 12″",
+            "Snow Thu afternoon, 12″",
         )
     })
 
     it("words a storm that's already started differently", () => {
         expect(describeStorm(storm("2026-11-11T17:00:00Z", "2026-11-12T03:00:00Z", 3), denver, now)).toBe(
-            "Snow through tonight · 3.0″ more",
+            "Snow through tonight, 3.0″ more",
         )
     })
 })

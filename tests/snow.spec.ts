@@ -2,17 +2,20 @@ import { expect, type Page, test } from "@playwright/test"
 
 import { dateAt, gridFixture, mockApis, week } from "./fixtures.ts"
 
-const rows = (page: Page) => page.locator(".daily-row")
+const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
+const score = (page: Page) => page.getByRole("button", { name: /^Condies score \d+ out of 100, / })
 
 // 06:00 tomorrow in the forecast's time zone, as hours from now.
 const tomorrowMorning = () => (Date.parse(`${dateAt(1)}T12:00:00-07:00`) - Date.now()) / 3_600_000
 
-test("rows and the header show real snow totals", async ({ page }) => {
+test("rows and the Snow section show real snow totals", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 4.5 }]) })
     await page.goto("#/")
 
-    await expect(rows(page).nth(1).locator(".daily-meta")).toContainText("4.5″")
-    await expect(page.locator(".card-header", { hasText: "7-DAY" })).toContainText("4.5″ this week")
+    await expect(days(page).nth(1)).toHaveAccessibleName(/\. 4\.5″ snow\./)
+    const snow = page.getByRole("region", { name: "Snow" })
+    await expect(snow.getByRole("term")).toHaveText(["Next 7 days"])
+    await expect(snow.getByRole("definition")).toHaveText(["4.5″"])
 })
 
 test("POW DAY comes from measured snow, not the forecast wording", async ({ page }) => {
@@ -25,7 +28,7 @@ test("POW DAY comes from measured snow, not the forecast wording", async ({ page
     await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 8 }]) })
     await page.goto("#/")
 
-    await expect(rows(page).nth(1).locator(".daily-chip")).toHaveText("POW DAY")
+    await expect(days(page).nth(1)).toHaveAccessibleName(/^Tomorrow, .*\. POW DAY\. /)
 })
 
 test("the day page says whether it's snow or rain at this elevation", async ({ page }) => {
@@ -50,8 +53,9 @@ test("each day gets a Condies score and best window", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([]) })
     await page.goto("#/")
 
-    await expect(rows(page).nth(1).locator(".daily-score")).toHaveText(/^\d+$/)
-    await rows(page).nth(1).click()
+    // Home scores only the best day. Every day's own screen has its score.
+    await expect(score(page)).toBeVisible()
+    await days(page).nth(1).click()
     await expect(page.locator(".day-score-ring")).toHaveText(/^\d+$/)
     await expect(page.locator(".day-insight").first()).toContainText("Best window")
 })
@@ -60,8 +64,8 @@ test("missing grid data leaves the rest of the forecast intact", async ({ page }
     await mockApis(page)
     await page.goto("#/")
 
-    await expect(rows(page)).toHaveCount(7)
-    await expect(page.locator(".daily-score")).toHaveCount(0)
+    await expect(days(page)).toHaveCount(7)
+    await expect(score(page)).toHaveCount(0)
 })
 
 const saved = [

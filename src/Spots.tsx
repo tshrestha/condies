@@ -46,7 +46,7 @@ export default function Spots() {
     )
 
     return (
-        <>
+        <div class="container pt-2 pb-5 mb-5">
             <h1 class="display-6 text-center mt-3 mb-3">My Spots</h1>
             <Show
                 when={saved.length}
@@ -120,6 +120,6 @@ export default function Spots() {
                     </div>
                 </Loading>
             </Show>
-        </>
+        </div>
     )
 }

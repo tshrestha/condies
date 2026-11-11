@@ -143,7 +143,7 @@ export default function Map() {
     })
 
     return (
-        <>
+        <div class="container pt-2 pb-5 mb-5">
             <div id={"map"} class={"position-fixed top-0 start-0 z-2"} ref={mapContainerRef}></div>
             <button
                 type="button"
@@ -155,6 +155,6 @@ export default function Map() {
             >
                 <i class="bi bi-broadcast" /> Radar
             </button>
-        </>
+        </div>
     )
 }

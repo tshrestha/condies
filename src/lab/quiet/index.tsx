@@ -2,37 +2,24 @@ import "@fontsource-variable/chivo/wght.css"
 import "../../design/tokens.css"
 import "../../design/components.css"
 import "./quiet.css"
+// After quiet.css, so the split's wide padding still wins over My Spots' head as it did before Home moved out.
+import "../../home/home.css"
 
-import { createMemo, createSignal, flush, For, Match, onSettled, Show, Switch } from "solid-js"
+import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js"
 
-import { Cat, StarIcon } from "../../design/icons.tsx"
 import { Dock as DesignDock, Masthead as DesignMasthead } from "../../design/nav.tsx"
-import { AlertRow, RangeBar, Score, Sheet as SheetFrame } from "../../design/parts.tsx"
+import { Score, Sheet as SheetFrame } from "../../design/parts.tsx"
 import { ErrorState, LoadingState, OfflineNotice } from "../../design/states.tsx"
-import { avalancheScale, type Paint, paintDay, paintTemp, paintVars } from "../../design/ramp.ts"
-import {
-    conditionWord,
-    dayName,
-    degrees,
-    feelsLike,
-    highlightWord,
-    isLoud,
-    nextHours,
-    numeralFit,
-    sentence,
-    severityRank,
-    shortDate,
-    snowLine,
-    windLine,
-    windSpeed,
-} from "../../design/words.ts"
+import { type Paint, paintDay, paintTemp, paintVars } from "../../design/ramp.ts"
+import { dayName, degrees, highlightWord, sentence, shortDate, snowLine, windSpeed } from "../../design/words.ts"
+import { type Avalanche, type HomeCtx, HomeScreen as Home } from "../../home/sections.tsx"
+import { AlertSheet, AvalancheSheet } from "../../home/sheets.tsx"
 import { type DaySummary, formatSnow, formatWindRange, getDayLabel, hasSnow } from "../../lib/daily.ts"
-import { type AlertView, type ForecastView, rankSpots } from "../../lib/forecastView.ts"
+import { type AlertView, rankSpots } from "../../lib/forecastView.ts"
 import type { Period } from "../../lib/nws.ts"
 import { formatAge } from "../../lib/util.ts"
 import type { DesignProps } from "../data.ts"
 
-type Avalanche = NonNullable<ForecastView["avalanche"]>
 type Sheet = { kind: "alert"; alert: AlertView } | { kind: "avalanche"; avalanche: Avalanche } | { kind: "search" }
 
 interface Ctx {
@@ -74,431 +61,33 @@ function Dock(props: Ctx) {
     )
 }
 
-function AvalancheRow(props: Ctx & { avalanche: Avalanche }) {
-    return (
-        <Show
-            when={props.avalanche.rating}
-            fallback={
-                <section class="sq-ground sq-avy-none" aria-label="Avalanche danger">
-                    <p class="sq-strong">No current avalanche rating</p>
-                    <p>That doesn’t mean it’s safe.</p>
-                    <a class="sq-link" href={props.avalanche.link} target="_blank" rel="noreferrer">
-                        {props.avalanche.center}
-                    </a>
-                </section>
-            }
-        >
-            {(rating) => (
-                <AlertRow
-                    tone="avalanche"
-                    title={`${rating().name} avalanche danger`}
-                    note={`${rating().level} of 5`}
-                    chip={avalancheScale[rating().level]}
-                    onOpen={() => props.open({ kind: "avalanche", avalanche: props.avalanche })}
-                />
-            )}
-        </Show>
-    )
-}
-
-// Danger of 3 or higher is a go or no-go fact, so it joins the warnings at the top.
-const risenAvalanche = (f: ForecastView) => ((f.avalanche?.rating?.level ?? 0) >= 3 ? f.avalanche : undefined)
-
-function Alerts(props: Ctx) {
+// Home is shared with the app. The lab wires it to its own links, a star that only remembers itself, and a
+// refresh that only says it happened.
+function HomeScreen(props: Ctx) {
     const f = () => props.app.forecast
-    const sorted = () => [...f().alerts].sort((a, b) => severityRank[a.severity] - severityRank[b.severity])
-    const row = (alert: AlertView) => (
-        <AlertRow
-            tone={alert.severity === "Extreme" ? "extreme" : isLoud(alert) ? "severe" : "quiet"}
-            title={alert.event}
-            note={alert.severity}
-            onOpen={() => props.open({ kind: "alert", alert })}
-        />
-    )
-    return (
-        <Show when={sorted().length || risenAvalanche(f())}>
-            <section class="sq-ground sq-alerts" aria-label="Alerts">
-                <For each={sorted().filter(isLoud)}>{row}</For>
-                <Show when={risenAvalanche(f())}>{(a) => <AvalancheRow {...props} avalanche={a()} />}</Show>
-                <For each={sorted().filter((a) => !isLoud(a))}>{row}</For>
-            </section>
-        </Show>
-    )
-}
-
-// Now is a paint chip: the current temperature's own color as a swatch inside the margins, with dark ink.
-function Now(props: Ctx & { fit?: number; numeral: (el: HTMLElement) => void }) {
-    const f = () => props.app.forecast
-    const paint = () => paintTemp(f().current.temperature, props.app.theme)
-    const text = () => degrees(f().current.temperature)
-    const fit = () => numeralFit(text())
     const [starred, setStarred] = createSignal(false)
     const [refreshed, setRefreshed] = createSignal(false)
-    const age = () => (refreshed() ? "just now" : formatAge(f().now - Date.parse(f().updatedAt)))
-    const place = () => [f().place.city, f().place.state].filter(Boolean).join(", ")
-    const details = () =>
-        [
-            feelsLike(f().current) !== undefined ? `Feels like ${degrees(feelsLike(f().current))}` : "",
-            windLine(f().current),
-        ]
-            .filter(Boolean)
-            .join(" · ")
-
+    const home: HomeCtx = {
+        get forecast() {
+            return props.app.forecast
+        },
+        get theme() {
+            return props.app.theme
+        },
+        dayLink: (date) => props.app.link({ name: "day", date }),
+        openAlert: (alert) => props.open({ kind: "alert", alert }),
+        openAvalanche: (avalanche) => props.open({ kind: "avalanche", avalanche }),
+    }
     return (
-        <section class="sq-chip sq-now" style={paintVars(paint())} aria-label="Right now">
-            <div class="sq-place-row">
-                <h1 class="sq-place">
-                    <Cat />
-                    <span>Right meow in {place()}</span>
-                </h1>
-                <button
-                    type="button"
-                    class="sq-star"
-                    aria-pressed={starred() ? "true" : "false"}
-                    aria-label={`Save ${f().place.city} to My Spots`}
-                    onClick={() => setStarred(!starred())}
-                >
-                    <StarIcon filled={starred()} />
-                </button>
-            </div>
-            <p
-                ref={props.numeral}
-                class="sq-numeral"
-                style={{
-                    "--em": fit().em.toFixed(3),
-                    "--lsb": fit().lsb.toFixed(3),
-                    "--fit": props.fit ? `${props.fit}px` : undefined,
-                }}
-            >
-                {text()}
-            </p>
-            <p class="sq-cond">{conditionWord(f().current.shortForecast)}</p>
-            <p class="sq-now-line">{details()}</p>
-            <div class="sq-age">
-                <button type="button" class="sq-link" onClick={() => setRefreshed(true)}>
-                    Updated {age()}
-                </button>
-            </div>
-        </section>
-    )
-}
-
-function NextHours(props: Ctx) {
-    const f = () => props.app.forecast
-    const next = createMemo(() => nextHours(f()))
-    const summary = () =>
-        next()
-            .blocks.map((b) => `${b.label}, ${degrees(b.temperature)}, ${b.precip}`)
-            .join(". ")
-    return (
-        <section class="sq-ground sq-next" aria-label="Next 12 hours">
-            <p class="sq-caption sq-strong">{next().caption}</p>
-            <Show when={next().later}>{(storm) => <p class="sq-caption sq-later">{storm()}</p>}</Show>
-            <a
-                class="sq-blocks-link"
-                aria-label={`Next 12 hours: ${summary()}. Open hour by hour.`}
-                {...props.app.link({ name: "day", date: f().days[0]?.date ?? "" })}
-            >
-                <ol class="sq-blocks" aria-hidden="true">
-                    <For each={next().blocks}>
-                        {(block) => (
-                            <li class="sq-block">
-                                <span class="sq-block-head">
-                                    <span class="sq-small">{block.label}</span>
-                                    <span class="sq-num">{degrees(block.temperature)}</span>
-                                </span>
-                                <span>{block.precip}</span>
-                            </li>
-                        )}
-                    </For>
-                </ol>
-            </a>
-        </section>
-    )
-}
-
-function Best(props: Ctx) {
-    const f = () => props.app.forecast
-    return (
-        <Show when={f().best} fallback={<p class="sq-ground sq-caption sq-strong">No standout day this week</p>}>
-            {(best) => (
-                <section class="sq-ground sq-best" aria-label="Best day">
-                    <a class="sq-best-head" {...props.app.link({ name: "day", date: best().day.date })}>
-                        <span class="sq-small">Best day</span>
-                        <span class="sq-num">{dayName(best().day, best().index)}</span>
-                        <span>{best().day.condies!.bestWindow}</span>
-                    </a>
-                    <Score score={best().day.condies!.score} />
-                </section>
-            )}
-        </Show>
-    )
-}
-
-function DayRow(
-    props: Ctx & { day: DaySummary; index: number; min: number; max: number; anchor?: (el: HTMLElement) => void },
-) {
-    const name = () => dayName(props.day, props.index)
-    const period = () => props.day.day ?? props.day.night
-    const marker = () => highlightWord(props.day)
-    const condition = () => marker() ?? conditionWord(period()?.shortForecast ?? "")
-    // "Light snow · 6.4″ snow" says snow twice, so the amount drops the word when the condition has it.
-    const snow = () =>
-        hasSnow(props.day) ? `${formatSnow(props.day.snow!)}${/snow|pow/i.test(condition()) ? "" : " snow"}` : undefined
-    const label = () =>
-        [
-            `${name()}, ${shortDate(props.day.date)}`,
-            condition(),
-            snow(),
-            props.day.low !== undefined ? `low ${props.day.low}°` : undefined,
-            props.day.high !== undefined ? `high ${props.day.high}°` : undefined,
-        ]
-            .filter(Boolean)
-            .join(". ")
-    return (
-        <li>
-            <a class="sq-day" aria-label={label()} {...props.app.link({ name: "day", date: props.day.date })}>
-                <span class="sq-day-name sq-strong" aria-hidden="true">
-                    {name()}
-                </span>
-                <span class="sq-day-low" aria-hidden="true">
-                    {props.day.low === undefined ? "" : degrees(props.day.low)}
-                </span>
-                <RangeBar
-                    low={props.day.low}
-                    high={props.day.high}
-                    min={props.min}
-                    max={props.max}
-                    theme={props.app.theme}
-                />
-                <span ref={(el: HTMLElement) => props.anchor?.(el)} class="sq-day-high" aria-hidden="true">
-                    {props.day.high === undefined ? "" : degrees(props.day.high)}
-                </span>
-                <span class="sq-day-cond" aria-hidden="true">
-                    <span class={marker() ? "sq-strong" : undefined}>{condition()}</span>
-                    <Show when={snow()}>, {snow()}</Show>
-                </span>
-            </a>
-        </li>
-    )
-}
-
-function Week(props: Ctx & { anchor: (el: HTMLElement) => void }) {
-    const f = () => props.app.forecast
-    const anchorIndex = () => Math.min(1, f().days.length - 1)
-    const temps = () =>
-        f()
-            .days.flatMap((d) => [d.low, d.high])
-            .filter((t): t is number => t !== undefined)
-    const min = () => Math.min(...temps())
-    const max = () => Math.max(...temps())
-    return (
-        <section class="sq-ground sq-week" aria-label="This week">
-            <div class="sq-week-head" aria-hidden="true">
-                <span class="sq-strong">This week</span>
-                <span class="sq-day-low sq-small">Low</span>
-                <span />
-                <span class="sq-day-high sq-small">High</span>
-            </div>
-            <ol class="sq-days">
-                <For each={f().days}>
-                    {(day, i) => (
-                        <DayRow
-                            {...props}
-                            day={day}
-                            index={i()}
-                            min={min()}
-                            max={max()}
-                            anchor={i() === anchorIndex() ? props.anchor : undefined}
-                        />
-                    )}
-                </For>
-            </ol>
-        </section>
-    )
-}
-
-// Snow in time order: what fell, what's there now, what's coming. Laid out on the same three columns as the
-// next 12 hours, so the two read as one system.
-function Snow(props: Ctx) {
-    const f = () => props.app.forecast
-    const depth = () => f().snowDepth
-    const coming = () => (f().weekSnow >= 1 ? f().weekSnow : undefined)
-    const signed = (inches: number) => `${inches > 0 ? "+" : inches < 0 ? "−" : ""}${Math.abs(inches)}″`
-    return (
-        <Show when={depth() || coming()}>
-            <section class="sq-ground sq-facts" aria-labelledby="sq-snow-title">
-                <h2 id="sq-snow-title" class="sq-strong">
-                    Snow
-                </h2>
-                <dl class="sq-facts-grid">
-                    <Show when={depth()}>
-                        {(d) => (
-                            <>
-                                <div>
-                                    <dt class="sq-small">Last 24 hours</dt>
-                                    <dd class="sq-num">{signed(d().change)}</dd>
-                                </div>
-                                <div>
-                                    <dt class="sq-small">On the ground</dt>
-                                    <dd class="sq-num">{d().depth}″</dd>
-                                </div>
-                            </>
-                        )}
-                    </Show>
-                    <Show when={coming()}>
-                        {(inches) => (
-                            <div>
-                                <dt class="sq-small">Next 7 days</dt>
-                                <dd class="sq-num">{formatSnow(inches())}</dd>
-                            </div>
-                        )}
-                    </Show>
-                </dl>
-                <Show when={depth()}>
-                    {(d) => (
-                        <p class="sq-small sq-facts-source">
-                            Measured at {d().station.name}, {Number(d().station.miles.toFixed(1))} mi away at{" "}
-                            {d().station.elevation.toLocaleString()} ft, {formatAge(f().now - d().measuredAt)}.
-                        </p>
-                    )}
-                </Show>
-            </section>
-        </Show>
-    )
-}
-
-const duration = (hours: number) => {
-    const minutes = Math.round(hours * 60)
-    const h = Math.floor(minutes / 60)
-    return h ? `${h} hr ${minutes % 60} min` : `${minutes} min`
-}
-
-function localHour(time: number, timeZone: string) {
-    const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone,
-        hour: "numeric",
-        minute: "numeric",
-        hourCycle: "h23",
-    }).formatToParts(time)
-    const part = (type: string) => Number(parts.find((p) => p.type === type)!.value)
-    return part("hour") + part("minute") / 60
-}
-
-// Today's light, drawn like a week row: sunrise on the left, sunset on the right, and the daylight between them
-// on a 24-hour track. The part already behind us is dimmed, so the bar shows how much light is left.
-function Daylight(props: Ctx) {
-    const f = () => props.app.forecast
-    return (
-        <Show when={f().sun}>
-            {(sun) => {
-                const now = () => localHour(f().now, f().place.timeZone)
-                const rise = () => sun().sunriseHour
-                const set = () => sun().sunsetHour
-                const passed = () => Math.min(Math.max(now(), rise()), set())
-                const at = (hour: number) => `${(hour / 24) * 100}%`
-                const status = () =>
-                    now() < rise()
-                        ? `Sunrise in ${duration(rise() - now())}`
-                        : now() < set()
-                          ? `${duration(set() - now())} left`
-                          : `${duration(set() - rise())} total`
-                return (
-                    <section class="sq-ground sq-daylight" aria-labelledby="sq-daylight-title">
-                        <h2 id="sq-daylight-title" class="sq-strong">
-                            Daylight
-                        </h2>
-                        <p class="sq-sr">
-                            Sunrise {sun().sunrise}, sunset {sun().sunset}. {status()}.
-                        </p>
-                        <div class="sq-sunrow" aria-hidden="true">
-                            <span class="sq-strong">{sun().sunrise}</span>
-                            <span class="sq-sunbar">
-                                <i class="sq-sunbar-past" style={{ left: at(rise()), width: at(passed() - rise()) }} />
-                                <i class="sq-sunbar-left" style={{ left: at(passed()), width: at(set() - passed()) }} />
-                            </span>
-                            <span class="sq-strong">{sun().sunset}</span>
-                            <span class="sq-small">Sunrise</span>
-                            <span class="sq-small sq-sunrow-status">{status()}</span>
-                            <span class="sq-small sq-sunrow-end">Sunset</span>
-                        </div>
-                    </section>
-                )
-            }}
-        </Show>
-    )
-}
-
-function Mountain(props: Ctx) {
-    const f = () => props.app.forecast
-    const calmAvalanche = () => (risenAvalanche(f()) ? undefined : f().avalanche)
-    return (
-        <>
-            <Snow {...props} />
-            <Show when={calmAvalanche()}>
-                {(avalanche) => (
-                    <div class="sq-ground sq-alerts sq-alerts-calm">
-                        <AvalancheRow {...props} avalanche={avalanche()} />
-                    </div>
-                )}
-            </Show>
-            <Daylight {...props} />
-        </>
-    )
-}
-
-// Tomorrow's high must clear the bottom of the first screen by this much.
-const PEEK = 8
-const MIN_NUMERAL = 84
-
-function HomeScreen(props: Ctx) {
-    // CSS sizes the numeral to the swatch's width and about a fifth of the screen's height. On a busy day with
-    // several warnings it shrinks further, so that tomorrow's high still makes the first screen.
-    const [size, setSize] = createSignal<number>()
-    let numeral: HTMLElement | undefined
-    let anchor: HTMLElement | undefined
-    onSettled(() => {
-        const fit = () => {
-            if (!numeral || !anchor) {
-                return
-            }
-            setSize(undefined)
-            flush()
-            if (innerWidth >= 1024) {
-                return
-            }
-            const current = parseFloat(getComputedStyle(numeral).fontSize)
-            const ratio = numeral.getBoundingClientRect().height / current
-            // On a phone the dock covers the bottom of the screen, so tomorrow has to clear the dock instead.
-            const dock = document.querySelector<HTMLElement>(".sq-dock")
-            const bottom =
-                dock && getComputedStyle(dock).display !== "none" ? dock.getBoundingClientRect().top : innerHeight
-            const slack = bottom - PEEK - (anchor.getBoundingClientRect().bottom + scrollY)
-            if (slack < 0) {
-                setSize(Math.floor(Math.max(MIN_NUMERAL, current + slack / ratio)))
-            }
-        }
-        document.fonts.ready.then(fit)
-        addEventListener("resize", fit)
-        return () => removeEventListener("resize", fit)
-    })
-
-    return (
-        <div class="sq-home">
+        <Home
+            {...home}
+            saved={starred()}
+            onToggleSave={() => setStarred(!starred())}
+            updated={refreshed() ? "just now" : formatAge(f().now - Date.parse(f().updatedAt))}
+            onRefresh={() => setRefreshed(true)}
+        >
             <Masthead {...props} />
-            <Alerts {...props} />
-            <div class="sq-split">
-                <div class="sq-lead">
-                    <Now {...props} fit={size()} numeral={(el) => (numeral = el)} />
-                </div>
-                <div class="sq-rest">
-                    <NextHours {...props} />
-                    <Best {...props} />
-                    <Week {...props} anchor={(el) => (anchor = el)} />
-                    <Mountain {...props} />
-                </div>
-            </div>
-        </div>
+        </Home>
     )
 }
 
@@ -925,59 +514,6 @@ function SpotsScreen(props: Ctx) {
                 </div>
             </div>
         </div>
-    )
-}
-
-function AlertSheet(props: { alert: AlertView; onClose: () => void }) {
-    // The detail reads like the notice it opened from: framed, heavier for Extreme, plain for the quieter ones.
-    const tone = () => (props.alert.severity === "Extreme" ? "extreme" : isLoud(props.alert) ? "severe" : "quiet")
-    return (
-        <SheetFrame label={props.alert.event} onClose={props.onClose} title={props.alert.severity}>
-            <div class="sq-sheet-head" data-tone={tone()}>
-                <h2 class="sq-num">{props.alert.event}</h2>
-                <p>{props.alert.headline}</p>
-            </div>
-            <div class="sq-sheet-body">
-                <dl class="sq-parts">
-                    <For each={props.alert.parts}>
-                        {(part) => (
-                            <div>
-                                <Show when={part.label}>
-                                    <dt class="sq-strong">{sentence(part.label)}</dt>
-                                </Show>
-                                <dd>{part.text}</dd>
-                            </div>
-                        )}
-                    </For>
-                </dl>
-                <Show when={props.alert.instruction}>
-                    <p class="sq-strong">{props.alert.instruction}</p>
-                </Show>
-            </div>
-        </SheetFrame>
-    )
-}
-
-function AvalancheSheet(props: { avalanche: Avalanche; onClose: () => void }) {
-    const rating = () => props.avalanche.rating!
-    const paint = () => avalancheScale[rating().level]
-    return (
-        <SheetFrame label="Avalanche danger" onClose={props.onClose} paint={paint()} title="Avalanche danger">
-            <div class="sq-sheet-head" style={paintVars(paint())}>
-                <h2 class="sq-num">{rating().name}</h2>
-                <p>
-                    Level {rating().level} of 5.
-                    {rating().warning ? ` Avalanche ${rating().warning} in effect.` : ""}
-                </p>
-            </div>
-            <div class="sq-sheet-body">
-                <p>{rating().advice}</p>
-                <p>Varies by slope and elevation.</p>
-                <a class="sq-link" href={props.avalanche.link} target="_blank" rel="noreferrer">
-                    {props.avalanche.center}
-                </a>
-            </div>
-        </SheetFrame>
     )
 }
 

@@ -11,16 +11,31 @@
     background: transparent;
 }
 
+/* Home is on Strata Quiet, so behind it and the shell the page is its ground rather than Bootstrap's colors. */
+html[data-theme="light"] body:has(.sq-home) {
+    background: #fff !important;
+}
+
+html[data-theme="dark"] body:has(.sq-home) {
+    background: #0d0d0d !important;
+}
+
 /* The error and first-load states still fill the screen. */
 .sq-root.sq-shell > .sq-error,
 .sq-root.sq-shell > .sq-loading {
     min-height: 80svh;
 }
 
-/* On phones the dock owns the bottom of the screen, so the old floating buttons sit above it. */
+/* On phones the dock owns the bottom of the screen, so the old floating buttons sit above it. "html" out-ranks
+   Bootstrap's ".bottom-0", which loads after this file in production builds. */
 @media (max-width: 767.98px) {
-    .above-dock,
-    .maplibregl-ctrl-bottom-right {
+    html .above-dock,
+    html .maplibregl-ctrl-bottom-right {
         bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    /* Room at the end of the page for the dock and the button above it, so nothing is left underneath. */
+    html .container.mb-5 {
+        margin-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
     }
 }

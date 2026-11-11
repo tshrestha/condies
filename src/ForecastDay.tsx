@@ -1,6 +1,8 @@
 import { useParams, useSearchParams } from "@solidjs/router"
 import { createMemo, For, Loading, Match, Show, Switch, untrack } from "solid-js"
 
+import raindropIcon from "./assets/weather-icons-master/production/fill/all/raindrop.svg"
+import snowflakeIcon from "./assets/weather-icons-master/production/fill/all/snowflake.svg"
 import {
     type DaySummary,
     formatSnow,
@@ -15,11 +17,18 @@ import { tempGradient } from "./lib/tempColors.ts"
 import { formatLocalDate } from "./lib/util.ts"
 import { getIcon } from "./lib/wicons.ts"
 
-import { getPrecipIcon, getSummaryIcon } from "./DailyForecast.tsx"
 import { getForecastData } from "./Forecast.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
 import HomeButton from "./HomeButton.tsx"
 import HourlyForecast from "./HourlyForecast.tsx"
+
+// Until the Day screen moves to Strata Quiet, which has no condition icons.
+const getPrecipIcon = (summary: DaySummary) => (summary.precipType === "snow" ? snowflakeIcon : raindropIcon)
+
+const getSummaryIcon = (summary: DaySummary) => {
+    const period = (summary.day ?? summary.night)!
+    return getIcon({ keyword: period.shortForecast, isDay: period.isDaytime })
+}
 
 // The router reuses a route's component when only its params change, so key on them to remount.
 export function ForecastDayRoute() {
@@ -87,7 +96,7 @@ function ForecastDay(props: { point: string; date: string }) {
     const next = () => dayLink(1)
 
     return (
-        <>
+        <div class="container pt-2 pb-5 mb-5">
             <Loading fallback={<ForecastPlaceholder />}>
                 <Show
                     when={summary()}
@@ -257,6 +266,6 @@ function ForecastDay(props: { point: string; date: string }) {
             <div class="position-fixed bottom-0 pb-4 z-3 above-dock">
                 <HomeButton href={backHref} />
             </div>
-        </>
+        </div>
     )
 }

@@ -2,7 +2,7 @@ import { expect, type Page, test } from "@playwright/test"
 
 import { mockApis } from "./fixtures.ts"
 
-const star = (page: Page) => page.getByRole("button", { name: "Save to My Spots" })
+const star = (page: Page) => page.getByRole("button", { name: /^Save .+ to My Spots$/ })
 
 test("a forecast can be starred and unstarred", async ({ page }) => {
     await mockApis(page)
