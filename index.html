@@ -25,9 +25,6 @@
                 }
                 document.documentElement.setAttribute("data-theme", theme)
                 document.querySelector('meta[name="theme-color"]').setAttribute("content", grounds[theme])
-                // Screens still on Bootstrap read these until they move to Strata Quiet.
-                document.body.setAttribute("data-bs-theme", theme)
-                document.body.classList.add(theme + "-bg")
             })()
         </script>
         <main id="root"></main>

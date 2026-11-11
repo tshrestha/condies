@@ -28,22 +28,8 @@ function App() {
             {(props) => (
                 <Shell>
                     {/* Without a boundary, one uncaught error stops all reactivity for the rest of the session. */}
-                    <Errored
-                        fallback={
-                            <div class="sq-root sq-shell" data-theme={theme()}>
-                                <ErrorState home={{ href: "#/" }} onRetry={() => location.reload()} />
-                            </div>
-                        }
-                    >
-                        <Loading
-                            fallback={
-                                <div class="sq-root sq-shell" data-theme={theme()}>
-                                    <LoadingState theme={theme()} />
-                                </div>
-                            }
-                        >
-                            {props.children}
-                        </Loading>
+                    <Errored fallback={<ErrorState home={{ href: "#/" }} onRetry={() => location.reload()} />}>
+                        <Loading fallback={<LoadingState theme={theme()} />}>{props.children}</Loading>
                     </Errored>
                 </Shell>
             )}

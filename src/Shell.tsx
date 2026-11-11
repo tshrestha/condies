@@ -21,8 +21,7 @@ function useOnline() {
 }
 
 // The frame every screen sits in: the top bar on wide screens, the dock on phones, the offline notice and search.
-// Screens sit between the shell's pieces. The ones still on Bootstrap wrap themselves in its .container, outside
-// any .sq-root, so Strata Quiet's resets can't reach them.
+// It's the app's one .sq-root, so every screen inside it gets the theme's tokens.
 export default function Shell(props: ParentProps) {
     const location = useLocation()
     const online = useOnline()
@@ -48,20 +47,16 @@ export default function Shell(props: ParentProps) {
     }
 
     return (
-        <>
-            <div class="sq-root sq-shell" data-theme={theme()}>
-                <Masthead {...nav} />
-                <Show when={!online()}>
-                    <OfflineNotice />
-                </Show>
-            </div>
+        <div class="sq-root" data-theme={theme()}>
+            <Masthead {...nav} />
+            <Show when={!online()}>
+                <OfflineNotice />
+            </Show>
             {props.children}
-            <div class="sq-root sq-shell" data-theme={theme()}>
-                <Dock {...nav} current={current()} now={now()} />
-                <Show when={searching()}>
-                    <SearchSheet onClose={() => setSearching(false)} />
-                </Show>
-            </div>
-        </>
+            <Dock {...nav} current={current()} now={now()} />
+            <Show when={searching()}>
+                <SearchSheet onClose={() => setSearching(false)} />
+            </Show>
+        </div>
     )
 }

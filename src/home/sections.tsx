@@ -1,4 +1,4 @@
-import { createMemo, createSignal, flush, For, Loading, onSettled, type ParentProps, Show } from "solid-js"
+import { createMemo, createSignal, flush, For, Loading, onSettled, Show } from "solid-js"
 
 import { Cat, StarIcon } from "../design/icons.tsx"
 import type { LinkProps } from "../design/nav.tsx"
@@ -22,9 +22,9 @@ import type { AlertView, ForecastView } from "../lib/forecastView.ts"
 import { formatAge } from "../lib/util.ts"
 import { FactsPlaceholder } from "./Placeholder.tsx"
 
-// Home's sections, shared by the app and the lab. They take the forecast and plain callbacks, so each can wire
-// its own navigation and data. In the app, avalanche danger, snow depth and sun times arrive after the
-// forecast: reading them can suspend, so each section that reads one waits behind its own Loading boundary.
+// Home's sections. They take the forecast and plain callbacks, and know nothing of the router or the data's
+// source. Avalanche danger, snow depth and sun times arrive after the forecast: reading them can suspend, so each
+// section that reads one waits behind its own Loading boundary.
 
 export type Avalanche = NonNullable<ForecastView["avalanche"]>
 
@@ -504,12 +504,11 @@ function useNumeralFit() {
     }
 }
 
-// The whole Home screen below the top bar. The lab passes its own top bar as children.
-export function HomeScreen(props: ParentProps<HomeCtx & NowProps & { notice?: string }>) {
+// The whole Home screen below the top bar.
+export function HomeScreen(props: HomeCtx & NowProps & { notice?: string }) {
     const fit = useNumeralFit()
     return (
         <div class="sq-home">
-            {props.children}
             <div ref={fit.watch}>
                 <Show when={props.notice}>
                     <p class="sq-ground sq-notice" role="status">

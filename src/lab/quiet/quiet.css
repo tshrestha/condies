@@ -1,9 +1,0 @@
-/* Strata Quiet. Every 5°F has its own color, used like a paint chip: a flat swatch with dark ink. */
-
-html[data-design="quiet"] {
-    background: #fff;
-}
-
-html[data-design="quiet"][data-theme="dark"] {
-    background: #0d0d0d;
-}

@@ -1,14 +1,9 @@
-import "bootstrap/dist/css/bootstrap.min.css"
-import "bootstrap-icons/font/bootstrap-icons.min.css"
-import "./app.css"
-// Strata Quiet loads beside Bootstrap while screens move over one at a time. It's all scoped to .sq-root.
 import "@fontsource-variable/chivo/wght.css"
 import "./design/tokens.css"
 import "./design/components.css"
 import "./home/home.css"
 import "./day/day.css"
 import "./spots/spots.css"
-import "./transition.css"
 
 import { render } from "@solidjs/web"
 

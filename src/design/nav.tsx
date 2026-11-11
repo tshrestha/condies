@@ -2,7 +2,7 @@ import { Cat, MapIcon, SearchIcon, StarIcon } from "./icons.tsx"
 import type { Paint } from "./ramp.ts"
 import ThemeToggle, { type Theme } from "./ThemeToggle.tsx"
 
-// Spread onto an <a>. A plain hash link in the app; the lab adds a click handler.
+// Spread onto an <a>: a plain hash link, with an optional click handler.
 export interface LinkProps {
     href: string
     onClick?: (e: MouseEvent) => void

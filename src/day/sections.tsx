@@ -1,4 +1,4 @@
-import { createMemo, For, Loading, type ParentProps, Show } from "solid-js"
+import { createMemo, For, Loading, Show } from "solid-js"
 
 import type { LinkProps } from "../design/nav.tsx"
 import { Score } from "../design/parts.tsx"
@@ -9,8 +9,7 @@ import type { ForecastView } from "../lib/forecastView.ts"
 import type { Period } from "../lib/nws.ts"
 import { Hourly } from "./chart.tsx"
 
-// The Day screen, shared by the app and the lab. Like Home's sections it takes the forecast and plain links, so
-// each can wire its own navigation. Sun times can arrive after the forecast, so the line that reads them waits
+// The Day screen. Like Home's sections it takes the forecast and plain links. Sun times can arrive after the forecast, so the line that reads them waits
 // behind its own Loading boundary.
 
 export interface DayCtx {
@@ -65,8 +64,8 @@ function Pager(props: DayCtx & { index: number }) {
     )
 }
 
-// One day of the forecast. The lab passes its own top bar as children.
-export function DayView(props: ParentProps<DayCtx & { day: DaySummary; index: number }>) {
+// One day of the forecast.
+export function DayView(props: DayCtx & { day: DaySummary; index: number }) {
     const f = () => props.forecast
     const name = () => dayName(props.day, props.index)
     const period = () => props.day.day ?? props.day.night
@@ -84,7 +83,6 @@ export function DayView(props: ParentProps<DayCtx & { day: DaySummary; index: nu
 
     return (
         <div class="sq-dayview">
-            {props.children}
             <Pager {...props} index={props.index} />
             <div class="sq-split">
                 <div class="sq-lead">

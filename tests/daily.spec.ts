@@ -173,7 +173,7 @@ test("a deep link applies the saved theme", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("condiesTheme", '"dark"'))
     await mockApis(page)
     await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
-    await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
 })
 
 for (const width of [320, 390]) {

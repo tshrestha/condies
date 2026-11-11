@@ -223,7 +223,7 @@ export default function Map() {
     })
 
     return (
-        <div class="sq-root sq-map" data-theme={theme()}>
+        <div class="sq-map">
             <div id="map" class="sq-map-canvas" ref={mapContainerRef} />
             <button
                 type="button"

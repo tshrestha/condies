@@ -1,4 +1,4 @@
-import { createMemo, createSignal, For, type ParentProps, Show } from "solid-js"
+import { createMemo, createSignal, For, Show } from "solid-js"
 
 import type { LinkProps } from "../design/nav.tsx"
 import { Score } from "../design/parts.tsx"
@@ -6,8 +6,7 @@ import { dayName } from "../design/words.ts"
 import { formatSnow, getDayLabel, hasSnow } from "../lib/daily.ts"
 import { rankSpots, type SpotView } from "../lib/forecastView.ts"
 
-// My Spots, shared by the app and the lab. It takes the spots and a link for each, so each can wire its own
-// navigation. A spot whose forecast didn't load has no days and says so in its row.
+// My Spots. It takes the spots and a link for each. A spot whose forecast didn't load has no days and says so in its row.
 
 export type RankedSpot = ReturnType<typeof rankSpots>[number]
 
@@ -51,16 +50,14 @@ export function SpotRow(props: { spot: RankedSpot; link: LinkProps }) {
     )
 }
 
-// Ranked by score, so the rows sit on the ground: a color here would read as a ranking. The lab passes its own
-// top bar as children.
-export function SpotsView(props: ParentProps<SpotsCtx>) {
+// Ranked by score, so the rows sit on the ground: a color here would read as a ranking.
+export function SpotsView(props: SpotsCtx) {
     const [date, setDate] = createSignal<string>()
     const ranked = createMemo(() => rankSpots(props.spots, date()))
     const filterDays = () => props.spots.find((spot) => spot.days.length)?.days ?? []
 
     return (
         <div class="sq-spotsview">
-            {props.children}
             <div class="sq-split">
                 <div class="sq-lead sq-ground sq-spots-head">
                     <h1 class="sq-num">My Spots</h1>

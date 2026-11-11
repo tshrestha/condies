@@ -28,7 +28,7 @@ test.describe("theme", () => {
 
         await page.emulateMedia({ colorScheme: "dark" })
         await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
-        await expect(page.locator("body")).toHaveClass(/dark-bg/)
+        await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#0d0d0d")
 
         // Choosing light while the system is dark.
         await page.getByRole("button", { name: "Dark mode" }).click()
@@ -43,7 +43,9 @@ test.describe("theme", () => {
         await page.goto("#/")
 
         await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
-        await expect(page.locator("body")).toHaveClass(/dark-bg/)
+        // The browser's bars and the page behind everything are already the dark ground.
+        await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#0d0d0d")
+        await expect(page.locator("html")).toHaveCSS("background-color", "rgb(13, 13, 13)")
     })
 })
 

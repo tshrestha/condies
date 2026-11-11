@@ -6,7 +6,6 @@ import type { SpotView } from "./lib/forecastView.ts"
 import { getSpots, type Spot } from "./lib/spots.ts"
 import { SpotsPlaceholder } from "./spots/Placeholder.tsx"
 import { SpotsView } from "./spots/sections.tsx"
-import { theme } from "./theme.ts"
 
 export async function loadSpot({ lat, lon, name }: Spot) {
     try {
@@ -36,13 +35,11 @@ export default function Spots() {
     )
 
     return (
-        <div class="sq-root" data-theme={theme()}>
-            <Loading fallback={<SpotsPlaceholder count={saved.length} />}>
-                <SpotsView
-                    spots={saved.length ? spots() : []}
-                    spotLink={(spot) => ({ href: `#/forecast/${spot.lat},${spot.lon}` })}
-                />
-            </Loading>
-        </div>
+        <Loading fallback={<SpotsPlaceholder count={saved.length} />}>
+            <SpotsView
+                spots={saved.length ? spots() : []}
+                spotLink={(spot) => ({ href: `#/forecast/${spot.lat},${spot.lon}` })}
+            />
+        </Loading>
     )
 }

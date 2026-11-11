@@ -37,32 +37,30 @@ function ForecastDay(props: { point: string; date: string }) {
     const index = createMemo(() => view().days.findIndex((d) => d.date === date))
 
     return (
-        <div class="sq-root" data-theme={theme()}>
-            <Loading fallback={<DayPlaceholder />}>
-                <Show
-                    when={index() >= 0}
-                    fallback={
-                        // An old link, or a day that has since passed.
-                        <div class="sq-ground sq-error" role="status">
-                            <h1 class="sq-num">There’s no forecast for this day.</h1>
-                            <div class="sq-error-actions">
-                                <a class="sq-link" href={back}>
-                                    Back to the forecast
-                                </a>
-                            </div>
+        <Loading fallback={<DayPlaceholder />}>
+            <Show
+                when={index() >= 0}
+                fallback={
+                    // An old link, or a day that has since passed.
+                    <div class="sq-ground sq-error" role="status">
+                        <h1 class="sq-num">There’s no forecast for this day.</h1>
+                        <div class="sq-error-actions">
+                            <a class="sq-link" href={back}>
+                                Back to the forecast
+                            </a>
                         </div>
-                    }
-                >
-                    <DayView
-                        forecast={view()}
-                        theme={theme()}
-                        dayLink={(day) => ({ href: `#/forecast/${lat},${lon}/day/${day}${query}` })}
-                        now={{ href: back }}
-                        day={view().days[index()]}
-                        index={index()}
-                    />
-                </Show>
-            </Loading>
-        </div>
+                    </div>
+                }
+            >
+                <DayView
+                    forecast={view()}
+                    theme={theme()}
+                    dayLink={(day) => ({ href: `#/forecast/${lat},${lon}/day/${day}${query}` })}
+                    now={{ href: back }}
+                    day={view().days[index()]}
+                    index={index()}
+                />
+            </Show>
+        </Loading>
     )
 }

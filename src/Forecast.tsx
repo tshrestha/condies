@@ -103,8 +103,11 @@ export default function Forecast(props: ForecastProps) {
 
     const view = createForecastView(lat, lon)
 
+    // Home.tsx renders this inside its own Loading and Errored fallbacks. In production builds of Solid 2 RC, a
+    // fallback that is itself a boundary with no element around it hangs the page, so this div has to stay. The
+    // location fallback tests in forecast.spec.ts and reliability.spec.ts catch it.
     return (
-        <div class="sq-root" data-theme={theme()}>
+        <div>
             <Loading fallback={<HomePlaceholder />}>
                 <Ready forecast={view()} lat={lat} lon={lon} notice={props.notice} fromHome={fromHome} />
             </Loading>

@@ -76,6 +76,3 @@ export function scoreDay(date: string, hourly: Period[], grid: Grid): DayScore |
         bestWindow: `${hours[bestStart].hourString}–${(after ?? last).hourString}`,
     }
 }
-
-// Dark enough for the white number on top of it to stay readable at every score.
-export const scoreColor = (score: number) => `hsl(${Math.round(score * 1.3)} 65% 28%)`

@@ -1,5 +1,29 @@
-/* Strata Quiet's foundation: tokens, resets, surfaces, type and focus. Everything is scoped under .sq-root, so
-   it can load beside any other stylesheet without changing it. The spec is DESIGN.md. */
+/* Strata Quiet's foundation: the page, tokens, resets, surfaces, type and focus. The app is one .sq-root, the
+   shell, with every screen inside it. The spec is DESIGN.md. */
+
+/* The page: border-box sizing everywhere, no margin around it, and the theme's ground behind it, the same color
+   as theme-color, so overscrolling and the browser's own bars match. */
+
+*,
+::before,
+::after {
+    box-sizing: border-box;
+}
+
+html {
+    background: #fff;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+html[data-theme="dark"] {
+    background: #0d0d0d;
+}
+
+body {
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+}
 
 .sq-root {
     --sq-ground: #fff;
@@ -32,15 +56,14 @@
     color-scheme: dark;
 }
 
-/* Element resets. "html" lifts each one just above a bare element selector, so they beat another stylesheet's
-   "p" or "a" (Bootstrap's, while it's still here) whichever loads last. They stay below every class. */
+/* Element resets, at no specificity, so every class beats them. */
 
-html :where(.sq-root) a {
+:where(.sq-root) a {
     color: inherit;
     text-decoration: none;
 }
 
-html :where(.sq-root) button {
+:where(.sq-root) button {
     padding: 0;
     border: 0;
     border-radius: 0;
@@ -51,33 +74,33 @@ html :where(.sq-root) button {
     cursor: pointer;
 }
 
-html :where(.sq-root) input {
+:where(.sq-root) input {
     color: inherit;
     font: inherit;
 }
 
-html :where(.sq-root) p,
-html :where(.sq-root) ul,
-html :where(.sq-root) ol,
-html :where(.sq-root) figure {
+:where(.sq-root) p,
+:where(.sq-root) ul,
+:where(.sq-root) ol,
+:where(.sq-root) figure {
     margin: 0;
     padding: 0;
 }
 
-html :where(.sq-root) ul,
-html :where(.sq-root) ol {
+:where(.sq-root) ul,
+:where(.sq-root) ol {
     list-style: none;
 }
 
-html :where(.sq-root) svg {
+:where(.sq-root) svg {
     display: block;
 }
 
-html :where(.sq-root) h1,
-html :where(.sq-root) h2,
-html :where(.sq-root) dl,
-html :where(.sq-root) dt,
-html :where(.sq-root) dd {
+:where(.sq-root) h1,
+:where(.sq-root) h2,
+:where(.sq-root) dl,
+:where(.sq-root) dt,
+:where(.sq-root) dd {
     margin: 0;
     font: inherit;
 }
