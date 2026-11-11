@@ -43,6 +43,9 @@ body {
        the bar, with a little room for the blur's soft edge. Without an inset, as on desktops and most Android
        phones, both terms are 0. */
     --sq-top: calc(env(safe-area-inset-top, 0px) + min(env(safe-area-inset-top, 0px), 12px));
+    /* The dock floats 12px off the bottom edge. On an iPhone it sinks into the home indicator's inset and stops
+       just above the indicator, as the system's own bars do. */
+    --sq-dock-bottom: max(12px, env(safe-area-inset-bottom, 0px) - 12px);
 
     min-height: 100vh;
     min-height: 100svh;

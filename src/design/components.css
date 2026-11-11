@@ -223,13 +223,14 @@
     }
 
     .sq-root {
-        padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+        /* The dock's 58px and 16px of room above it. */
+        padding-bottom: calc(var(--sq-dock-bottom) + 74px);
     }
 
     .sq-dock {
         position: fixed;
         right: max(12px, env(safe-area-inset-right, 0px));
-        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        bottom: var(--sq-dock-bottom);
         left: max(12px, env(safe-area-inset-left, 0px));
         z-index: 20;
         display: flex;

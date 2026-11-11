@@ -49,22 +49,24 @@ test.describe("theme", () => {
     })
 })
 
-// An iPhone with a Dynamic Island: iOS draws the status bar over the top 59px and blurs what's under it.
+// An iPhone with a Dynamic Island: iOS draws the status bar over the top 59px and blurs what's under it, and keeps
+// the bottom 34px for the home indicator.
 const statusBar = 59
+const homeIndicator = 34
 
 async function emulateIPhoneInsets(page: Page) {
     const cdp = await page.context().newCDPSession(page)
     await cdp.send(
         "Emulation.setSafeAreaInsetsOverride" as never,
         {
-            insets: { top: statusBar, bottom: 34, left: 0, right: 0 },
+            insets: { top: statusBar, bottom: homeIndicator, left: 0, right: 0 },
         } as never,
     )
 }
 
 const top = async (locator: Locator) => (await locator.boundingBox())!.y
 
-test.describe("under an iPhone's status bar", () => {
+test.describe("on an iPhone", () => {
     test("Home and the Day screen start below it", async ({ page }) => {
         await mockApis(page)
         await emulateIPhoneInsets(page)
@@ -83,7 +85,23 @@ test.describe("under an iPhone's status bar", () => {
         expect(await top(page.getByRole("button", { name: "Close" }))).toBeGreaterThanOrEqual(statusBar)
     })
 
-    test("the map runs under it, with its own controls below it", async ({ page }) => {
+    test("the dock sits just above the home indicator, and the page ends above the dock", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/")
+        const dock = (await page.locator(".sq-dock").boundingBox())!
+        const viewport = page.viewportSize()!
+        expect(viewport.height - (dock.y + dock.height)).toBe(homeIndicator - 12)
+
+        await page.mouse.wheel(0, 10_000)
+        const daylight = page.getByRole("region", { name: "Daylight" })
+        await expect(daylight).toBeVisible()
+        await expect
+            .poll(async () => (await daylight.boundingBox())!.y + (await daylight.boundingBox())!.height)
+            .toBeLessThanOrEqual(dock.y)
+    })
+
+    test("the map runs under the status bar, with its own controls below it", async ({ page }) => {
         await mockApis(page)
         await emulateIPhoneInsets(page)
         await page.goto("#/map")

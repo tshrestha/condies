@@ -194,6 +194,6 @@
     }
 
     .sq-root .sq-map .maplibregl-ctrl-bottom-right {
-        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+        bottom: calc(var(--sq-dock-bottom) + 72px);
     }
 }

@@ -32,7 +32,8 @@ white type on saturated blue, no banners, no condensed numerals.
   showing through (about 10:1 by day, 6:1 by night). With `prefers-reduced-transparency`, or without backdrop
   blur, it's solid. Tabs: Now (the cat), Search, Spots (the star), Map. The current tab is a chip in the color
   of the temperature right now, bold, with its icon filled: the dock's one painted thing. The theme switch is a
-  separate 58px glass disc beside it.
+  separate 58px glass disc beside it. It floats 12px off the bottom edge; on an iPhone it sinks into the home
+  indicator's inset and stops just above the indicator (`--sq-dock-bottom`), as the system's own bars do.
 - Wide screens: the top bar keeps words (Search, Spots, Map) and the same theme switch.
 - The theme switch is a horizon: the sun up in light mode; switching sets the sun and raises a crescent moon
   as two stars come out. It shows the current theme and is a toggle button ("Dark mode", pressed or not).
