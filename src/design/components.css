@@ -522,3 +522,81 @@
         margin-left: auto;
     }
 }
+
+/* States: the full-screen first load, the error page and the offline notice. */
+
+.sq-offline {
+    padding: 12px var(--sq-gut);
+}
+
+.sq-loading {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    padding-top: var(--sq-gut);
+}
+
+.sq-loading-band {
+    height: 56svh;
+    margin: 0 var(--sq-gut);
+    background: var(--c1);
+}
+
+.sq-loading-text {
+    padding: 20px var(--sq-gut);
+    font-size: var(--sq-l);
+    font-weight: 700;
+}
+
+@keyframes sq-walk {
+    0% {
+        background: var(--c0);
+    }
+    16% {
+        background: var(--c1);
+    }
+    33% {
+        background: var(--c2);
+    }
+    50% {
+        background: var(--c3);
+    }
+    66% {
+        background: var(--c4);
+    }
+    83% {
+        background: var(--c5);
+    }
+}
+
+.sq-error {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: 100svh;
+    padding: 72px var(--sq-gut);
+}
+
+.sq-error-actions {
+    display: flex;
+    gap: 28px;
+}
+
+.sq-error-actions > * {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sq-loading-band {
+        animation: sq-walk 9s step-end infinite;
+    }
+}
+
+/* A search result chosen from the keyboard, the one Enter opens. */
+.sq-result[aria-selected="true"] {
+    margin-inline: -10px;
+    padding-inline: 10px;
+    background: var(--sq-track);
+}

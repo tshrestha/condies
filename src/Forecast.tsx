@@ -8,14 +8,12 @@ import { type Alert, getAlerts, getForecast, getGridForecast, getPoint, type Poi
 import Alerts from "./Alerts.tsx"
 import DailyForecast from "./DailyForecast.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
-import HomeButton from "./HomeButton.tsx"
 import HourlyForecast from "./HourlyForecast"
 import CurrentConditions from "./CurrentConditions.tsx"
 import CurrentConditionsPlaceholder from "./CurrentConditionsPlaceholder.tsx"
 import LastUpdated from "./LastUpdated.tsx"
 import MountainConditions from "./MountainConditions.tsx"
 import SunRiseSet from "./SunRiseSet.tsx"
-import ThemeToggle from "./ThemeToggle.tsx"
 
 export interface ForecastProps {
     point: {
@@ -116,16 +114,6 @@ export default function Forecast(props: ForecastProps) {
 
     return (
         <>
-            <div class="d-flex justify-content-between align-items-center">
-                <Show when={location.pathname === "/"}>
-                    <a href="#/spots" class="btn btn-sm btn-light rounded-pill">
-                        <i class="bi bi-star-fill text-warning" /> My Spots
-                    </a>
-                </Show>
-                <div class="ms-auto">
-                    <ThemeToggle />
-                </div>
-            </div>
             <Loading fallback={<CurrentConditionsPlaceholder />}>
                 <Show when={data()!.hourlyForecast.periods.length}>
                     <CurrentConditions
@@ -167,11 +155,6 @@ export default function Forecast(props: ForecastProps) {
                     />
                 </Show>
             </Loading>
-            <Show when={location.pathname !== "/"}>
-                <div class={"position-fixed bottom-0 pb-4 z-3"}>
-                    <HomeButton />
-                </div>
-            </Show>
         </>
     )
 }

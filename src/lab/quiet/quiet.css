@@ -526,71 +526,6 @@ html[data-design="quiet"][data-theme="dark"] {
     padding: 8px var(--sq-gut) 32px;
 }
 
-/* States */
-
-.sq-offline {
-    padding: 12px var(--sq-gut);
-}
-
-.sq-loading {
-    display: flex;
-    flex-direction: column;
-    min-height: 100svh;
-    padding-top: var(--sq-gut);
-}
-
-.sq-loading-band {
-    height: 56svh;
-    margin: 0 var(--sq-gut);
-    background: var(--c1);
-}
-
-.sq-loading-text {
-    padding: 20px var(--sq-gut);
-    font-size: var(--sq-l);
-    font-weight: 700;
-}
-
-@keyframes sq-walk {
-    0% {
-        background: var(--c0);
-    }
-    16% {
-        background: var(--c1);
-    }
-    33% {
-        background: var(--c2);
-    }
-    50% {
-        background: var(--c3);
-    }
-    66% {
-        background: var(--c4);
-    }
-    83% {
-        background: var(--c5);
-    }
-}
-
-.sq-error {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-height: 100svh;
-    padding: 72px var(--sq-gut);
-}
-
-.sq-error-actions {
-    display: flex;
-    gap: 28px;
-}
-
-.sq-error-actions > * {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-}
-
 /* Motion: chart columns grow from the baseline, and loading steps through the ramp. */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -598,10 +533,6 @@ html[data-design="quiet"][data-theme="dark"] {
         transition:
             height 0.35s cubic-bezier(0.2, 0.7, 0.2, 1),
             background-color 0.35s ease;
-    }
-
-    .sq-loading-band {
-        animation: sq-walk 9s step-end infinite;
     }
 }
 

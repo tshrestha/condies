@@ -10,7 +10,6 @@ import { scoreColor } from "./lib/score.ts"
 import { getSpots } from "./lib/spots.ts"
 import { getLocation } from "./lib/util.ts"
 
-import HomeButton from "./HomeButton.tsx"
 import { loadSpot } from "./Spots.tsx"
 
 const radarLayer = "radar"
@@ -148,7 +147,7 @@ export default function Map() {
             <div id={"map"} class={"position-fixed top-0 start-0 z-2"} ref={mapContainerRef}></div>
             <button
                 type="button"
-                class={`btn btn-sm rounded-pill shadow-sm position-fixed bottom-0 start-50 translate-middle-x mb-4 z-3 ${
+                class={`btn btn-sm rounded-pill shadow-sm position-fixed bottom-0 start-50 translate-middle-x mb-4 z-3 above-dock ${
                     radarOn() ? "btn-primary" : "btn-light"
                 }`}
                 aria-pressed={radarOn() ? "true" : "false"}
@@ -156,9 +155,6 @@ export default function Map() {
             >
                 <i class="bi bi-broadcast" /> Radar
             </button>
-            <div class={"position-fixed bottom-0 start-0 mb-3 mx-3 z-3"}>
-                <HomeButton />
-            </div>
         </>
     )
 }

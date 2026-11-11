@@ -62,8 +62,9 @@ test("searching for a place doesn't add it once spots are in use", async ({ page
     await mockApis(page)
     await page.goto("#/")
 
-    await page.locator("#geocodingSearch").fill("Boulder")
-    await page.locator(".search-result").first().click()
+    await page.getByRole("button", { name: "Search" }).click()
+    await page.getByRole("combobox", { name: "Where to?" }).fill("Boulder")
+    await page.getByRole("option").first().click()
     await expect(page).toHaveURL(/#\/forecast\//)
 
     await page.goto("#/spots")

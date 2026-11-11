@@ -6,7 +6,6 @@ import { denver } from "./lib/nws.ts"
 import { getLocation } from "./lib/util.ts"
 
 import Forecast, { getForecastData } from "./Forecast.tsx"
-import LocationSearchForm from "./LocationSearchForm.tsx"
 
 const getLastLocation = () => getItem(lastLocationKey) ?? denver
 
@@ -59,7 +58,6 @@ export default function Home() {
                     </Show>
                 </Loading>
             </Errored>
-            <LocationSearchForm />
         </>
     )
 }

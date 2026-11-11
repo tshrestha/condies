@@ -2,11 +2,9 @@ import { createMemo, createSignal, For, Loading, Show } from "solid-js"
 
 import { getForecastData } from "./Forecast.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
-import HomeButton from "./HomeButton.tsx"
 import { bestDay, formatSnow, getDayLabel, groupIntoDays, hasSnow } from "./lib/daily.ts"
 import { scoreColor } from "./lib/score.ts"
 import { getSpots, type Spot } from "./lib/spots.ts"
-import ThemeToggle from "./ThemeToggle.tsx"
 
 export async function loadSpot({ lat, lon, name }: Spot) {
     try {
@@ -49,7 +47,6 @@ export default function Spots() {
 
     return (
         <>
-            <ThemeToggle />
             <h1 class="display-6 text-center mt-3 mb-3">My Spots</h1>
             <Show
                 when={saved.length}
@@ -123,9 +120,6 @@ export default function Spots() {
                     </div>
                 </Loading>
             </Show>
-            <div class="position-fixed bottom-0 pb-4 z-3">
-                <HomeButton />
-            </div>
         </>
     )
 }

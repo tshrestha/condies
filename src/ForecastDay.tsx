@@ -20,7 +20,6 @@ import { getForecastData } from "./Forecast.tsx"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
 import HomeButton from "./HomeButton.tsx"
 import HourlyForecast from "./HourlyForecast.tsx"
-import ThemeToggle from "./ThemeToggle.tsx"
 
 // The router reuses a route's component when only its params change, so key on them to remount.
 export function ForecastDayRoute() {
@@ -89,7 +88,6 @@ function ForecastDay(props: { point: string; date: string }) {
 
     return (
         <>
-            <ThemeToggle />
             <Loading fallback={<ForecastPlaceholder />}>
                 <Show
                     when={summary()}
@@ -256,7 +254,7 @@ function ForecastDay(props: { point: string; date: string }) {
                     </Show>
                 </Show>
             </Loading>
-            <div class="position-fixed bottom-0 pb-4 z-3">
+            <div class="position-fixed bottom-0 pb-4 z-3 above-dock">
                 <HomeButton href={backHref} />
             </div>
         </>

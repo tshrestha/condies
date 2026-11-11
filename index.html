@@ -19,14 +19,16 @@
                 try {
                     theme = JSON.parse(localStorage.getItem("condiesTheme"))
                 } catch (e) {}
-                if (!theme) {
+                if (theme !== "light" && theme !== "dark") {
                     theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
                 }
+                document.documentElement.setAttribute("data-theme", theme)
+                // Screens still on Bootstrap read these until they move to Strata Quiet.
                 document.body.setAttribute("data-bs-theme", theme)
                 document.body.classList.add(theme + "-bg")
             })()
         </script>
-        <main id="root" class="container pt-2 pb-5 mb-5"></main>
+        <main id="root"></main>
         <script type="module" src="./src/main.tsx"></script>
     </body>
 </html>

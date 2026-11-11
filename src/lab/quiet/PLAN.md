@@ -63,20 +63,41 @@ chip.
         - the app's pixels are unchanged on five screens
         - the lab's 100 screenshots are byte-identical
         - all tests pass
-2. **Shell and theme.**
-    - App shell, dock, masthead, horizon toggle, offline notice and error state.
-    - The pre-paint theme script.
-    - `theme-color` and manifest colors.
+2. **Shell and theme. Done.**
+    - What's in place:
+        - `Shell.tsx`: the top bar on wide screens and the dock on phones, both wired to the router.
+        - `theme.ts`: the theme controller and the pre-paint script, setting `data-theme` on `<html>`.
+        - `present.ts`: the current temperature that the dock's current tab is painted with.
+        - The offline notice and the full-screen loading and error states.
+    - Search moved here from phase 6. The dock replaced the floating search bar, so it couldn't wait. It's
+      `SearchSheet.tsx`: geocoding, recent places, arrow keys and Enter.
+    - Bootstrap screens still sit outside `.sq-root`, between the shell's pieces, so Quiet's resets can't reach
+      them. `src/transition.css` holds the temporary rules for that:
+        - the shell's transparent pieces
+        - lifting the Day screen's back button and the map controls above the dock
+    - The old `ThemeToggle`, `LocationSearchForm`, `Loading`, and the Home screen's "My Spots" button are gone.
+    - Behavior changes:
+        - Tab no longer cycles search results.
+        - Recent places list newest first.
+        - The theme is one toggle.
+    - Verified:
+        - all tests pass, with the shell's end-to-end tests rewritten to roles and text
+        - an axe check of the shell on phone and desktop, light and dark, with search open
+        - the lab's 100 screenshots still byte-identical
+    - `theme-color` and manifest colors move to phase 3, so they change with Home's background.
 3. **Home.**
     - Now, alerts, next 12 hours, best day, week, snow, daylight.
     - Section placeholders.
     - Numeral fitting against the dock.
+    - `theme-color` and manifest colors.
     - Review point: the owner looks at Home on real data before going further.
-4. **Day screen.**
+4. **Day screen,** including its back link (the old floating back button goes).
 5. **My Spots.**
-6. **Search** with real geocoding.
+6. **Search: done in phase 2.**
 7. **Map.** Review point: the map was never prototyped, so it gets its own look before moving on.
 8. **Removal.**
+    - `src/transition.css`, the `.container` wrapper in `Shell.tsx`, and the Bootstrap attributes that
+      `theme.ts` and `index.html` still set.
     - Bootstrap, Bootstrap Icons, `@types/bootstrap`, d3 and `@types/d3`, the Meteocons assets.
     - `wicons.ts`, `sky.ts` and `tempColors.ts` and their tests, and `scoreColor` in `score.ts`.
     - The old components.

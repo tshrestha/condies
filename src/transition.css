@@ -1,0 +1,26 @@
+/* Only while screens move from Bootstrap to Strata Quiet. Delete this file once they all have (phase 8 of
+   src/lab/quiet/PLAN.md). */
+
+/* The shell's pieces sit beside the Bootstrap screens rather than wrapping them, so they shouldn't paint a
+   page of their own. Above the full-screen map, so the top bar and dock stay reachable there. */
+.sq-root.sq-shell {
+    position: relative;
+    z-index: 3;
+    min-height: 0;
+    padding-bottom: 0;
+    background: transparent;
+}
+
+/* The error and first-load states still fill the screen. */
+.sq-root.sq-shell > .sq-error,
+.sq-root.sq-shell > .sq-loading {
+    min-height: 80svh;
+}
+
+/* On phones the dock owns the bottom of the screen, so the old floating buttons sit above it. */
+@media (max-width: 767.98px) {
+    .above-dock,
+    .maplibregl-ctrl-bottom-right {
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+}

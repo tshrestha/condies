@@ -1,6 +1,7 @@
-import { Show } from "solid-js"
+import { createEffect, Show } from "solid-js"
 
 import { type Period, type Point } from "./lib/nws.ts"
+import { setPresentTemperature } from "./present.ts"
 import { getSky } from "./lib/sky.ts"
 import { getIcon } from "./lib/wicons.ts"
 
@@ -19,6 +20,12 @@ export default function CurrentConditions(props: {
     const wind = () => props.period.windSpeed.value ?? props.period.windSpeed.maxValue ?? 0
     const gust = () => props.period.windGust?.value ?? 0
     const feelsLike = () => Math.round(props.period.feelsLike ?? props.period.temperature)
+    createEffect(
+        () => props.period.temperature,
+        (t) => {
+            setPresentTemperature(t)
+        },
+    )
 
     return (
         <div class={`sky sky-${sky().kind}-${sky().time} mt-3 mb-4 text-center current-conditions`}>

@@ -13,8 +13,8 @@ export interface NavProps {
     onToggleTheme: () => void
     home: LinkProps
     spots: LinkProps
+    map: LinkProps
     onSearch: () => void
-    onMap: () => void
 }
 
 // On a wide screen the controls sit in this top bar. On a phone the dock takes them, and this bar is hidden.
@@ -29,9 +29,9 @@ export function Masthead(props: NavProps) {
                     Search
                 </button>
                 <a {...props.spots}>Spots</a>
-                <button type="button" aria-label="Open the map" onClick={() => props.onMap()}>
+                <a aria-label="Open the map" {...props.map}>
                     Map
-                </button>
+                </a>
                 <ThemeToggle theme={props.theme} onToggle={props.onToggleTheme} />
             </nav>
         </header>
@@ -42,7 +42,7 @@ export function Masthead(props: NavProps) {
 // the current tab as a chip in the color of the temperature right now, so a little of the present follows you
 // to every screen. It floats, so it's round, unlike the printed, square things on the page. Without a
 // temperature yet, the current tab is a plain ink chip.
-export function Dock(props: NavProps & { current?: "home" | "spots"; now?: Paint }) {
+export function Dock(props: NavProps & { current?: "home" | "spots" | "map"; now?: Paint }) {
     const chip = () =>
         props.now
             ? { "--sq-now-chip": props.now.bg, "--sq-now-ink": props.now.ink }
@@ -63,10 +63,10 @@ export function Dock(props: NavProps & { current?: "home" | "spots"; now?: Paint
                     <StarIcon filled={props.current === "spots"} />
                     <span>Spots</span>
                 </a>
-                <button type="button" class="sq-dock-item" aria-label="Open the map" onClick={() => props.onMap()}>
+                <a class="sq-dock-item" aria-current={current("map")} aria-label="Open the map" {...props.map}>
                     <MapIcon />
                     <span>Map</span>
-                </button>
+                </a>
             </nav>
             <ThemeToggle theme={props.theme} onToggle={props.onToggleTheme} class="sq-glass sq-dock-theme" />
         </div>

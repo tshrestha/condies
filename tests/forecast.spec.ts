@@ -6,6 +6,12 @@ const heading = (page: Page) => page.locator(".current-conditions h1.display-6")
 const chart = (page: Page) => page.locator(".forecast-chart svg")
 const here = { latitude: 40.1234, longitude: -105.5678 }
 
+// Search lives in a sheet that the dock's Search button opens.
+async function openSearch(page: Page) {
+    await page.getByRole("button", { name: "Search" }).click()
+    return page.getByRole("combobox", { name: "Where to?" })
+}
+
 test("shows the forecast for the user's location", async ({ page }) => {
     await mockApis(page, { location: here })
     await page.goto("#/")
@@ -28,8 +34,8 @@ test("shows placeholders and search while the forecast loads", async ({ page }) 
     })
     await page.goto("#/")
 
-    await expect(page.locator("#geocodingSearch")).toBeVisible()
-    await expect(page.locator("h1.display-5")).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Search" })).toBeVisible()
+    await expect(page.getByText("Getting the forecast.")).toHaveCount(0)
     await expect(heading(page)).toHaveCount(0)
     release()
     await expect(heading(page)).toBeVisible()
@@ -110,8 +116,8 @@ test("an uncovered location shows an error with a way home", async ({ page }) =>
     })
     await page.goto("#/forecast/48.8500,2.3500")
 
-    await expect(page.locator(".alert-danger")).toContainText("Couldn't load this page")
-    await page.getByRole("link", { name: "go home" }).click()
+    await expect(page.getByRole("alert")).toContainText(/Couldn.t load this page/)
+    await page.getByRole("link", { name: "Go home" }).click()
     await expect(heading(page)).toHaveText("Place 39.7644")
 })
 
@@ -186,23 +192,24 @@ test("the theme toggles and is remembered", async ({ page }) => {
     await mockApis(page)
     await page.goto("#/")
 
-    await page.locator("label[for=condies-theme-dark]").click()
-    await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
+    await page.getByRole("button", { name: "Dark mode" }).click()
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
     await page.reload()
-    await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+    await expect(page.getByRole("button", { name: "Dark mode" })).toHaveAttribute("aria-pressed", "true")
 })
 
 test("search works from the keyboard", async ({ page }) => {
     await mockApis(page)
     await page.goto("#/")
-    const input = page.locator("#geocodingSearch")
+    const input = await openSearch(page)
 
     await input.fill("boul")
-    await expect(page.locator("a.search-result")).toHaveCount(2)
-    await expect(page.locator("a.search-result.active")).toHaveText("boul one")
+    await expect(page.getByRole("option")).toHaveCount(2)
+    await expect(page.getByRole("option", { selected: true })).toHaveText("boul one")
 
     await input.press("ArrowUp")
-    await expect(page.locator("a.search-result.active")).toHaveText("boul two")
+    await expect(page.getByRole("option", { selected: true })).toHaveText("boul two")
     await input.press("ArrowDown")
     await input.press("Enter")
     await expect(page).toHaveURL(/#\/forecast\/40\.015,-105\.27/)
@@ -213,8 +220,8 @@ test("search text is URL-encoded", async ({ page }) => {
     const requests = await mockApis(page)
     await page.goto("#/")
 
-    await page.locator("#geocodingSearch").fill("Texas A&M #5")
-    await expect(page.locator("a.search-result").first()).toBeVisible()
+    await (await openSearch(page)).fill("Texas A&M #5")
+    await expect(page.getByRole("option").first()).toBeVisible()
     expect(new URL(requests.find((u) => u.includes("forward"))!).searchParams.get("q")).toBe("Texas A&M #5")
 })
 
@@ -243,12 +250,12 @@ test("a slow older search can't replace newer results", async ({ page }) => {
         },
     })
     await page.goto("#/")
-    const input = page.locator("#geocodingSearch")
+    const input = await openSearch(page)
 
     await input.fill("denv")
     await page.waitForRequest((r) => r.url().includes("q=denv"))
     await input.fill("denver")
-    await expect(page.locator("a.search-result").first()).toHaveText("denver two")
+    await expect(page.getByRole("option")).toHaveText(["denver one", "denver two"])
     await expect.poll(() => answered).toBe(true)
     await expect(page.getByText("STALE")).toHaveCount(0)
 })
@@ -258,8 +265,8 @@ test("a poisoned search cache entry is ignored", async ({ page }) => {
     await mockApis(page)
     await page.goto("#/")
 
-    await page.locator("#geocodingSearch").fill("boul")
-    await expect(page.locator("a.search-result")).toHaveCount(2)
+    await (await openSearch(page)).fill("boul")
+    await expect(page.getByRole("option")).toHaveCount(2)
 })
 
 test("the app works with storage blocked", async ({ page }) => {

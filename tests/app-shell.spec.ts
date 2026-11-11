@@ -8,8 +8,8 @@ test.describe("theme", () => {
         await mockApis(page)
         await page.goto("#/")
 
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
-        await expect(page.locator("#condies-theme-dark")).toBeChecked()
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+        await expect(page.getByRole("button", { name: "Dark mode" })).toHaveAttribute("aria-pressed", "true")
     })
 
     test("a saved choice beats the system setting", async ({ page }) => {
@@ -18,22 +18,23 @@ test.describe("theme", () => {
         await mockApis(page)
         await page.goto("#/")
 
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "light")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
     })
 
     test("changes with the system until the user chooses", async ({ page }) => {
         await mockApis(page)
         await page.goto("#/")
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "light")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
 
         await page.emulateMedia({ colorScheme: "dark" })
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
         await expect(page.locator("body")).toHaveClass(/dark-bg/)
 
-        await page.locator("label[for=condies-theme-light]").click()
+        // Choosing light while the system is dark.
+        await page.getByRole("button", { name: "Dark mode" }).click()
         await page.emulateMedia({ colorScheme: "light" })
         await page.emulateMedia({ colorScheme: "dark" })
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "light")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
     })
 
     test("is applied before any app code runs", async ({ page }) => {
@@ -41,7 +42,7 @@ test.describe("theme", () => {
         await page.route("**/assets/*.js", (route) => route.abort())
         await page.goto("#/")
 
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
         await expect(page.locator("body")).toHaveClass(/dark-bg/)
     })
 })
@@ -90,7 +91,7 @@ test.describe("offline", () => {
         await page.reload()
 
         await expect(page.locator(".current-conditions h1.display-6")).toHaveText("Place 39.7644")
-        await expect(page.getByText("You're offline")).toBeVisible()
+        await expect(page.getByText(/You.re offline/)).toBeVisible()
     })
 
     const heading = (page: Page) => page.locator(".current-conditions h1.display-6")

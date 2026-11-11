@@ -263,5 +263,6 @@ test("icon-only links have names", async ({ page }) => {
     await expect(page.getByRole("link", { name: "Map" })).toBeVisible()
 
     await page.goto("#/spots")
-    await expect(page.getByRole("link", { name: "Back" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Now" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Dark mode" })).toBeVisible()
 })

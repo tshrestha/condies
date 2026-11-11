@@ -101,7 +101,7 @@ test("a forecast that has completely run out is an error, not a blank page", asy
     await mockApis(page, { daily: ended, hourly: [] })
     await page.goto("#/forecast/40,-105")
 
-    await expect(page.locator(".alert-danger")).toContainText("Couldn't load this page")
+    await expect(page.getByRole("alert")).toContainText(/Couldn.t load this page/)
 })
 
 test.describe("last updated", () => {

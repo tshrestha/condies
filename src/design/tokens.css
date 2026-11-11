@@ -38,8 +38,36 @@
 }
 
 :where(.sq-root) button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
     color: inherit;
+    font: inherit;
     text-align: inherit;
+    cursor: pointer;
+}
+
+:where(.sq-root) input {
+    color: inherit;
+    font: inherit;
+}
+
+:where(.sq-root) p,
+:where(.sq-root) ul,
+:where(.sq-root) ol,
+:where(.sq-root) figure {
+    margin: 0;
+    padding: 0;
+}
+
+:where(.sq-root) ul,
+:where(.sq-root) ol {
+    list-style: none;
+}
+
+:where(.sq-root) svg {
+    display: block;
 }
 
 :where(.sq-root) h1,

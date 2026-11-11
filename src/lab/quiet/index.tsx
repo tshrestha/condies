@@ -8,7 +8,8 @@ import { createMemo, createSignal, flush, For, Match, onSettled, Show, Switch } 
 import { Cat, StarIcon } from "../../design/icons.tsx"
 import { Dock as DesignDock, Masthead as DesignMasthead } from "../../design/nav.tsx"
 import { AlertRow, RangeBar, Score, Sheet as SheetFrame } from "../../design/parts.tsx"
-import { avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampWalk } from "../../design/ramp.ts"
+import { ErrorState, LoadingState, OfflineNotice } from "../../design/states.tsx"
+import { avalancheScale, type Paint, paintDay, paintTemp, paintVars } from "../../design/ramp.ts"
 import {
     conditionWord,
     dayName,
@@ -52,7 +53,7 @@ function Masthead(props: Ctx) {
             home={props.app.link({ name: "home" })}
             spots={props.app.link({ name: "spots" })}
             onSearch={() => props.open({ kind: "search" })}
-            onMap={() => {}}
+            map={{ href: "#", onClick: (e) => e.preventDefault() }}
         />
     )
 }
@@ -66,7 +67,7 @@ function Dock(props: Ctx) {
             home={props.app.link({ name: "home" })}
             spots={props.app.link({ name: "spots" })}
             onSearch={() => props.open({ kind: "search" })}
-            onMap={() => {}}
+            map={{ href: "#", onClick: (e) => e.preventDefault() }}
             current={screen() === "home" ? "home" : screen() === "spots" ? "spots" : undefined}
             now={paintTemp(props.app.forecast.current.temperature, props.app.theme)}
         />
@@ -1048,9 +1049,7 @@ function Ready(props: { app: DesignProps }) {
     return (
         <>
             <Show when={props.app.offline}>
-                <p class="sq-ground sq-offline" role="status">
-                    You’re offline. This is the last forecast you loaded.
-                </p>
+                <OfflineNotice />
             </Show>
             <Switch>
                 <Match when={props.app.screen.name === "home"}>
@@ -1079,36 +1078,6 @@ function Ready(props: { app: DesignProps }) {
     )
 }
 
-function LoadingState(props: { theme: DesignProps["theme"] }) {
-    const walk = () => rampWalk(props.theme)
-    return (
-        <div class="sq-loading" role="status">
-            <div
-                class="sq-loading-band"
-                aria-hidden="true"
-                style={Object.fromEntries(walk().map((c, i) => [`--c${i}`, c]))}
-            />
-            <p class="sq-ground sq-loading-text">Getting the forecast.</p>
-        </div>
-    )
-}
-
-function ErrorState(props: { app: DesignProps }) {
-    return (
-        <div class="sq-ground sq-error" role="alert">
-            <p class="sq-num">Couldn’t load this page.</p>
-            <div class="sq-error-actions">
-                <button type="button" class="sq-link" onClick={() => location.reload()}>
-                    Try again
-                </button>
-                <a class="sq-link" {...props.app.link({ name: "home" })}>
-                    Go home
-                </a>
-            </div>
-        </div>
-    )
-}
-
 export default function Quiet(props: DesignProps) {
     return (
         <div class="sq-root" data-theme={props.theme}>
@@ -1117,7 +1086,7 @@ export default function Quiet(props: DesignProps) {
                     <LoadingState theme={props.theme} />
                 </Match>
                 <Match when={props.status === "error"}>
-                    <ErrorState app={props} />
+                    <ErrorState home={props.link({ name: "home" })} onRetry={() => location.reload()} />
                 </Match>
                 <Match when={props.status === "ready"}>
                     <Ready app={props} />

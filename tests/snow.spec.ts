@@ -79,7 +79,7 @@ test("My Spots ranks saved places and filters by day", async ({ page }) => {
     windy.windGust = { values: [{ validTime: windy.windGust.values[0].validTime, value: 120 }] }
     await mockApis(page, { grid: (lat) => (lat === 40.5884 ? windy : calm) })
     await page.goto("#/")
-    await page.getByRole("link", { name: "My Spots" }).click()
+    await page.getByRole("link", { name: "Spots" }).click()
 
     await expect(page).toHaveURL(/#\/spots$/)
     await expect(page.locator(".spot-row")).toHaveCount(2)
