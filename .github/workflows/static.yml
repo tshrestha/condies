@@ -10,8 +10,6 @@ on:
     branches: ["main"]
 
 permissions:
-  id-token: write
-  pages: write
   contents: read
 
 jobs:
@@ -41,29 +39,9 @@ jobs:
       - name: Install test browser
         run: npx playwright install --with-deps chromium
 
-      # This builds without the real env vars, so it has to come before the deploy build below.
       - name: Run browser tests
         run: npm run test:e2e
 
+      # Type-checks too. Netlify does the deploy build, with the real env vars.
       - name: Build app
         run: npm run build
-        env:
-          VITE_GEOCODE_URL: ${{ vars.GEOCODE_URL }}
-          VITE_NAWA_TOKEN: ${{ secrets.NAWATOKEN }}
-
-      - name: Upload build artifacts
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: "./dist"
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

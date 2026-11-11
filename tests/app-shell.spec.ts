@@ -114,14 +114,14 @@ test.describe("on an iPhone", () => {
 test("the app can be installed", async ({ page, request }) => {
     await page.goto("#/")
     const href = await page.locator('link[rel="manifest"]').getAttribute("href")
-    expect(href).toBe("/condies/manifest.webmanifest")
+    expect(href).toBe("/manifest.webmanifest")
 
     const manifest = await (await request.get(href!)).json()
     expect(manifest.display).toBe("standalone")
-    expect(manifest.start_url).toBe("/condies/")
+    expect(manifest.start_url).toBe("/")
 
     for (const icon of manifest.icons) {
-        const response = await request.get(`/condies/${icon.src}`)
+        const response = await request.get(`/${icon.src}`)
         expect(response.ok(), icon.src).toBe(true)
         expect(response.headers()["content-type"]).toContain("image/png")
     }
