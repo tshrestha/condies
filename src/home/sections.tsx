@@ -179,6 +179,7 @@ export function NextHours(props: HomeCtx) {
             <Show when={next().later}>{(storm) => <p class="sq-caption sq-later">{storm()}</p>}</Show>
             <a
                 class="sq-blocks-link"
+                aria-current="false"
                 aria-label={`${summary()}. Open hour by hour.`}
                 {...props.dayLink(f().days[0]?.date ?? "")}
             >
@@ -208,7 +209,7 @@ export function Best(props: HomeCtx) {
         <Show when={f().best} fallback={<p class="sq-ground sq-caption sq-strong">No standout day this week</p>}>
             {(best) => (
                 <section class="sq-ground sq-best" aria-label="Best day">
-                    <a class="sq-best-head" {...props.dayLink(best().day.date)}>
+                    <a class="sq-best-head" aria-current="false" {...props.dayLink(best().day.date)}>
                         <span class="sq-small">Best day</span>
                         <span class="sq-num">{dayName(best().day, best().index)}</span>
                         <span>{best().day.condies!.bestWindow}</span>
@@ -234,7 +235,7 @@ function DayRow(
     // of the row reads after it as a sentence, with the words a screen reader needs and the screen doesn't.
     return (
         <li class="sq-day">
-            <a class="sq-day-name sq-strong" {...props.dayLink(props.day.date)}>
+            <a class="sq-day-name sq-strong" aria-current="false" {...props.dayLink(props.day.date)}>
                 {name()}
                 <span class="sq-sr">, {shortDate(props.day.date)}</span>
             </a>

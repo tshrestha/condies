@@ -24,7 +24,7 @@ export function ErrorState(props: { home: LinkProps; onRetry: () => void }) {
                 <button type="button" class="sq-link" onClick={() => props.onRetry()}>
                     Try again
                 </button>
-                <a class="sq-link" {...props.home}>
+                <a class="sq-link" aria-current="false" {...props.home}>
                     Go home
                 </a>
             </div>

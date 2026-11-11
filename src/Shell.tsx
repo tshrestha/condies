@@ -36,10 +36,10 @@ export default function Shell(props: ParentProps) {
         spots: { href: "#/spots" },
         map: { href: "#/map" },
         onSearch: () => setSearching(true),
-    }
-    const current = () => {
-        const path = location.pathname
-        return path === "/" ? "home" : path === "/spots" ? "spots" : path === "/map" ? "map" : undefined
+        get current() {
+            const path = location.pathname
+            return path === "/" ? "home" : path === "/spots" ? "spots" : path === "/map" ? "map" : undefined
+        },
     }
     const now = () => {
         const t = presentTemperature()
@@ -53,7 +53,7 @@ export default function Shell(props: ParentProps) {
                 <OfflineNotice />
             </Show>
             {props.children}
-            <Dock {...nav} current={current()} now={now()} />
+            <Dock {...nav} now={now()} />
             <Show when={searching()}>
                 <SearchSheet onClose={() => setSearching(false)} />
             </Show>

@@ -111,6 +111,49 @@ test.describe("on an iPhone", () => {
     })
 })
 
+// The tab for the screen you're on is the one link marked as the current page: not the other tabs, and not the
+// links on the page. The router marks links by their URL and gets hash links wrong (see ariaCurrent in nav.tsx).
+test.describe("the current page", () => {
+    const marked = (page: Page) => page.locator('a[aria-current="page"]:visible')
+    const settled = (page: Page) =>
+        expect(page.getByRole("region", { name: "This week" }).getByRole("link").first()).toBeVisible()
+
+    test("is marked in the dock and nowhere else", async ({ page }) => {
+        await mockApis(page)
+        await page.goto("#/")
+        await settled(page)
+        await expect(marked(page)).toHaveText(["Now"])
+
+        await page.getByRole("link", { name: "Spots", exact: true }).click()
+        await expect(marked(page)).toHaveText(["Spots"])
+
+        await page.getByRole("link", { name: "Open the map" }).click()
+        await expect(marked(page)).toHaveText(["Map"])
+
+        await page.getByRole("link", { name: "Now", exact: true }).click()
+        await settled(page)
+        await expect(marked(page)).toHaveText(["Now"])
+    })
+
+    test("is marked in the top bar on a wide screen and nowhere else", async ({ page }) => {
+        await page.setViewportSize({ width: 1200, height: 900 })
+        await mockApis(page)
+        await page.goto("#/")
+        await settled(page)
+        await expect(marked(page)).toHaveCount(0)
+
+        await page.getByRole("link", { name: "Spots", exact: true }).click()
+        await expect(marked(page)).toHaveText(["Spots"])
+
+        await page.getByRole("link", { name: "Open the map" }).click()
+        await expect(marked(page)).toHaveText(["Map"])
+
+        await page.getByRole("link", { name: "Condies" }).click()
+        await settled(page)
+        await expect(marked(page)).toHaveCount(0)
+    })
+})
+
 test("the app can be installed", async ({ page, request }) => {
     await page.goto("#/")
     const href = await page.locator('link[rel="manifest"]').getAttribute("href")

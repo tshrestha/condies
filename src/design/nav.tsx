@@ -8,6 +8,8 @@ export interface LinkProps {
     onClick?: (e: MouseEvent) => void
 }
 
+export type Tab = "home" | "spots" | "map"
+
 export interface NavProps {
     theme: Theme
     onToggleTheme: () => void
@@ -15,21 +17,31 @@ export interface NavProps {
     spots: LinkProps
     map: LinkProps
     onSearch: () => void
+    // The screen you're on, when it has a tab.
+    current?: Tab
 }
+
+// A link's aria-current: "page" when it goes to the screen you're on, "false" when it doesn't. Every link the Now
+// screen can show sets one, because the router marks the links that leave it out: it checks each link's URL
+// against the location, but reads a hash link as the document's own path, "/", so on the Now screen every link
+// would be the current page. It leaves an aria-current the app set alone. (@solidjs/router 2.0.0-next.44)
+export const ariaCurrent = (current: boolean) => (current ? "page" : "false")
 
 // On a wide screen the controls sit in this top bar. On a phone the dock takes them, and this bar is hidden.
 export function Masthead(props: NavProps) {
     return (
         <header class="sq-ground sq-mast">
-            <a class="sq-brand" {...props.home}>
+            <a class="sq-brand" aria-current="false" {...props.home}>
                 Condies
             </a>
             <nav class="sq-nav" aria-label="Main">
                 <button type="button" onClick={() => props.onSearch()}>
                     Search
                 </button>
-                <a {...props.spots}>Spots</a>
-                <a aria-label="Open the map" {...props.map}>
+                <a aria-current={ariaCurrent(props.current === "spots")} {...props.spots}>
+                    Spots
+                </a>
+                <a aria-current={ariaCurrent(props.current === "map")} aria-label="Open the map" {...props.map}>
                     Map
                 </a>
                 <ThemeToggle theme={props.theme} onToggle={props.onToggleTheme} />
@@ -42,12 +54,12 @@ export function Masthead(props: NavProps) {
 // the current tab as a chip in the color of the temperature right now, so a little of the present follows you
 // to every screen. It floats, so it's round, unlike the printed, square things on the page. Without a
 // temperature yet, the current tab is a plain ink chip.
-export function Dock(props: NavProps & { current?: "home" | "spots" | "map"; now?: Paint }) {
+export function Dock(props: NavProps & { now?: Paint }) {
     const chip = () =>
         props.now
             ? { "--sq-now-chip": props.now.bg, "--sq-now-ink": props.now.ink }
             : { "--sq-now-chip": "var(--sq-ink)", "--sq-now-ink": "var(--sq-ground)" }
-    const current = (name: string) => (props.current === name ? "page" : undefined)
+    const current = (tab: Tab) => ariaCurrent(props.current === tab)
     return (
         <div class="sq-dock" style={chip()}>
             <nav class="sq-dock-nav sq-glass" aria-label="Main">
