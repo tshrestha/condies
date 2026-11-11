@@ -228,7 +228,7 @@ test.describe("right now", () => {
             .getByRole("link", { name: /Open hour by hour\.$/ })
             .click()
         await expect(page).toHaveURL(new RegExp(`/day/${dateAt(0)}\\?from=home$`))
-        await expect(page.locator(".day-stat", { hasText: "Gusts" })).toContainText("30 mph")
+        await expect(page.getByRole("region", { name: "Details" }).getByText(/ wind, gusts 30 mph$/)).toBeVisible()
     })
 
     test("leaves out a feels-like that matches the temperature", async ({ page }) => {
@@ -290,7 +290,13 @@ test("charts describe themselves to screen readers", async ({ page }) => {
     await mockApis(page)
     await page.goto(`#/forecast/39.7644,-105.0196/day/${dateAt(0)}`)
 
-    await expect(page.locator(".forecast-chart svg")).toHaveAttribute("aria-label", /^HOURLY TEMPS: .*Snow/)
+    // Today's chart is titled by whether its hours run on into tomorrow, which depends on the time of day.
+    const hours = page.getByRole("region", { name: /^(Next 12 hours|Hour by hour)$/ })
+    const reading = hours.getByText(/^Warmest \d+° at \d+ [AP]M, coldest \d+° at \d+ [AP]M\.$/)
+    await expect(reading).toBeVisible()
+    // The chart is named by its title and the sentence it shows above it.
+    const title = await hours.getByRole("heading", { level: 2 }).textContent()
+    await expect(hours.getByRole("img")).toHaveAccessibleName(`${title}. ${await reading.textContent()}`)
 })
 
 test("icon-only links have names", async ({ page }) => {

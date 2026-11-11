@@ -5,7 +5,8 @@ import { getItem, lastLocationKey, setItem } from "./lib/cache.ts"
 import { denver } from "./lib/nws.ts"
 import { getLocation } from "./lib/util.ts"
 
-import Forecast, { getForecastData } from "./Forecast.tsx"
+import Forecast from "./Forecast.tsx"
+import { getForecastData } from "./forecastData.ts"
 
 const getLastLocation = () => getItem(lastLocationKey) ?? denver
 

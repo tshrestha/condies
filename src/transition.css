@@ -11,12 +11,13 @@
     background: transparent;
 }
 
-/* Home is on Strata Quiet, so behind it and the shell the page is its ground rather than Bootstrap's colors. */
-html[data-theme="light"] body:has(.sq-home) {
+/* Screens already on Strata Quiet bring their own .sq-root. Behind them and the shell the page is the ground
+   rather than Bootstrap's colors. */
+html[data-theme="light"] body:has(.sq-root:not(.sq-shell)) {
     background: #fff !important;
 }
 
-html[data-theme="dark"] body:has(.sq-home) {
+html[data-theme="dark"] body:has(.sq-root:not(.sq-shell)) {
     background: #0d0d0d !important;
 }
 
@@ -26,7 +27,7 @@ html[data-theme="dark"] body:has(.sq-home) {
     min-height: 80svh;
 }
 
-/* On phones the dock owns the bottom of the screen, so the old floating buttons sit above it. "html" out-ranks
+/* On phones the dock owns the bottom of the screen, so the map's floating controls sit above it. "html" out-ranks
    Bootstrap's ".bottom-0", which loads after this file in production builds. */
 @media (max-width: 767.98px) {
     html .above-dock,

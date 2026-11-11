@@ -4,6 +4,8 @@ import { dateAt, gridFixture, mockApis, week } from "./fixtures.ts"
 
 const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
 const score = (page: Page) => page.getByRole("button", { name: /^Condies score \d+ out of 100, / })
+const details = (page: Page) => page.getByRole("region", { name: "Details" })
+const snowLine = (page: Page) => page.getByRole("region", { name: "Rain and snow line" })
 
 // 06:00 tomorrow in the forecast's time zone, as hours from now.
 const tomorrowMorning = () => (Date.parse(`${dateAt(1)}T12:00:00-07:00`) - Date.now()) / 3_600_000
@@ -37,16 +39,18 @@ test("the day page says whether it's snow or rain at this elevation", async ({ p
     })
     await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
 
-    const insight = page.locator(".day-insight").last()
-    await expect(insight).toContainText("All snow at this elevation")
-    await expect(insight).toContainText("3.0″")
-    await expect(insight).toContainText("Snow level 7,900 ft, this spot is 9,800 ft")
+    const line = snowLine(page)
+    await expect(line.getByText("All snow at this elevation", { exact: true })).toBeVisible()
+    await expect(line.getByText("Snow level 7,900 ft, this spot is 9,800 ft", { exact: true })).toBeVisible()
+    await expect(details(page).getByText("3.0″ of snow", { exact: true })).toBeVisible()
 })
 
 test("a low spot under a high snow level reads as rain", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([], { elevation: 1000, snowLevel: 2500 }) })
     await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
-    await expect(page.locator(".day-insight").last()).toContainText("Rain at this elevation")
+
+    await expect(snowLine(page).getByText("Rain at this elevation", { exact: true })).toBeVisible()
+    await expect(details(page).getByText(/^\d+% chance of rain$/)).toBeVisible()
 })
 
 test("each day gets a Condies score and best window", async ({ page }) => {
@@ -56,8 +60,12 @@ test("each day gets a Condies score and best window", async ({ page }) => {
     // Home scores only the best day. Every day's own screen has its score.
     await expect(score(page)).toBeVisible()
     await days(page).nth(1).click()
-    await expect(page.locator(".day-score-ring")).toHaveText(/^\d+$/)
-    await expect(page.locator(".day-insight").first()).toContainText("Best window")
+    const condies = page.getByRole("region", { name: "Condies score" })
+    await expect(
+        condies.getByRole("button", { name: /^Condies score \d+ out of 100, \w+\. What this means$/ }),
+    ).toBeVisible()
+    await expect(condies.getByText("Best window", { exact: true })).toBeVisible()
+    await expect(condies.getByText(/^\d+ [AP]M–\d+ [AP]M$/)).toBeVisible()
 })
 
 test("missing grid data leaves the rest of the forecast intact", async ({ page }) => {

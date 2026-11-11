@@ -33,8 +33,11 @@ choose a scenario or Live NWS. Delete this file when the port is done.
       link and two callbacks for opening sheets.
     - `sheets.tsx` (alert and avalanche sheets), `Placeholder.tsx` (waiting shapes) and `home.css`.
     - `home.css` also holds the wide two-column split that the Day screen and My Spots use.
-- The Day and My Spots layouts are still in `src/lab/quiet/quiet.css` and `index.tsx`. They move into the app with
-  their screens in phases 4 and 5.
+- `src/day/` (since phase 4), shared the same way: `sections.tsx` (`DayView` and its pager, driven by a `DayCtx`),
+  `chart.tsx` (`Hourly`), `Placeholder.tsx` and `day.css`.
+- `src/forecastData.ts`: `getForecastData` and `createForecastView`, which Home and the Day screen both build
+  their view with, extras included.
+- The My Spots layout is still in `src/lab/quiet/quiet.css` and `index.tsx`. It moves into the app in phase 5.
 
 ## Component map
 
@@ -132,7 +135,29 @@ chip.
         - all tests pass: 93 end-to-end tests on three runs in a row, Home's rewritten to roles and text. The four
           sky tests went with the sky; tests for Now's facts and for a low avalanche rating were added.
     - Review point: the owner looks at Home on real data before going further.
-4. **Day screen,** including its back link (the old floating back button goes).
+4. **Day screen. Done.**
+    - What's in place:
+        - `ForecastDay.tsx` renders `DayView` on the same forecast view as Home. Sun times wait on their own.
+        - The pager is the way between days, with "← Now" on the first. The floating back button is gone.
+        - A placeholder while the forecast loads, and "There’s no forecast for this day." for old links.
+        - The tab style moved to `components.css`, since My Spots' day filter uses it too.
+    - One change to the reviewed design: the place name in the day's swatch is a link to that place's Now. The
+      pager only reaches Now from the first day, and an installed app has no back button, so without it day 5
+      of a searched place was five taps from its forecast. In the lab only that underline changed, on the 24 Day
+      screenshots; the other 76 stayed byte-identical. Later checks compare against the screenshots taken with it.
+    - Removed: `HourlyForecast`, `ForecastChart` and the four d3 chart components, and `HomeButton`. Only
+      `tempColors.ts`, which nothing imports now, still uses d3; both go in phase 8 with the rest.
+    - Fixed along the way:
+        - The chart's last hour label could run past its right edge, and at 5 AM make the page scroll sideways.
+          No hour label starts within two columns of the end now.
+        - The no-forecast page and the app's error page say their message as a heading, so the page has one.
+    - Verified:
+        - the lab's screenshots as above, before and after the place link
+        - all tests pass: 92 end-to-end tests on two runs in a row, the Day screen's rewritten to roles and text.
+          Night shading went with the old chart; a few chart checks measure columns, gust marks and labels.
+        - an axe check of the Day screen on phone and desktop, light and dark, with chart views and the score
+          explanation open
+        - live NWS for Alta, with no page errors
 5. **My Spots.**
 6. **Search: done in phase 2.**
 7. **Map.** Review point: the map was never prototyped, so it gets its own look before moving on.
@@ -181,8 +206,7 @@ Every spec uses Bootstrap or old class names today:
 
 `tests/fixtures.ts` can stay as it is, since it mocks the APIs and not the UI.
 
-Home's specs were rewritten in phase 3. The chart tests now open today's Day screen with its old selectors, and
-are rewritten with it in phase 4, as are the Day screen checks in `daily` and `mountain`. `snow` and
+Home's specs were rewritten in phase 3 and the Day screen's in phase 4. `snow` and
 `spots` still use My Spots' old selectors until phase 5, and `map` until phase 7.
 
 Expected behavior changes that tests must follow:

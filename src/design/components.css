@@ -386,6 +386,21 @@
     margin-left: -3px;
 }
 
+/* Tabs: a row of words where the chosen one is bold and underlined. The hourly chart's views and My Spots' day
+   filter. */
+
+.sq-tab {
+    min-height: 44px;
+    padding: 0 10px;
+}
+
+.sq-tab[aria-pressed="true"] {
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 3px;
+    text-underline-offset: 0.35em;
+}
+
 /* Sheets */
 
 .sq-sheet {

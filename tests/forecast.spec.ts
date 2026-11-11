@@ -6,10 +6,12 @@ const heading = (page: Page) => page.getByRole("heading", { level: 1, name: /^Ri
 const place = (city: string) => `Right meow in ${city}, CO`
 const nextHours = (page: Page) => page.getByRole("region", { name: "Next 12 hours" })
 const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
-const chart = (page: Page) => page.locator(".forecast-chart svg")
 const here = { latitude: 40.1234, longitude: -105.5678 }
 // Hourly charts live on the Day screen. Today's is the one Home's next 12 hours open.
 const today = () => `#/forecast/39.7644,-105.0196/day/${dateAt(0)}`
+// Today's chart is titled by whether its hours run on into tomorrow, which depends on the time of day.
+const chart = (page: Page) => page.getByRole("img", { name: /^(Next 12 hours|Hour by hour)\. / })
+const views = (page: Page) => page.getByRole("group", { name: "Hourly view" })
 
 // Search lives in a sheet that the dock's Search button opens.
 async function openSearch(page: Page) {
@@ -177,18 +179,19 @@ test("chart tabs switch the chart", async ({ page }) => {
     await mockApis(page)
     await page.goto(today())
 
-    for (const [id, title] of [
-        ["forecast-precip", "HOURLY PRECIPITATION"],
-        ["forecast-wind", "HOURLY WIND"],
-        ["forecast-temp", "HOURLY TEMPS"],
-    ]) {
-        await page.locator(`label[for=${id}]`).click()
-        await expect(page.locator(".chart-title")).toHaveText(title)
+    for (const [view, reading] of [
+        ["Precip", /\. Chance of rain peaks at \d+% at \d+ [AP]M\.$/],
+        ["Wind", /\. Wind up to \d+ mph, gusts to \d+ mph\.$/],
+        ["Temp", /\. Warmest \d+° at \d+ [AP]M, coldest \d+° at \d+ [AP]M\.$/],
+    ] as const) {
+        await views(page).getByRole("button", { name: view, exact: true }).click()
+        await expect(views(page).getByRole("button", { pressed: true })).toHaveText([view])
+        await expect(chart(page)).toHaveAccessibleName(reading)
         await expect(chart(page)).toHaveCount(1)
     }
 })
 
-test("the chart redraws when the window narrows", async ({ page }) => {
+test("the chart still fits after the window narrows", async ({ page }) => {
     await page.setViewportSize({ width: 800, height: 800 })
     await mockApis(page)
     await page.goto(today())
@@ -199,18 +202,25 @@ test("the chart redraws when the window narrows", async ({ page }) => {
         .poll(() => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth))
         .toBeLessThanOrEqual(0)
     await expect(chart(page)).toHaveCount(1)
+    const box = (await chart(page).boundingBox())!
+    expect(box.x).toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width).toBeLessThanOrEqual(375)
 })
 
 test("chart fill starts at the left edge", async ({ page }) => {
+    // Columns grow from the baseline. Without motion they're measured where they settle.
+    await page.emulateMedia({ reducedMotion: "reduce" })
     await mockApis(page, { hourly: hourly(14) })
     await page.goto(today())
     await expect(chart(page)).toBeVisible()
 
-    const left = await page.evaluate(
-        () => document.querySelector(".forecast-chart svg path")!.getBoundingClientRect().left,
-    )
-    const axis = await page.evaluate(() => document.querySelector(".axis-line")!.getBoundingClientRect().left)
-    expect(Math.abs(left - axis)).toBeLessThan(2)
+    // The column list draws the baseline. The bar in a column isn't in the accessibility tree, so it's found
+    // by its class.
+    const columns = chart(page).getByRole("list").first()
+    const baseline = (await columns.boundingBox())!
+    const bar = (await columns.getByRole("listitem").first().locator(".sq-bar").boundingBox())!
+    expect(bar.height).toBeGreaterThan(0)
+    expect(Math.abs(bar.x - baseline.x)).toBeLessThan(2)
 })
 
 test("the theme toggles and is remembered", async ({ page }) => {

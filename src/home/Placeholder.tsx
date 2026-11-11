@@ -8,14 +8,14 @@ import { numeralFit } from "../design/words.ts"
 const fit = numeralFit("00°")
 
 // A bar standing in for one line of text, as wide as the text usually runs.
-const Bar = (props: { width: string; class?: string }) => (
+export const Bar = (props: { width: string; class?: string }) => (
     <i class={`sq-ph-bar ${props.class ?? ""}`} style={{ width: props.width }} />
 )
 
 // The Now swatch keeps its real lines, invisible, so the block comes out the same size.
 function NowPlaceholder() {
     return (
-        <div class="sq-now sq-ph-now">
+        <div class="sq-now sq-ph-swatch">
             <div class="sq-place-row">
                 <p class="sq-place">Right meow</p>
             </div>

@@ -1,6 +1,6 @@
 import { createMemo, createSignal, For, Loading, Show } from "solid-js"
 
-import { getForecastData } from "./Forecast.tsx"
+import { getForecastData } from "./forecastData.ts"
 import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
 import { bestDay, formatSnow, getDayLabel, groupIntoDays, hasSnow } from "./lib/daily.ts"
 import { scoreColor } from "./lib/score.ts"

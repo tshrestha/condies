@@ -108,8 +108,10 @@ temperatures' size. No score, no line.
 - Daylight (`Daylight`): a bold heading, then a row shaped like a week row: sunrise time on the left, sunset on
   the right, and today's light as a bar on a 24-hour track between them. The part already gone is dim, the
   part left is ink. Under it: "Sunrise", how much light is left ("3 hr 12 min left"), "Sunset".
-- Day screen: swatch with "High 26°" and "Low 10°" in words, best window and score, facts, the snow line,
-  the hourly chart (temperature columns in ramp colors, other views in ink), the forecast text on the ground.
+- Day screen: a pager of neighboring days ("← Now" before the first), then the swatch with "High 26°" and
+  "Low 10°" in words, best window and score, facts, the snow line, the hourly chart (temperature columns in
+  ramp colors, other views in ink), the forecast text on the ground. The place name in the swatch links back to
+  that place's Now from any day.
 - My Spots: rows on the ground ranked by score: name, day and window, snow, then the score line.
 
 ## Map (designed here, not yet in the lab)

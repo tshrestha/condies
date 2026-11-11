@@ -19,7 +19,7 @@ export function LoadingState(props: { theme: Theme }) {
 export function ErrorState(props: { home: LinkProps; onRetry: () => void }) {
     return (
         <div class="sq-ground sq-error" role="alert">
-            <p class="sq-num">Couldn’t load this page.</p>
+            <h1 class="sq-num">Couldn’t load this page.</h1>
             <div class="sq-error-actions">
                 <button type="button" class="sq-link" onClick={() => props.onRetry()}>
                     Try again

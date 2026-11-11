@@ -318,12 +318,12 @@
     background: var(--sq-track);
 }
 
-.sq-ph-now {
+.sq-ph-swatch {
     background: var(--sq-track);
     color: transparent;
 }
 
-.sq-ph-now .sq-place-row {
+.sq-ph-swatch .sq-place-row {
     min-height: 24px;
 }
 
