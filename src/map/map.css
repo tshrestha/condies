@@ -188,6 +188,11 @@
 
 /* On phones the dock owns the bottom of the screen, so the controls sit above it. */
 @media (max-width: 767.98px) {
+    /* The map runs under the status bar. Its radar switch and attribution keep clear of it themselves. */
+    .sq-root:has(> .sq-map) {
+        padding-top: 0;
+    }
+
     .sq-root .sq-map .maplibregl-ctrl-bottom-right {
         bottom: calc(84px + env(safe-area-inset-bottom, 0px));
     }

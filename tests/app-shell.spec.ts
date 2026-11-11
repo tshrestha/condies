@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 
 import { mockApis } from "./fixtures.ts"
 
@@ -46,6 +46,50 @@ test.describe("theme", () => {
         // The browser's bars and the page behind everything are already the dark ground.
         await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#0d0d0d")
         await expect(page.locator("html")).toHaveCSS("background-color", "rgb(13, 13, 13)")
+    })
+})
+
+// An iPhone with a Dynamic Island: iOS draws the status bar over the top 59px and blurs what's under it.
+const statusBar = 59
+
+async function emulateIPhoneInsets(page: Page) {
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send(
+        "Emulation.setSafeAreaInsetsOverride" as never,
+        {
+            insets: { top: statusBar, bottom: 34, left: 0, right: 0 },
+        } as never,
+    )
+}
+
+const top = async (locator: Locator) => (await locator.boundingBox())!.y
+
+test.describe("under an iPhone's status bar", () => {
+    test("Home and the Day screen start below it", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/")
+        expect(await top(page.getByRole("region", { name: "Right now" }))).toBeGreaterThanOrEqual(statusBar + 8)
+
+        await page.getByRole("region", { name: "This week" }).getByRole("link").nth(1).click()
+        expect(await top(page.getByRole("navigation", { name: "Other days" }))).toBeGreaterThanOrEqual(statusBar + 8)
+    })
+
+    test("a sheet's bar starts below it", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/")
+        await page.getByRole("button", { name: "Search" }).click()
+        expect(await top(page.getByRole("button", { name: "Close" }))).toBeGreaterThanOrEqual(statusBar)
+    })
+
+    test("the map runs under it, with its own controls below it", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/map")
+        await expect(page.locator(".maplibregl-canvas")).toBeVisible()
+        expect(await top(page.locator("#map"))).toBe(0)
+        expect(await top(page.getByRole("button", { name: "Radar" }))).toBeGreaterThanOrEqual(statusBar)
     })
 })
 

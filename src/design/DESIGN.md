@@ -151,6 +151,10 @@ sentence above states the reading and is the chart's text alternative. No legend
 
 ## Layout
 
+Every screen and sheet starts below the status bar: iOS draws it over the page and blurs what's under it, so the
+frame's top is the safe-area inset plus 12px (`--sq-top`), which is 0 where there's no inset. Only the map
+runs under it, with its radar switch and attribution kept below.
+
 Gutter `--sq-gut`: 20px, 32px from 600px, 40px from 1024px. From 1024px the masthead and alerts run full
 width; below them the swatch holds still on the left and the list scrolls on the right.
 
