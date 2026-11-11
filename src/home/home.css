@@ -1,0 +1,378 @@
+/* Home: Now, the alerts, the next 12 hours, the best day, the week, snow and daylight. Load after
+   components.css. The spec is DESIGN.md. */
+
+/* Now: the current temperature as a paint chip. */
+
+.sq-now {
+    container-type: inline-size;
+    margin: 0 var(--sq-gut);
+    padding: 10px 16px 12px;
+}
+
+.sq-place-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.sq-place {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.sq-place .sq-cat {
+    flex: none;
+    align-self: center;
+}
+
+/* Small controls keep a 44px target by reaching into the space around them. */
+.sq-age .sq-link {
+    flex: none;
+    margin-block: -13px;
+    padding-block: 13px;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+/* Above the numeral: its glyphs overflow the trimmed box upward and would take the star's taps. */
+.sq-star {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: -10px -12px -10px 0;
+}
+
+.sq-star .sq-icon {
+    width: 26px;
+    height: 26px;
+}
+
+/* Chivo at regular weight, not a condensed display face: a printed number, not a scoreboard. Its ink spans the
+   chip, up to about a fifth of the screen's height. The tracking must match TRACKING in words.ts. */
+.sq-numeral {
+    margin: 10px 0 8px calc(var(--lsb) * -1em);
+    font-family: var(--sq-text);
+    font-size: min(calc(100cqi / var(--em)), 26svh, var(--fit, 1000px));
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+    text-box: trim-both cap alphabetic;
+}
+
+.sq-cond {
+    font-size: var(--sq-l);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-now-line {
+    margin-top: 6px;
+}
+
+.sq-age {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: var(--sq-s);
+}
+
+.sq-avy-none {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 24px var(--sq-gut);
+}
+
+.sq-avy-none .sq-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+/* Next 12 hours: a sentence, then the same hours in three columns. */
+
+.sq-caption {
+    padding: 12px var(--sq-gut) 11px;
+}
+
+.sq-caption + .sq-later {
+    margin-top: -10px;
+}
+
+.sq-next {
+    padding-top: 8px;
+}
+
+.sq-next .sq-caption {
+    padding-bottom: 4px;
+}
+
+.sq-blocks-link {
+    display: block;
+}
+
+.sq-blocks {
+    --sq-third: calc((100% - 2 * var(--sq-gut)) / 3);
+    display: grid;
+    grid-template-columns: calc(var(--sq-gut) + var(--sq-third)) var(--sq-third) minmax(0, 1fr);
+}
+
+.sq-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px 10px 0;
+}
+
+.sq-block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 6px;
+}
+
+.sq-block-head > * {
+    white-space: nowrap;
+}
+
+.sq-block:first-child {
+    padding-left: var(--sq-gut);
+}
+
+.sq-block:last-child {
+    padding-right: var(--sq-gut);
+}
+
+.sq-best {
+    padding: 10px var(--sq-gut) 12px;
+}
+
+.sq-best-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 8px;
+}
+
+/* The week: on the ground, one range bar per day on a scale shared by the whole week. The rows share their
+   columns through subgrid so every bar starts and ends on the same scale. */
+
+.sq-week {
+    display: grid;
+    grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+    column-gap: 12px;
+    padding: 6px var(--sq-gut) 6px;
+}
+
+.sq-week-head,
+.sq-days,
+.sq-days > li,
+.sq-day {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+}
+
+.sq-week-head {
+    align-items: baseline;
+    padding-bottom: 0;
+}
+
+.sq-day {
+    position: relative;
+    align-items: baseline;
+    padding: 10px 0 11px;
+}
+
+.sq-day-name {
+    grid-column: 1;
+}
+
+/* The day's name is the row's link, stretched over all of it, above the range bar. Its focus ring is the row's. */
+.sq-day-name::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: "";
+}
+
+.sq-root .sq-day-name:focus-visible {
+    outline: 0;
+}
+
+.sq-root .sq-day-name:focus-visible::after {
+    outline: 3px solid var(--k);
+    outline-offset: -3px;
+}
+
+.sq-day-low {
+    grid-column: 2;
+    text-align: right;
+}
+
+.sq-day-high {
+    grid-column: 4;
+    text-align: right;
+}
+
+.sq-day .sq-day-high {
+    font-size: var(--sq-l);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-day-cond {
+    grid-column: 1 / 4;
+}
+
+.sq-week > .sq-caption {
+    grid-column: 1 / -1;
+    padding-inline: 0;
+}
+
+/* Home's closing sections: a bold heading like "This week", then the facts on the next-12-hours columns or a
+   row shaped like the week's rows. */
+
+.sq-facts,
+.sq-daylight {
+    display: grid;
+    gap: 8px;
+    padding: 26px var(--sq-gut) 6px;
+}
+
+/* No column gap, so the columns start exactly where the next-12-hours columns do. */
+.sq-facts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Labels can wrap on narrow phones, so each column sits on the bottom to keep the numbers on one baseline. */
+.sq-facts-grid > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-right: 8px;
+}
+
+.sq-facts-grid dt {
+    margin-bottom: 2px;
+}
+
+.sq-facts-source {
+    margin-top: 2px;
+}
+
+.sq-alerts-calm {
+    padding-top: 22px;
+}
+
+.sq-daylight {
+    padding-bottom: 40px;
+}
+
+.sq-sunrow {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 2px;
+}
+
+.sq-sunbar {
+    position: relative;
+    height: 12px;
+}
+
+.sq-sunbar::before {
+    position: absolute;
+    top: 5px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--sq-track);
+    content: "";
+}
+
+.sq-sunbar i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.sq-sunbar-past {
+    background: var(--sq-dim);
+}
+
+.sq-sunbar-left {
+    background: var(--sq-ink);
+}
+
+.sq-sunrow-status {
+    text-align: center;
+}
+
+.sq-sunrow-end {
+    text-align: right;
+}
+
+/* Waiting: each section's shape in the track color, with no shimmer. */
+
+.sq-ph-bar {
+    display: block;
+    height: 0.72em;
+    margin-block: calc((1lh - 0.72em) / 2);
+    background: var(--sq-track);
+}
+
+.sq-ph-swatch {
+    background: var(--sq-track);
+    color: transparent;
+}
+
+.sq-ph-swatch .sq-place-row {
+    min-height: 24px;
+}
+
+.sq-ph-score {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: 6px;
+}
+
+.sq-ph-week .sq-day-low .sq-ph-bar,
+.sq-ph-week .sq-day-high .sq-ph-bar {
+    margin-left: auto;
+}
+
+/* Widths */
+
+@media (max-width: 379px) {
+    .sq-week {
+        column-gap: 8px;
+    }
+}
+
+/* Wide: Now is the split's lead (components.css). */
+@media (min-width: 1024px) {
+    .sq-now {
+        min-height: min(70vh, 640px);
+        margin-right: 0;
+    }
+
+    .sq-numeral {
+        font-size: min(calc(100cqi / var(--em)), 30vh);
+    }
+}

@@ -1,0 +1,197 @@
+/* Strata Quiet's foundation: the page, tokens, resets, surfaces, type and focus. The app is one .sq-root, the
+   shell, with every screen inside it. The spec is DESIGN.md. */
+
+/* The page: border-box sizing everywhere, no margin around it, and the theme's ground behind it, the same color
+   as theme-color, so overscrolling and the browser's own bars match. */
+
+*,
+::before,
+::after {
+    box-sizing: border-box;
+}
+
+html {
+    background: #fff;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+html[data-theme="dark"] {
+    background: #0d0d0d;
+}
+
+body {
+    margin: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.sq-root {
+    --sq-ground: #fff;
+    --sq-ink: #111;
+    --sq-track: #e3e3e3;
+    --sq-dim: #8a8a8a;
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    --sq-gut: 20px;
+    --sq-s: 14px;
+    --sq-m: 18px;
+    --sq-l: 32px;
+    --sq-xl: 88px;
+    --sq-text: "Chivo Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+    min-height: 100vh;
+    min-height: 100svh;
+    background: var(--sq-ground);
+    color: var(--sq-ink);
+    font: 400 var(--sq-m) / 1.3 var(--sq-text);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
+
+.sq-root[data-theme="dark"] {
+    --sq-ground: #0d0d0d;
+    --sq-ink: #f0f0f0;
+    --sq-track: #333;
+    --sq-dim: #6b6b6b;
+    color-scheme: dark;
+}
+
+/* Element resets, at no specificity, so every class beats them. */
+
+:where(.sq-root) a {
+    color: inherit;
+    text-decoration: none;
+}
+
+:where(.sq-root) button {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+:where(.sq-root) input {
+    color: inherit;
+    font: inherit;
+}
+
+:where(.sq-root) p,
+:where(.sq-root) ul,
+:where(.sq-root) ol,
+:where(.sq-root) figure {
+    margin: 0;
+    padding: 0;
+}
+
+:where(.sq-root) ul,
+:where(.sq-root) ol {
+    list-style: none;
+}
+
+:where(.sq-root) svg {
+    display: block;
+}
+
+:where(.sq-root) h1,
+:where(.sq-root) h2,
+:where(.sq-root) dl,
+:where(.sq-root) dt,
+:where(.sq-root) dd {
+    margin: 0;
+    font: inherit;
+}
+
+/* Surfaces: the ground, and chips of temperature color laid on it. */
+
+.sq-ground {
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-chip {
+    background: var(--b);
+    color: var(--k);
+}
+
+/* Type: four sizes, two weights. */
+
+.sq-strong {
+    font-weight: 700;
+}
+
+.sq-small {
+    font-size: var(--sq-s);
+}
+
+.sq-num {
+    font-size: var(--sq-l);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-xl {
+    font-size: var(--sq-xl);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+}
+
+.sq-low {
+    font-weight: 400;
+}
+
+.sq-link {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+.sq-root :focus-visible {
+    outline: 3px solid var(--k);
+    outline-offset: 2px;
+}
+
+.sq-root .sq-close:focus-visible,
+.sq-root .sq-blocks-link:focus-visible {
+    outline-offset: -3px;
+}
+
+.sq-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Motion: nothing slides or fades in. A chip's color shifts when the data or the theme changes. */
+
+@media (prefers-reduced-motion: no-preference) {
+    .sq-chip {
+        transition:
+            background-color 0.4s ease,
+            color 0.4s ease;
+    }
+}
+
+/* Widths: the gutter grows with the screen. */
+
+@media (min-width: 600px) {
+    .sq-root {
+        --sq-gut: 32px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .sq-root {
+        --sq-gut: 40px;
+    }
+}

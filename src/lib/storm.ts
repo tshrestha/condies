@@ -69,9 +69,9 @@ export function describeStorm(storm: Storm, timeZone: string, now: number) {
     // The end is the first hour without snow, so step back into the last one with it.
     const until = describeTime(storm.end - 1, timeZone, now)
     if (storm.start <= now) {
-        return `Snow through ${until} · ${amount} more`
+        return `Snow through ${until}, ${amount} more`
     }
 
     const from = describeTime(storm.start, timeZone, now)
-    return from === until ? `Snow ${from} · ${amount}` : `Snow from ${from} to ${until} · ${amount}`
+    return from === until ? `Snow ${from}, ${amount}` : `Snow from ${from} to ${until}, ${amount}`
 }

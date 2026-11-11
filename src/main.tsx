@@ -1,6 +1,9 @@
-import "bootstrap/dist/css/bootstrap.min.css"
-import "bootstrap-icons/font/bootstrap-icons.min.css"
-import "./app.css"
+import "@fontsource-variable/chivo/wght.css"
+import "./design/tokens.css"
+import "./design/components.css"
+import "./home/home.css"
+import "./day/day.css"
+import "./spots/spots.css"
 
 import { render } from "@solidjs/web"
 

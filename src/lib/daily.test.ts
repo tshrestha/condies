@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 
-import { bestDay, type DaySummary, formatTemp, formatWindRange, getDayLabel, groupIntoDays } from "./daily.ts"
+import { bestDay, type DaySummary, formatWindRange, getDayLabel, groupIntoDays } from "./daily.ts"
 import type { Period } from "./nws.ts"
 
 const period = (startTime: string, isDaytime: boolean, temperature: number, extra: Partial<Period> = {}) =>
@@ -73,11 +73,6 @@ describe("labels", () => {
         expect(getDayLabel(full, 0, "short")).toBe("Today")
         expect(getDayLabel(night, 0, "short")).toBe("Tonight")
         expect(getDayLabel(full, 1, "long")).toBe("Tuesday")
-    })
-
-    it("shows a dash for a missing temperature", () => {
-        expect(formatTemp(undefined)).toBe("–")
-        expect(formatTemp(0)).toBe("0°")
     })
 })
 

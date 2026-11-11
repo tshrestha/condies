@@ -1,0 +1,194 @@
+/* The map: full screen under the top bar, with the dock floating over it on phones. The only color on it is
+   data: a quiet base map, NOAA radar and the saved spots' paint chips. MapLibre's stylesheet loads after this
+   one, with the map, so overrides of its classes start from .sq-root .sq-map. The spec is DESIGN.md. */
+
+/* The map takes whatever height the top bar leaves. The dock is fixed, so it takes none and floats over it. */
+.sq-root:has(> .sq-map) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    padding-bottom: 0;
+}
+
+.sq-map {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+}
+
+.sq-map-canvas {
+    position: absolute;
+    inset: 0;
+}
+
+.sq-root .sq-map .maplibregl-map {
+    font-family: var(--sq-text);
+}
+
+/* Radar: a round glass switch at the top right. On, it's ink. */
+.sq-radar {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 16px 0 12px;
+    border-radius: 22px;
+    corner-shape: squircle;
+    font-weight: 700;
+}
+
+.sq-radar .sq-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.sq-radar[aria-pressed="true"] {
+    background: var(--sq-ink);
+    color: var(--sq-ground);
+}
+
+/* Zoom, compass and locate: the same glass, on the right edge. */
+.sq-root .sq-map .maplibregl-ctrl-group.sq-glass {
+    overflow: hidden;
+    border-radius: 22px;
+    corner-shape: squircle;
+    background: var(--glass);
+    box-shadow:
+        inset 0 0 0 1px var(--glass-edge),
+        var(--glass-shadow);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sq-root .sq-map .maplibregl-ctrl-group.sq-glass {
+        background: var(--glass-solid);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sq-root .sq-map .maplibregl-ctrl-group.sq-glass {
+        background: var(--glass-solid);
+    }
+}
+
+.sq-root .sq-map .maplibregl-ctrl-group button {
+    width: 44px;
+    height: 44px;
+}
+
+.sq-root .sq-map .maplibregl-ctrl-group button + button {
+    border-top: 1px solid var(--glass-edge);
+}
+
+.sq-root .sq-map .maplibregl-ctrl-bottom-right .maplibregl-ctrl {
+    margin: 0 max(12px, env(safe-area-inset-right, 0px)) 12px 0;
+}
+
+/* MapLibre draws its icons dark. At night they flip, keeping their hue for the locate button's states. */
+.sq-root[data-theme="dark"] .sq-map .maplibregl-ctrl-icon,
+.sq-root[data-theme="dark"] .sq-map .maplibregl-ctrl-attrib-button {
+    filter: invert(1) hue-rotate(180deg);
+}
+
+/* Attribution stays compact at the top left, on the ground. */
+.sq-root .sq-map .maplibregl-ctrl-top-left {
+    top: env(safe-area-inset-top, 0px);
+    left: env(safe-area-inset-left, 0px);
+}
+
+.sq-root .sq-map .maplibregl-ctrl-attrib {
+    background: var(--sq-ground);
+    color: var(--sq-ink);
+}
+
+.sq-root .sq-map .maplibregl-ctrl-attrib a {
+    color: inherit;
+}
+
+/* A saved spot: a square paint chip, printed, so square. The button around it is the 44px target. */
+.sq-pin {
+    display: grid;
+    place-items: center;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.sq-pin-chip {
+    padding: 5px 7px;
+    font-size: var(--sq-s);
+    font-weight: 700;
+    line-height: 1;
+    box-shadow:
+        0 0 0 1px rgb(0 0 0 / 0.16),
+        0 2px 8px rgb(0 0 0 / 0.24);
+}
+
+/* Popups are on the ground, square, with no tip. */
+.sq-root .sq-map .maplibregl-popup-content {
+    min-width: 240px;
+    padding: 0;
+    border-radius: 0;
+    background: var(--sq-ground);
+    color: var(--sq-ink);
+    font-size: var(--sq-m);
+    line-height: 1.3;
+    box-shadow:
+        0 0 0 1px rgb(128 128 128 / 0.3),
+        0 8px 28px rgb(0 0 0 / 0.24);
+}
+
+/* MapLibre places a popup beside a pin near an edge but never pulls it back onto the screen, so it only always
+   fits at two-thirds of the map's width or less. At this width the score's label takes its own line, as on the
+   narrowest phones, so the meter keeps its length. */
+.sq-root .sq-map .sq-popup:has(.sq-spot) .maplibregl-popup-content {
+    width: 260px;
+}
+
+.sq-root .sq-map .sq-popup .sq-score {
+    grid-template-columns: minmax(40px, 1fr) max-content;
+    row-gap: 2px;
+}
+
+.sq-root .sq-map .sq-popup .sq-score-label {
+    grid-column: 1 / -1;
+    text-align: left;
+}
+
+.sq-root .sq-map .sq-popup .sq-spot {
+    padding-inline: 16px;
+}
+
+.sq-root .sq-map .maplibregl-popup-tip {
+    display: none;
+}
+
+.sq-root .sq-map .maplibregl-popup-close-button {
+    width: 44px;
+    height: 44px;
+    font-size: 26px;
+    line-height: 1;
+}
+
+/* Room for the close button beside the spot's name. */
+.sq-root .sq-map .sq-popup .sq-spot-text > :first-child {
+    padding-right: 36px;
+}
+
+.sq-popup-place {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 12px 36px 14px var(--sq-gut);
+}
+
+/* On phones the dock owns the bottom of the screen, so the controls sit above it. */
+@media (max-width: 767.98px) {
+    .sq-root .sq-map .maplibregl-ctrl-bottom-right {
+        bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    }
+}

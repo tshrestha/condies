@@ -2,17 +2,24 @@ import { expect, type Page, test } from "@playwright/test"
 
 import { dateAt, gridFixture, mockApis, week } from "./fixtures.ts"
 
-const rows = (page: Page) => page.locator(".daily-row")
+const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
+// Each day's row reads as a sentence: the day and date (its link), low, high, then the conditions.
+const rows = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("listitem")
+const score = (page: Page) => page.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })
+const details = (page: Page) => page.getByRole("region", { name: "Details" })
+const snowLine = (page: Page) => page.getByRole("region", { name: "Rain and snow line" })
 
 // 06:00 tomorrow in the forecast's time zone, as hours from now.
 const tomorrowMorning = () => (Date.parse(`${dateAt(1)}T12:00:00-07:00`) - Date.now()) / 3_600_000
 
-test("rows and the header show real snow totals", async ({ page }) => {
+test("rows and the Snow section show real snow totals", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 4.5 }]) })
     await page.goto("#/")
 
-    await expect(rows(page).nth(1).locator(".daily-meta")).toContainText("4.5″")
-    await expect(page.locator(".card-header", { hasText: "7-DAY" })).toContainText("4.5″ this week")
+    await expect(rows(page).nth(1)).toContainText("4.5″ snow")
+    const snow = page.getByRole("region", { name: "Snow" })
+    await expect(snow.getByRole("term")).toHaveText(["Next 7 days"])
+    await expect(snow.getByRole("definition")).toHaveText(["4.5″"])
 })
 
 test("POW DAY comes from measured snow, not the forecast wording", async ({ page }) => {
@@ -25,7 +32,7 @@ test("POW DAY comes from measured snow, not the forecast wording", async ({ page
     await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 8 }]) })
     await page.goto("#/")
 
-    await expect(rows(page).nth(1).locator(".daily-chip")).toHaveText("POW DAY")
+    await expect(rows(page).nth(1)).toHaveText(/^Tomorrow, .*\. POW DAY/)
 })
 
 test("the day page says whether it's snow or rain at this elevation", async ({ page }) => {
@@ -34,34 +41,39 @@ test("the day page says whether it's snow or rain at this elevation", async ({ p
     })
     await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
 
-    const insight = page.locator(".day-insight").last()
-    await expect(insight).toContainText("All snow at this elevation")
-    await expect(insight).toContainText("3.0″")
-    await expect(insight).toContainText("Snow level 7,900 ft, this spot is 9,800 ft")
+    const line = snowLine(page)
+    await expect(line.getByText("All snow at this elevation", { exact: true })).toBeVisible()
+    await expect(line.getByText("Snow level 7,900 ft, this spot is 9,800 ft", { exact: true })).toBeVisible()
+    await expect(details(page).getByText("3.0″ of snow", { exact: true })).toBeVisible()
 })
 
 test("a low spot under a high snow level reads as rain", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([], { elevation: 1000, snowLevel: 2500 }) })
     await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
-    await expect(page.locator(".day-insight").last()).toContainText("Rain at this elevation")
+
+    await expect(snowLine(page).getByText("Rain at this elevation", { exact: true })).toBeVisible()
+    await expect(details(page).getByText(/^\d+% chance of rain$/)).toBeVisible()
 })
 
 test("each day gets a Condies score and best window", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([]) })
     await page.goto("#/")
 
-    await expect(rows(page).nth(1).locator(".daily-score")).toHaveText(/^\d+$/)
-    await rows(page).nth(1).click()
-    await expect(page.locator(".day-score-ring")).toHaveText(/^\d+$/)
-    await expect(page.locator(".day-insight").first()).toContainText("Best window")
+    // Home scores only the best day. Every day's own screen has its score.
+    await expect(score(page)).toBeVisible()
+    await days(page).nth(1).click()
+    const condies = page.getByRole("region", { name: "Condies score" })
+    await expect(condies.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
+    await expect(condies.getByText("Best window", { exact: true })).toBeVisible()
+    await expect(condies.getByText(/^\d+ [AP]M–\d+ [AP]M$/)).toBeVisible()
 })
 
 test("missing grid data leaves the rest of the forecast intact", async ({ page }) => {
     await mockApis(page)
     await page.goto("#/")
 
-    await expect(rows(page)).toHaveCount(7)
-    await expect(page.locator(".daily-score")).toHaveCount(0)
+    await expect(days(page)).toHaveCount(7)
+    await expect(score(page)).toHaveCount(0)
 })
 
 const saved = [
@@ -79,21 +91,27 @@ test("My Spots ranks saved places and filters by day", async ({ page }) => {
     windy.windGust = { values: [{ validTime: windy.windGust.values[0].validTime, value: 120 }] }
     await mockApis(page, { grid: (lat) => (lat === 40.5884 ? windy : calm) })
     await page.goto("#/")
-    await page.getByRole("link", { name: "My Spots" }).click()
+    await page.getByRole("link", { name: "Spots" }).click()
 
     await expect(page).toHaveURL(/#\/spots$/)
-    await expect(page.locator(".spot-row")).toHaveCount(2)
-    await expect(page.locator(".spot-row .fw-medium")).toHaveText(["Vail", "Alta"])
-    await expect(page.locator(".spot-score").first()).toHaveText(/^\d+$/)
+    const rows = page.getByRole("listitem")
+    await expect(rows).toHaveCount(2)
+    await expect(rows.getByRole("link")).toHaveText([/^Vail/, /^Alta/])
+    await expect(rows.first().getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
 
-    await page.locator(".spots-filter .btn").nth(2).click()
-    await expect(page.locator(".spots-filter .btn-primary")).not.toHaveText("This week")
-    await page.locator(".spot-row").first().click()
+    const days = page.getByRole("group", { name: "Which day" }).getByRole("button")
+    await expect(days.first()).toHaveText("This week")
+    await expect(days.first()).toHaveAttribute("aria-pressed", "true")
+    await days.nth(2).click()
+    await expect(days.nth(2)).toHaveAttribute("aria-pressed", "true")
+    await expect(days.first()).toHaveAttribute("aria-pressed", "false")
+    await rows.first().getByRole("link").click()
     await expect(page).toHaveURL(/#\/forecast\//)
 })
 
 test("My Spots explains itself when nothing is saved", async ({ page }) => {
     await mockApis(page)
     await page.goto("#/spots")
-    await expect(page.locator(".alert-secondary")).toContainText("Tap the star")
+    await expect(page.getByRole("heading", { name: "My Spots" })).toBeVisible()
+    await expect(page.getByText("Tap the star on any forecast to add it here.")).toBeVisible()
 })

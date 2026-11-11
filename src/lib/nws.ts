@@ -43,12 +43,6 @@ export interface Period {
     feelsLike?: number
 }
 
-export interface HourlyForecast {
-    minTemp: number
-    maxTemp: number
-    periods: Period[]
-}
-
 export interface ForecastResult {
     properties: {
         periods: Period[]
@@ -71,13 +65,6 @@ export interface Point {
             }
         }
     }
-}
-
-export interface BeaufortScale {
-    force: number
-    mphMin: number
-    mphMax: number
-    description: string
 }
 
 /**
@@ -196,43 +183,6 @@ export interface Alert {
 
 const headers = {
     "User-Agent": "Elevation Code Works LLC",
-}
-
-export const beaufortScale: BeaufortScale[] = [
-    { force: 0, mphMin: 0, mphMax: 1, description: "Calm" },
-    { force: 1, mphMin: 1, mphMax: 3, description: "Light Air" },
-    { force: 2, mphMin: 4, mphMax: 7, description: "Light Breeze" },
-    { force: 3, mphMin: 8, mphMax: 12, description: "Gentle Breeze" },
-    {
-        force: 4,
-        mphMin: 13,
-        mphMax: 18,
-        description: "Moderate Breeze",
-    },
-    {
-        force: 5,
-        mphMin: 19,
-        mphMax: 24,
-        description: "Fresh Breeze",
-    },
-    { force: 6, mphMin: 25, mphMax: 31, description: "Strong Breeze" },
-    { force: 7, mphMin: 32, mphMax: 38, description: "Near Gale" },
-    { force: 8, mphMin: 39, mphMax: 46, description: "Gale" },
-    { force: 9, mphMin: 47, mphMax: 54, description: "Severe Gale" },
-    { force: 10, mphMin: 55, mphMax: 63, description: "Storm" },
-    { force: 11, mphMin: 64, mphMax: 72, description: "Violent Storm" },
-    { force: 12, mphMin: 72, mphMax: 83, description: "Hurricane" },
-]
-
-export function toBeaufortForce(windSpeed: number): number {
-    if (windSpeed > 83) {
-        return 12
-    }
-    if (windSpeed < 0) {
-        return 0
-    }
-    let beauf = beaufortScale.find(({ mphMin, mphMax }) => windSpeed >= mphMin && windSpeed <= mphMax)
-    return beauf!.force
 }
 
 export function toMph(speed: number) {

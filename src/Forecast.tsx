@@ -1,90 +1,24 @@
-import { query, useLocation, useParams } from "@solidjs/router"
-import type { Feature } from "geojson"
-import { createMemo, Errored, Loading, Show, untrack } from "solid-js"
+import { useLocation, useParams } from "@solidjs/router"
+import { createEffect, createSignal, Loading, Match, onCleanup, Show, Switch, untrack } from "solid-js"
 
-import { groupIntoDays } from "./lib/daily.ts"
-import { type Alert, getAlerts, getForecast, getGridForecast, getPoint, type Point } from "./lib/nws.ts"
-
-import Alerts from "./Alerts.tsx"
-import DailyForecast from "./DailyForecast.tsx"
-import ForecastPlaceholder from "./ForecastPlaceholder.tsx"
-import HomeButton from "./HomeButton.tsx"
-import HourlyForecast from "./HourlyForecast"
-import CurrentConditions from "./CurrentConditions.tsx"
-import CurrentConditionsPlaceholder from "./CurrentConditionsPlaceholder.tsx"
-import LastUpdated from "./LastUpdated.tsx"
-import MountainConditions from "./MountainConditions.tsx"
-import SunRiseSet from "./SunRiseSet.tsx"
-import ThemeToggle from "./ThemeToggle.tsx"
+import { createForecastView } from "./forecastData.ts"
+import { type Avalanche, type HomeCtx, HomeScreen } from "./home/sections.tsx"
+import { HomePlaceholder } from "./home/Placeholder.tsx"
+import { AlertSheet, AvalancheSheet } from "./home/sheets.tsx"
+import type { AlertView, ForecastView } from "./lib/forecastView.ts"
+import { isSpot, toggleSpot } from "./lib/spots.ts"
+import { formatAge } from "./lib/util.ts"
+import { setPresentTemperature } from "./present.ts"
+import { theme } from "./theme.ts"
 
 export interface ForecastProps {
     point: {
         lat: string
         lon: string
     }
+    // Said above the forecast, such as why it isn't for where you are.
+    notice?: string
 }
-
-const timeRegex = /(\d+):(\d+)\s(AM|PM)/
-
-export const getForecastData = query(async (lat, lon) => {
-    const point: Point = await getPoint(lat, lon)
-    if (!point) {
-        throw new Error(`no NWS data for ${lat},${lon}`)
-    }
-
-    const [alertResults, forecast, hourlyForecastResult, grid] = await Promise.all([
-        getAlerts(lat, lon),
-        getForecast(point.properties.forecast),
-        getForecast(point.properties.forecastHourly),
-        getGridForecast(point.properties.forecastGridData),
-    ])
-
-    // NWS responses are cached for a while, so the first period can already be over.
-    const now = Date.now()
-    if (forecast) {
-        forecast.properties.periods = forecast.properties.periods.filter((p) => new Date(p.endTime).getTime() > now)
-    }
-
-    let alerts!: Alert[]
-    if (alertResults && alertResults.features && alertResults.features.length) {
-        alerts = alertResults.features.map((f: Feature) => f.properties)
-    }
-
-    const allHourlyPeriods = (hourlyForecastResult?.properties.periods ?? [])
-        .filter((p) => new Date(p.endTime).getTime() > now)
-        .map((p) => {
-            const d = new Date(p.startTime)
-            const timeString = d.toLocaleTimeString("en-US", {
-                hour12: true,
-                timeStyle: "short",
-                timeZone: point.properties.timeZone,
-            })
-            const match = timeString.match(timeRegex)
-            const hourString = `${match![1]} ${match![3]}`
-            const start = d.getTime()
-            const gridGust = grid?.gust.get(start)
-
-            return {
-                ...p,
-                hourString,
-                snowInches: grid?.snowfall.get(start) ?? 0,
-                feelsLike: grid?.feelsLike.get(start),
-                // The grid has gusts for far more hours than the hourly forecast does.
-                windGust:
-                    p.windGust
-                    ?? (gridGust === undefined ? undefined : { value: Math.round(gridGust), unitCode: "mph" }),
-            }
-        })
-
-    // Also catches a forecast saved for offline use that has since run out.
-    if (!forecast?.properties.periods.length && !allHourlyPeriods.length) {
-        throw new Error(`no current forecast for ${lat},${lon}`)
-    }
-
-    const hourlyForecast = { periods: allHourlyPeriods.slice(0, 11) }
-    const updatedAt = forecast?.properties.generatedAt ?? hourlyForecastResult?.properties.generatedAt
-    return { point, forecast, hourlyForecast, allHourlyPeriods, alerts, grid, updatedAt }
-}, "forecast")
 
 // The router reuses a route's component when only its params change, so key on the location to remount.
 export function ForecastRoute() {
@@ -100,78 +34,83 @@ export function ForecastRoute() {
     )
 }
 
+type Open = { kind: "alert"; alert: AlertView } | { kind: "avalanche"; avalanche: Avalanche }
+
+// Home with its forecast. This is made while the forecast may still be loading, so its body reads only plain
+// props; the forecast is read in the markup, where the Loading boundary catches the wait.
+function Ready(props: { forecast: ForecastView; lat: string; lon: string; notice?: string; fromHome: boolean }) {
+    const { lat, lon, fromHome } = untrack(() => ({ lat: props.lat, lon: props.lon, fromHome: props.fromHome }))
+    const place = { lat: Number(lat), lon: Number(lon) }
+    const [saved, setSaved] = createSignal(isSpot(place))
+    const [open, setOpen] = createSignal<Open>()
+    const [clock, setClock] = createSignal(Date.now())
+    const timer = setInterval(() => setClock(Date.now()), 60_000)
+    onCleanup(() => clearInterval(timer))
+
+    createEffect(
+        () => props.forecast.current?.temperature,
+        (t) => {
+            if (t !== undefined) {
+                setPresentTemperature(t)
+            }
+        },
+    )
+
+    const home: HomeCtx = {
+        get forecast() {
+            return props.forecast
+        },
+        get theme() {
+            return theme()
+        },
+        dayLink: (date) => ({
+            href: `#/forecast/${lat},${lon}/day/${date}${fromHome ? "?from=home" : ""}`,
+        }),
+        openAlert: (alert) => setOpen({ kind: "alert", alert }),
+        openAvalanche: (avalanche) => setOpen({ kind: "avalanche", avalanche }),
+    }
+    const close = () => setOpen(undefined)
+
+    return (
+        <>
+            <HomeScreen
+                {...home}
+                notice={props.notice}
+                saved={saved()}
+                onToggleSave={() =>
+                    setSaved(toggleSpot({ ...place, name: props.forecast.place.city || `${lat}, ${lon}` }))
+                }
+                updated={props.forecast.updatedAt ? formatAge(clock() - Date.parse(props.forecast.updatedAt)) : ""}
+                onRefresh={() => location.reload()}
+            />
+            <Switch>
+                <Match when={open()?.kind === "alert" && open()}>
+                    {(o) => <AlertSheet alert={(o() as { alert: AlertView }).alert} onClose={close} />}
+                </Match>
+                <Match when={open()?.kind === "avalanche" && open()}>
+                    {(o) => <AvalancheSheet avalanche={(o() as { avalanche: Avalanche }).avalanche} onClose={close} />}
+                </Match>
+            </Switch>
+        </>
+    )
+}
+
 export default function Forecast(props: ForecastProps) {
     const location = useLocation()
     // Each mount shows one location, so the coordinates are read once.
     const { lat, lon } = untrack(() => props.point)
+    const fromHome = untrack(() => location.pathname === "/")
 
-    const data = createMemo(() => getForecastData(lat, lon))
-    const powDay = createMemo(
-        () =>
-            groupIntoDays(data().forecast?.properties.periods ?? [], {
-                grid: data().grid,
-                hourly: data().allHourlyPeriods,
-            })[0]?.highlight === "pow",
-    )
+    const view = createForecastView(lat, lon)
 
+    // Home.tsx renders this inside its own Loading and Errored fallbacks. In production builds of Solid 2 RC, a
+    // fallback that is itself a boundary with no element around it hangs the page, so this div has to stay. The
+    // location fallback tests in forecast.spec.ts and reliability.spec.ts catch it.
     return (
-        <>
-            <div class="d-flex justify-content-between align-items-center">
-                <Show when={location.pathname === "/"}>
-                    <a href="#/spots" class="btn btn-sm btn-light rounded-pill">
-                        <i class="bi bi-star-fill text-warning" /> My Spots
-                    </a>
-                </Show>
-                <div class="ms-auto">
-                    <ThemeToggle />
-                </div>
-            </div>
-            <Loading fallback={<CurrentConditionsPlaceholder />}>
-                <Show when={data()!.hourlyForecast.periods.length}>
-                    <CurrentConditions
-                        point={data()!.point}
-                        period={data()!.hourlyForecast.periods[0]}
-                        next={data()!.hourlyForecast.periods[1]}
-                        powDay={powDay()}
-                        lat={lat}
-                        lon={lon}
-                    />
-                </Show>
-                <Show when={data()!.updatedAt}>
-                    <LastUpdated time={data()!.updatedAt!} />
-                </Show>
+        <div>
+            <Loading fallback={<HomePlaceholder />}>
+                <Ready forecast={view()} lat={lat} lon={lon} notice={props.notice} fromHome={fromHome} />
             </Loading>
-            <Loading fallback={null}>
-                <Show when={data() && data()!.alerts}>
-                    <Alerts alerts={data()!.alerts} />
-                </Show>
-            </Loading>
-            {/* Sunrise times are optional, so a failed lookup only hides this row. */}
-            <Errored fallback={null}>
-                <SunRiseSet lat={lat} lon={lon} timeZone={data()!.point.properties.timeZone} />
-            </Errored>
-            <Loading fallback={<ForecastPlaceholder />}>
-                <Show when={data()!.hourlyForecast.periods.length}>
-                    <HourlyForecast periods={data()!.hourlyForecast.periods} />
-                </Show>
-                <MountainConditions lat={lat} lon={lon} />
-                <Show when={data()!.forecast}>
-                    <DailyForecast
-                        periods={data()!.forecast!.properties.periods}
-                        grid={data()!.grid}
-                        hourly={data()!.allHourlyPeriods}
-                        lat={lat}
-                        lon={lon}
-                        fromHome={location.pathname === "/"}
-                        timeZone={data()!.point.properties.timeZone}
-                    />
-                </Show>
-            </Loading>
-            <Show when={location.pathname !== "/"}>
-                <div class={"position-fixed bottom-0 pb-4 z-3"}>
-                    <HomeButton />
-                </div>
-            </Show>
-        </>
+        </div>
     )
 }

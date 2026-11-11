@@ -28,10 +28,6 @@ export default defineConfig({
                                     if (id.includes("/maplibre-gl/")) {
                                         return "vendor-maplibre"
                                     }
-                                    // UI framework
-                                    if (id.includes("/bootstrap/") || id.includes("/bootstrap-icons/")) {
-                                        return "vendor-ui"
-                                    }
                                 }
                             },
                         },

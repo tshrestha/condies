@@ -43,29 +43,6 @@ export function getLocation() {
     })
 }
 
-// Maps wind direction to arrow showing where wind is blowing TO
-export function getWindArrow(direction: string): string {
-    const arrows: Record<string, string> = {
-        N: "↓",
-        S: "↑",
-        E: "←",
-        W: "→",
-        NE: "↙",
-        NW: "↘",
-        SE: "↖",
-        SW: "↗",
-        NNE: "↙",
-        NNW: "↘",
-        SSE: "↖",
-        SSW: "↗",
-        ENE: "↙",
-        ESE: "↖",
-        WNW: "↘",
-        WSW: "↗",
-    }
-    return arrows[direction] || "○"
-}
-
 export function tooWindy(windSpeed: QuantitativeValue, threshold = 10) {
     if (windSpeed.maxValue && windSpeed.maxValue > threshold) {
         return true

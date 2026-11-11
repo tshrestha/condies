@@ -5,8 +5,8 @@ import { getItem, lastLocationKey, setItem } from "./lib/cache.ts"
 import { denver } from "./lib/nws.ts"
 import { getLocation } from "./lib/util.ts"
 
-import Forecast, { getForecastData } from "./Forecast.tsx"
-import LocationSearchForm from "./LocationSearchForm.tsx"
+import Forecast from "./Forecast.tsx"
+import { getForecastData } from "./forecastData.ts"
 
 const getLastLocation = () => getItem(lastLocationKey) ?? denver
 
@@ -43,14 +43,14 @@ export default function Home() {
         <>
             <Errored
                 fallback={
-                    <>
-                        <div class="alert alert-warning text-center rounded-5 p-2 mt-2" role="status">
-                            {initialPoint === denver
-                                ? "Couldn't load the forecast for your location, so this is Denver's."
-                                : "Couldn't load the forecast for where you are now, so this is the last place you loaded."}
-                        </div>
-                        <Forecast point={initialPoint} />
-                    </>
+                    <Forecast
+                        point={initialPoint}
+                        notice={
+                            initialPoint === denver
+                                ? "Couldn’t load the forecast for your location, so this is Denver’s."
+                                : "Couldn’t load the forecast for where you are now, so this is the last place you loaded."
+                        }
+                    />
                 }
             >
                 <Loading fallback={<Forecast point={initialPoint} />}>
@@ -59,7 +59,6 @@ export default function Home() {
                     </Show>
                 </Loading>
             </Errored>
-            <LocationSearchForm />
         </>
     )
 }

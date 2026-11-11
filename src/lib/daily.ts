@@ -95,8 +95,6 @@ export function getDayLabel(summary: DaySummary, index: number, weekday: "short"
     return formatLocalDate(summary.date, { weekday })
 }
 
-export const formatTemp = (temperature?: number) => (temperature === undefined ? "–" : `${temperature}°`)
-
 export function formatWindRange({ windMin, windMax }: DaySummary) {
     return windMin === windMax ? `${windMax} mph` : `${windMin}–${windMax} mph`
 }

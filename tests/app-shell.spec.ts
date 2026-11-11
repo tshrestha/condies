@@ -8,8 +8,8 @@ test.describe("theme", () => {
         await mockApis(page)
         await page.goto("#/")
 
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
-        await expect(page.locator("#condies-theme-dark")).toBeChecked()
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+        await expect(page.getByRole("button", { name: "Dark mode" })).toHaveAttribute("aria-pressed", "true")
     })
 
     test("a saved choice beats the system setting", async ({ page }) => {
@@ -18,22 +18,23 @@ test.describe("theme", () => {
         await mockApis(page)
         await page.goto("#/")
 
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "light")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
     })
 
     test("changes with the system until the user chooses", async ({ page }) => {
         await mockApis(page)
         await page.goto("#/")
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "light")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
 
         await page.emulateMedia({ colorScheme: "dark" })
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
-        await expect(page.locator("body")).toHaveClass(/dark-bg/)
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+        await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#0d0d0d")
 
-        await page.locator("label[for=condies-theme-light]").click()
+        // Choosing light while the system is dark.
+        await page.getByRole("button", { name: "Dark mode" }).click()
         await page.emulateMedia({ colorScheme: "light" })
         await page.emulateMedia({ colorScheme: "dark" })
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "light")
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
     })
 
     test("is applied before any app code runs", async ({ page }) => {
@@ -41,8 +42,10 @@ test.describe("theme", () => {
         await page.route("**/assets/*.js", (route) => route.abort())
         await page.goto("#/")
 
-        await expect(page.locator("body")).toHaveAttribute("data-bs-theme", "dark")
-        await expect(page.locator("body")).toHaveClass(/dark-bg/)
+        await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
+        // The browser's bars and the page behind everything are already the dark ground.
+        await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#0d0d0d")
+        await expect(page.locator("html")).toHaveCSS("background-color", "rgb(13, 13, 13)")
     })
 })
 
@@ -65,6 +68,8 @@ test("the app can be installed", async ({ page, request }) => {
 test.describe("offline", () => {
     test.use({ serviceWorkers: "allow" })
 
+    const heading = (page: Page) => page.getByRole("heading", { level: 1, name: /^Right meow in / })
+
     test("shows the last forecast with no signal", async ({ page, context }) => {
         let offline = false
         await mockApis(page, {
@@ -76,33 +81,31 @@ test.describe("offline", () => {
             },
         })
         await page.goto("#/")
-        await expect(page.locator(".current-conditions h1.display-6")).toHaveText("Place 39.7644")
+        await expect(heading(page)).toHaveText("Right meow in Place 39.7644, CO")
 
         // The first visit installs the worker, so this load is the one it can save for later.
         await page.evaluate(() => navigator.serviceWorker.ready)
         await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true)
         await page.reload()
-        await expect(page.locator(".current-conditions h1.display-6")).toHaveText("Place 39.7644")
+        await expect(heading(page)).toHaveText("Right meow in Place 39.7644, CO")
         await page.waitForTimeout(300)
 
         offline = true
         await context.setOffline(true)
         await page.reload()
 
-        await expect(page.locator(".current-conditions h1.display-6")).toHaveText("Place 39.7644")
-        await expect(page.getByText("You're offline")).toBeVisible()
+        await expect(heading(page)).toHaveText("Right meow in Place 39.7644, CO")
+        await expect(page.getByText(/You.re offline/)).toBeVisible()
     })
-
-    const heading = (page: Page) => page.locator(".current-conditions h1.display-6")
 
     // Loads twice so the worker has saved the forecast, as it would have for a returning visitor.
     async function loadUntilSaved(page: Page, city: string) {
         await page.goto("#/")
-        await expect(heading(page)).toHaveText(city)
+        await expect(heading(page)).toHaveText(`Right meow in ${city}, CO`)
         await page.evaluate(() => navigator.serviceWorker.ready)
         await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true)
         await page.reload()
-        await expect(heading(page)).toHaveText(city)
+        await expect(heading(page)).toHaveText(`Right meow in ${city}, CO`)
         await page.waitForTimeout(300)
     }
 
@@ -124,8 +127,8 @@ test.describe("offline", () => {
         await page.evaluate(() => sessionStorage.setItem("mockLocation", '{"latitude":41.5,"longitude":-106.5}'))
         await page.reload()
 
-        await expect(page.locator(".alert-warning")).toContainText("the last place you loaded")
-        await expect(heading(page)).toHaveText("Place 40.1234")
+        await expect(page.getByRole("status").filter({ hasText: "the last place you loaded" })).toBeVisible()
+        await expect(heading(page)).toHaveText("Right meow in Place 40.1234, CO")
         expect(await page.evaluate(() => localStorage.getItem("condiesLastLocation"))).toContain("40.1234")
     })
 
@@ -142,7 +145,7 @@ test.describe("offline", () => {
         hanging = true
         await page.reload()
 
-        await expect(heading(page)).toHaveText("Place 39.7644", { timeout: 15_000 })
-        await expect(page.locator(".daily-row").first()).toBeVisible()
+        await expect(heading(page)).toHaveText("Right meow in Place 39.7644, CO", { timeout: 15_000 })
+        await expect(page.getByRole("region", { name: "This week" }).getByRole("link").first()).toBeVisible()
     })
 })
