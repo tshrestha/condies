@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 
 import { mockApis } from "./fixtures.ts"
 
@@ -49,17 +49,79 @@ test.describe("theme", () => {
     })
 })
 
+// An iPhone with a Dynamic Island: iOS draws the status bar over the top 59px and blurs what's under it, and keeps
+// the bottom 34px for the home indicator.
+const statusBar = 59
+const homeIndicator = 34
+
+async function emulateIPhoneInsets(page: Page) {
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send(
+        "Emulation.setSafeAreaInsetsOverride" as never,
+        {
+            insets: { top: statusBar, bottom: homeIndicator, left: 0, right: 0 },
+        } as never,
+    )
+}
+
+const top = async (locator: Locator) => (await locator.boundingBox())!.y
+
+test.describe("on an iPhone", () => {
+    test("Home and the Day screen start below it", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/")
+        expect(await top(page.getByRole("region", { name: "Right now" }))).toBeGreaterThanOrEqual(statusBar + 8)
+
+        await page.getByRole("region", { name: "This week" }).getByRole("link").nth(1).click()
+        expect(await top(page.getByRole("navigation", { name: "Other days" }))).toBeGreaterThanOrEqual(statusBar + 8)
+    })
+
+    test("a sheet's bar starts below it", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/")
+        await page.getByRole("button", { name: "Search" }).click()
+        expect(await top(page.getByRole("button", { name: "Close" }))).toBeGreaterThanOrEqual(statusBar)
+    })
+
+    test("the dock sits just above the home indicator, and the page ends above the dock", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/")
+        const dock = (await page.locator(".sq-dock").boundingBox())!
+        const viewport = page.viewportSize()!
+        expect(viewport.height - (dock.y + dock.height)).toBe(homeIndicator - 12)
+
+        await page.mouse.wheel(0, 10_000)
+        const daylight = page.getByRole("region", { name: "Daylight" })
+        await expect(daylight).toBeVisible()
+        await expect
+            .poll(async () => (await daylight.boundingBox())!.y + (await daylight.boundingBox())!.height)
+            .toBeLessThanOrEqual(dock.y)
+    })
+
+    test("the map runs under the status bar, with its own controls below it", async ({ page }) => {
+        await mockApis(page)
+        await emulateIPhoneInsets(page)
+        await page.goto("#/map")
+        await expect(page.locator(".maplibregl-canvas")).toBeVisible()
+        expect(await top(page.locator("#map"))).toBe(0)
+        expect(await top(page.getByRole("button", { name: "Radar" }))).toBeGreaterThanOrEqual(statusBar)
+    })
+})
+
 test("the app can be installed", async ({ page, request }) => {
     await page.goto("#/")
     const href = await page.locator('link[rel="manifest"]').getAttribute("href")
-    expect(href).toBe("/condies/manifest.webmanifest")
+    expect(href).toBe("/manifest.webmanifest")
 
     const manifest = await (await request.get(href!)).json()
     expect(manifest.display).toBe("standalone")
-    expect(manifest.start_url).toBe("/condies/")
+    expect(manifest.start_url).toBe("/")
 
     for (const icon of manifest.icons) {
-        const response = await request.get(`/condies/${icon.src}`)
+        const response = await request.get(`/${icon.src}`)
         expect(response.ok(), icon.src).toBe(true)
         expect(response.headers()["content-type"]).toContain("image/png")
     }

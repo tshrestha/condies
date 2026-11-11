@@ -39,8 +39,17 @@ body {
     --sq-xl: 88px;
     --sq-text: "Chivo Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+    /* iOS draws its status bar over the top of the page and blurs what's under it, so everything starts below
+       the bar, with a little room for the blur's soft edge. Without an inset, as on desktops and most Android
+       phones, both terms are 0. */
+    --sq-top: calc(env(safe-area-inset-top, 0px) + min(env(safe-area-inset-top, 0px), 12px));
+    /* The dock floats 12px off the bottom edge. On an iPhone it sinks into the home indicator's inset and stops
+       just above the indicator, as the system's own bars do. */
+    --sq-dock-bottom: max(12px, env(safe-area-inset-bottom, 0px) - 12px);
+
     min-height: 100vh;
     min-height: 100svh;
+    padding-top: var(--sq-top);
     background: var(--sq-ground);
     color: var(--sq-ink);
     font: 400 var(--sq-m) / 1.3 var(--sq-text);

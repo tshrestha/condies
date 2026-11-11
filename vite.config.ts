@@ -3,7 +3,6 @@ import solidPlugin from "@solidjs/vite-plugin"
 
 export default defineConfig({
     plugins: [solidPlugin()],
-    base: "/condies/",
     server: {
         port: 3000,
     },

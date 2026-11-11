@@ -1,0 +1,8 @@
+# Netlify builds the app and serves it from the site root. Routes are in the URL's hash, so no redirects are
+# needed. Search needs VITE_GEOCODE_URL and VITE_NAWA_TOKEN set in the site's environment variables.
+[build]
+command = "npm run build"
+publish = "dist"
+
+[build.environment]
+NODE_VERSION = "24"

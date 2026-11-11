@@ -32,7 +32,8 @@ white type on saturated blue, no banners, no condensed numerals.
   showing through (about 10:1 by day, 6:1 by night). With `prefers-reduced-transparency`, or without backdrop
   blur, it's solid. Tabs: Now (the cat), Search, Spots (the star), Map. The current tab is a chip in the color
   of the temperature right now, bold, with its icon filled: the dock's one painted thing. The theme switch is a
-  separate 58px glass disc beside it.
+  separate 58px glass disc beside it. It floats 12px off the bottom edge; on an iPhone it sinks into the home
+  indicator's inset and stops just above the indicator (`--sq-dock-bottom`), as the system's own bars do.
 - Wide screens: the top bar keeps words (Search, Spots, Map) and the same theme switch.
 - The theme switch is a horizon: the sun up in light mode; switching sets the sun and raises a crescent moon
   as two stars come out. It shows the current theme and is a toggle button ("Dark mode", pressed or not).
@@ -150,6 +151,10 @@ One series at a time, one column per hour on a baseline, direct labels at the en
 sentence above states the reading and is the chart's text alternative. No legends, no gridlines.
 
 ## Layout
+
+Every screen and sheet starts below the status bar: iOS draws it over the page and blurs what's under it, so the
+frame's top is the safe-area inset plus 12px (`--sq-top`), which is 0 where there's no inset. Only the map
+runs under it, with its radar switch and attribution kept below.
 
 Gutter `--sq-gut`: 20px, 32px from 600px, 40px from 1024px. From 1024px the masthead and alerts run full
 width; below them the swatch holds still on the left and the list scrolls on the right.
