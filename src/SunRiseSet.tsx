@@ -1,53 +1,12 @@
 import { query } from "@solidjs/router"
-import type { Feature } from "geojson"
 import { createMemo, Loading, Show } from "solid-js"
 
 import sunriseIcon from "./assets/weather-icons-master/production/fill/all/sunrise.svg"
 import sunsetIcon from "./assets/weather-icons-master/production/fill/all/sunset.svg"
+import { getSunTimes } from "./lib/sun.ts"
 import SunRiseSetPlaceholder from "./SunRiseSetPlaceholder.tsx"
 
-const apiURL = `https://aa.usno.navy.mil/api/rstt/oneday`
-
-// Today's date and UTC offset at the forecast location, which can differ from the viewer's.
-function getLocalDateAndOffset(timeZone: string) {
-    const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        timeZoneName: "longOffset",
-    }).formatToParts(new Date())
-    const part = (type: string) => parts.find((p) => p.type === type)!.value
-
-    const [, sign, hours, minutes] = part("timeZoneName").match(/GMT(?:([+-])(\d+):(\d+))?/)!
-    const offset = hours ? parseInt(hours, 10) + parseInt(minutes, 10) / 60 : 0
-
-    return { date: `${part("year")}-${part("month")}-${part("day")}`, offset: sign === "-" ? -offset : offset }
-}
-
-function formatTime(time: string) {
-    const [hours, minutes] = time.split(":")
-    const hour = parseInt(hours, 10)
-    return `${hour % 12 || 12}:${minutes} ${hour < 12 ? "AM" : "PM"}`
-}
-
-const getData = query(async (lat: string, lon: string, timeZone: string) => {
-    const { date, offset } = getLocalDateAndOffset(timeZone)
-
-    const response = await fetch(`${apiURL}?date=${date}&tz=${offset}&coords=${lat},${lon}&id=ElevationCodeWorksLLC`)
-    if (!response.ok) {
-        console.error("failed to get sun rise/set data", response.status, response.statusText)
-        return null
-    }
-
-    const result: Feature = await response.json()
-    const { sundata } = result.properties!.data
-
-    return {
-        sunrise: formatTime(sundata.find((d: Record<string, string>) => d.phen === "Rise").time),
-        sunset: formatTime(sundata.find((d: Record<string, string>) => d.phen === "Set").time),
-    }
-}, "sunriseset")
+const getData = query(getSunTimes, "sunriseset")
 
 export default function SunRiseSet(props: Record<string, string>) {
     const data = createMemo(() => getData(props.lat, props.lon, props.timeZone))

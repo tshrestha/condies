@@ -1,6 +1,6 @@
-import { type DaySummary, getDayLabel } from "../../lib/daily.ts"
-import type { Period } from "../../lib/nws.ts"
-import type { LabAlert, LabForecast } from "../data.ts"
+import { type DaySummary, getDayLabel } from "../lib/daily.ts"
+import type { Period } from "../lib/nws.ts"
+import type { AlertView, ForecastView } from "../lib/forecastView.ts"
 
 export const sentence = (text: string) => {
     const lower = text.toLowerCase()
@@ -98,7 +98,7 @@ const kindOf = (p: Period): "snow" | "storms" | "rain" => {
 
 const sum = (values: number[]) => values.reduce((a, b) => a + b, 0)
 
-const rainInches = (f: LabForecast, hours: Period[]) =>
+const rainInches = (f: ForecastView, hours: Period[]) =>
     f.grid ? sum(hours.map((h) => f.grid!.precipitation.get(Date.parse(h.startTime)) ?? 0)) / 25.4 : undefined
 
 const formatRain = (inches: number) => (inches < 0.1 ? "under 0.1″" : `${inches.toFixed(1)}″`)
@@ -115,7 +115,7 @@ const isWet = (p: Period) => (p.snowInches ?? 0) >= 0.02 || p.probabilityOfPreci
 
 // The next 12 hours from now, as one caption and three spans of four hours. The caption and the blocks read
 // the same hours, so their numbers always agree, and the caption names when the span ends.
-export function nextHours(f: LabForecast) {
+export function nextHours(f: ForecastView) {
     const hours = f.hours.slice(0, 12)
     const blocks: Block[] = [0, 1, 2]
         .map((k) => hours.slice(k * 4, k * 4 + 4))
@@ -149,7 +149,7 @@ export function nextHours(f: LabForecast) {
     return { blocks, caption: caption(f, hours, blocks), later }
 }
 
-function caption(f: LabForecast, hours: Period[], blocks: Block[]) {
+function caption(f: ForecastView, hours: Period[], blocks: Block[]) {
     if (!hours.length) {
         return "No hourly forecast right now"
     }
@@ -186,7 +186,7 @@ function caption(f: LabForecast, hours: Period[], blocks: Block[]) {
     return `${kind} ${when}, ${amount}`
 }
 
-export const severityRank: Record<LabAlert["severity"], number> = {
+export const severityRank: Record<AlertView["severity"], number> = {
     Extreme: 0,
     Severe: 1,
     Moderate: 2,
@@ -194,7 +194,7 @@ export const severityRank: Record<LabAlert["severity"], number> = {
     Unknown: 4,
 }
 
-export const isLoud = (alert: LabAlert) => severityRank[alert.severity] <= severityRank.Severe
+export const isLoud = (alert: AlertView) => severityRank[alert.severity] <= severityRank.Severe
 
 export function snowLine(day: DaySummary) {
     if (!day.phase) {

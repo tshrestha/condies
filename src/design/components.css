@@ -1,0 +1,524 @@
+/* Strata Quiet's shared pieces: the top bar, control icons, the horizon theme switch, the dock, alert notices,
+   the Condies score, the range bar and sheets. Load after tokens.css. */
+
+/* Masthead */
+
+.sq-mast {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 52px;
+    padding: 4px calc(var(--sq-gut) - 10px);
+}
+
+.sq-brand {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+.sq-nav {
+    display: flex;
+}
+
+.sq-nav > * {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 10px;
+}
+
+/* Control icons: 24px, 2px strokes, round joins, in the ink of whatever they sit on. */
+
+.sq-icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sq-icon-filled {
+    fill: currentColor;
+}
+
+/* The theme switch: a horizon. The sun sets below the line as the moon rises, and two stars come out. */
+
+.sq-theme {
+    display: inline-grid;
+    place-items: center;
+}
+
+.sq-horizon {
+    width: 28px;
+    height: 28px;
+    overflow: visible;
+}
+
+.sq-horizon-sun,
+.sq-horizon-moon,
+.sq-horizon-stars {
+    fill: currentColor;
+}
+
+.sq-horizon-sun path,
+.sq-horizon-line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.sq-horizon-moon {
+    transform: translateY(14px);
+}
+
+.sq-horizon-stars {
+    opacity: 0;
+}
+
+.sq-horizon-dark .sq-horizon-sun {
+    transform: translateY(14px);
+}
+
+.sq-horizon-dark .sq-horizon-moon {
+    transform: none;
+}
+
+.sq-horizon-dark .sq-horizon-stars {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .sq-horizon-sun,
+    .sq-horizon-moon {
+        transition: transform 0.7s cubic-bezier(0.3, 0.7, 0.2, 1);
+    }
+
+    .sq-horizon-dark .sq-horizon-moon,
+    .sq-horizon:not(.sq-horizon-dark) .sq-horizon-sun {
+        transition-delay: 0.15s;
+    }
+
+    .sq-horizon-stars {
+        transition: opacity 0.3s ease 0.45s;
+    }
+
+    .sq-horizon:not(.sq-horizon-dark) .sq-horizon-stars {
+        transition-delay: 0s;
+    }
+}
+
+/* The dock: phones only. Clear frosted glass, light by day and graphite by night, blurred and saturated so the
+   page's own colors glow through it. The one painted thing in it is the current tab: a chip in the color of
+   the temperature right now. Where blur isn't available, or the reader asked for less transparency, the glass is
+   solid. At these opacities the labels pass AA over any content: about 9:1 by day and 5.6:1 by night against
+   the worst case showing through. */
+
+.sq-dock {
+    display: none;
+}
+
+.sq-glass {
+    --glass: rgb(255 255 255 / 0.74);
+    --glass-solid: #f3f3f3;
+    --glass-ink: #111;
+    --glass-edge: rgb(0 0 0 / 0.07);
+    --glass-shadow: 0 10px 30px rgb(0 0 0 / 0.14);
+    background: var(--glass);
+    color: var(--glass-ink);
+    box-shadow:
+        inset 0 0 0 1px var(--glass-edge),
+        var(--glass-shadow);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8);
+    backdrop-filter: blur(22px) saturate(1.8);
+}
+
+.sq-root[data-theme="dark"] .sq-glass {
+    --glass: rgb(32 32 34 / 0.74);
+    --glass-solid: #222224;
+    --glass-ink: #f0f0f0;
+    --glass-edge: rgb(255 255 255 / 0.1);
+    --glass-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .sq-glass {
+        background: var(--glass-solid);
+    }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .sq-glass {
+        background: var(--glass-solid);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+/* Printed things are square; the things you touch float, so they're round. Continuous (squircle) corners where
+   the browser has them, a plain capsule where it doesn't. Inner corners are concentric with the bar's. */
+.sq-dock-nav {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding: 5px;
+    border-radius: 29px;
+    corner-shape: squircle;
+}
+
+.sq-dock-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 48px;
+    padding: 4px 2px 5px;
+    border-radius: 24px;
+    corner-shape: squircle;
+    font-size: var(--sq-s);
+    line-height: 1;
+}
+
+.sq-dock-item .sq-cat {
+    width: 22px;
+    height: 22px;
+}
+
+.sq-dock-item[aria-current="page"] {
+    background: var(--sq-now-chip);
+    color: var(--sq-now-ink);
+    font-weight: 700;
+}
+
+.sq-dock-theme {
+    flex: none;
+    width: 58px;
+    height: 58px;
+    align-self: center;
+    border-radius: 50%;
+}
+
+.sq-dock-theme .sq-horizon {
+    width: 36px;
+    height: 36px;
+    margin-top: -4px;
+}
+
+.sq-root .sq-dock :focus-visible {
+    outline-offset: -4px;
+}
+
+@media (max-width: 767.98px) {
+    .sq-mast {
+        display: none;
+    }
+
+    .sq-root {
+        padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .sq-dock {
+        position: fixed;
+        right: max(12px, env(safe-area-inset-right, 0px));
+        bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+        left: max(12px, env(safe-area-inset-left, 0px));
+        z-index: 20;
+        display: flex;
+        gap: 8px;
+    }
+}
+
+/* Alerts: printed notices inside the margins, never banners. The frame's weight carries the severity with the
+   word: a heavy frame for Extreme, a light one for Severe and avalanche danger, none for Moderate and Minor. */
+
+.sq-alerts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px var(--sq-gut) 10px;
+}
+
+.sq-alert {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px;
+    border: 2px solid var(--sq-ink);
+}
+
+.sq-alert-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.sq-alert[data-tone="extreme"] {
+    padding: 12px 14px;
+    border-width: 5px;
+}
+
+.sq-alert[data-tone="extreme"] .sq-alert-title {
+    font-size: var(--sq-l);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+}
+
+.sq-alert[data-tone="quiet"] {
+    min-height: 44px;
+    padding: 4px 0;
+    border: 0;
+}
+
+.sq-alert[data-tone="quiet"] .sq-alert-title {
+    font-weight: 400;
+}
+
+.sq-alert-note {
+    flex: none;
+    font-size: var(--sq-s);
+}
+
+.sq-alert[data-tone="avalanche"] {
+    align-items: center;
+}
+
+.sq-avy-chip {
+    flex: none;
+    width: 20px;
+    height: 20px;
+}
+
+.sq-cat {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
+
+/* The Condies score: one line of label, ink meter and value out of 100 with a word. Never a temperature color. */
+
+.sq-score {
+    display: grid;
+    grid-template-columns: max-content minmax(40px, 1fr) max-content;
+    align-items: center;
+    column-gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    margin-top: 6px;
+}
+
+.sq-score-label {
+    font-size: var(--sq-s);
+}
+
+/* The narrowest phones can't fit "100/100 PRIMO" beside the label, so the label takes its own line. */
+@media (max-width: 359.98px) {
+    .sq-score {
+        grid-template-columns: minmax(40px, 1fr) max-content;
+        row-gap: 2px;
+    }
+
+    .sq-score-label {
+        grid-column: 1 / -1;
+        text-align: left;
+    }
+}
+
+.sq-score-value strong {
+    font-weight: 700;
+}
+
+.sq-meter {
+    position: relative;
+    height: 8px;
+    background: var(--sq-track);
+}
+
+.sq-meter i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    background: var(--sq-ink);
+}
+
+.sq-score-help {
+    margin-top: 4px;
+}
+
+/* The range bar: the ramp's own 5° steps as hard segments from low to high, on a thin track. */
+
+.sq-range {
+    position: relative;
+    grid-column: 3;
+    align-self: center;
+    height: 12px;
+}
+
+.sq-range::before {
+    position: absolute;
+    top: 5px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: var(--sq-track);
+    content: "";
+}
+
+.sq-range i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+}
+
+.sq-range-tick {
+    width: 6px;
+    margin-left: -3px;
+}
+
+/* Sheets */
+
+.sq-sheet {
+    --b: var(--sq-ground);
+    --k: var(--sq-ink);
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    border: 0;
+    background: var(--sq-ground);
+    color: var(--sq-ink);
+}
+
+.sq-sheet::backdrop {
+    background: rgb(0 0 0 / 0.6);
+}
+
+.sq-sheet-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 56px;
+    padding: 4px calc(var(--sq-gut) - 10px) 4px var(--sq-gut);
+    background: var(--b);
+    color: var(--k);
+}
+
+.sq-close {
+    min-height: 44px;
+    padding: 0 10px;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+}
+
+.sq-sheet-head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px var(--sq-gut) 22px;
+    background: var(--b);
+    color: var(--k);
+}
+
+/* The alert's detail keeps its notice's frame. */
+.sq-sheet-head[data-tone="extreme"],
+.sq-sheet-head[data-tone="severe"] {
+    margin: 0 var(--sq-gut);
+    padding: 14px 14px 18px;
+    border: 2px solid var(--sq-ink);
+}
+
+.sq-sheet-head[data-tone="extreme"] {
+    border-width: 5px;
+}
+
+.sq-sheet-body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px var(--sq-gut) 40px;
+}
+
+.sq-parts {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sq-sheet-body .sq-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+}
+
+.sq-search {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.sq-input {
+    width: 100%;
+    min-height: 56px;
+    padding: 4px 0;
+    border: 0;
+    border-bottom: 3px solid currentColor;
+    border-radius: 0;
+    background: transparent;
+    font-size: var(--sq-l);
+}
+
+/* Focus thickens the field's own rule instead of drawing a second box around it. */
+.sq-root .sq-input:focus-visible {
+    outline: 0;
+    border-bottom-width: 6px;
+}
+
+.sq-input::placeholder {
+    color: inherit;
+    opacity: 0.62;
+}
+
+.sq-results {
+    width: 100%;
+}
+
+.sq-result {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    min-height: 60px;
+    padding: 10px 0;
+}
+
+@media (max-width: 379px) {
+    .sq-nav > * {
+        padding: 0 6px;
+        font-size: var(--sq-s);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sq-sheet {
+        width: 560px;
+        margin-left: auto;
+    }
+}

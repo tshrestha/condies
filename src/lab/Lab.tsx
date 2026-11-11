@@ -3,7 +3,9 @@ import type { Component } from "solid-js"
 
 import { denver } from "../lib/nws.ts"
 
-import { type DesignProps, type LabForecast, type LabSpot, loadLive, type Screen } from "./data.ts"
+import type { ForecastView, SpotView } from "../lib/forecastView.ts"
+
+import { type DesignProps, loadLive, type Screen } from "./data.ts"
 import { loadScenario, scenarios } from "./scenarios.ts"
 
 // Each design is its own lazily loaded module, so a design that's mid-edit can't break the others.
@@ -44,7 +46,7 @@ function systemTheme() {
     return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
 }
 
-function initialScreen(forecast?: LabForecast): Screen {
+function initialScreen(forecast?: ForecastView): Screen {
     const name = read("screen", "home")
     if (name === "day") {
         const index = Number(read("day", "0"))
@@ -128,7 +130,7 @@ function Strip(props: {
     )
 }
 
-type Loaded = { forecast: LabForecast; spots: LabSpot[]; searchSamples: string[] }
+type Loaded = { forecast: ForecastView; spots: SpotView[]; searchSamples: string[] }
 
 function getLivePoint(): Promise<{ lat: string; lon: string }> {
     const lat = params.get("lat")

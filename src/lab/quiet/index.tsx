@@ -1,36 +1,38 @@
 import "@fontsource-variable/chivo/wght.css"
+import "../../design/tokens.css"
+import "../../design/components.css"
 import "./quiet.css"
 
 import { createMemo, createSignal, flush, For, Match, onSettled, Show, Switch } from "solid-js"
-import type { ParentProps } from "solid-js"
 
-import { type DaySummary, formatSnow, formatWindRange, getDayLabel, hasSnow } from "../../lib/daily.ts"
-import type { Period } from "../../lib/nws.ts"
-import { formatAge } from "../../lib/util.ts"
-import { type DesignProps, type LabAlert, type LabForecast, rankSpots } from "../data.ts"
-
-import { avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampSteps, rampWalk } from "./ramp.ts"
+import { Cat, StarIcon } from "../../design/icons.tsx"
+import { Dock as DesignDock, Masthead as DesignMasthead } from "../../design/nav.tsx"
+import { AlertRow, RangeBar, Score, Sheet as SheetFrame } from "../../design/parts.tsx"
+import { avalancheScale, type Paint, paintDay, paintTemp, paintVars, rampWalk } from "../../design/ramp.ts"
 import {
     conditionWord,
     dayName,
     degrees,
     feelsLike,
-    grade,
     highlightWord,
     isLoud,
     nextHours,
     numeralFit,
-    scoreHelp,
     sentence,
     severityRank,
     shortDate,
     snowLine,
     windLine,
     windSpeed,
-} from "./words.ts"
+} from "../../design/words.ts"
+import { type DaySummary, formatSnow, formatWindRange, getDayLabel, hasSnow } from "../../lib/daily.ts"
+import { type AlertView, type ForecastView, rankSpots } from "../../lib/forecastView.ts"
+import type { Period } from "../../lib/nws.ts"
+import { formatAge } from "../../lib/util.ts"
+import type { DesignProps } from "../data.ts"
 
-type Avalanche = NonNullable<LabForecast["avalanche"]>
-type Sheet = { kind: "alert"; alert: LabAlert } | { kind: "avalanche"; avalanche: Avalanche } | { kind: "search" }
+type Avalanche = NonNullable<ForecastView["avalanche"]>
+type Sheet = { kind: "alert"; alert: AlertView } | { kind: "avalanche"; avalanche: Avalanche } | { kind: "search" }
 
 interface Ctx {
     app: DesignProps
@@ -39,189 +41,35 @@ interface Ctx {
 
 const dateOf = (p: Period) => p.startTime.slice(0, 10)
 
-function Cat() {
-    return (
-        <svg class="sq-cat" viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M3 1l3 4h5l3-4v8l-1 2 2 6h2v-4h2v6H3l2-8-2-2z" />
-        </svg>
-    )
-}
+const otherTheme = (app: DesignProps) => (app.theme === "light" ? "dark" : "light")
 
-// The one treatment of the Condies score, the same on Best day, the Day screen and My Spots. It is labeled,
-// out of 100, graded in a word and drawn as an ink meter, so it can never be read as a temperature. Tapping it
-// explains it. It is one line: label, meter, value.
-function Score(props: { score?: number }) {
-    const [open, setOpen] = createSignal(false)
-    return (
-        <Show when={props.score !== undefined}>
-            <button
-                type="button"
-                class="sq-score"
-                aria-expanded={open() ? "true" : "false"}
-                aria-label={`Condies score ${props.score} out of 100, ${grade(props.score!)}. What this means`}
-                onClick={() => setOpen(!open())}
-            >
-                <span class="sq-score-label">Condies score</span>
-                <span class="sq-meter" aria-hidden="true">
-                    <i style={{ width: `${props.score}%` }} />
-                </span>
-                <span class="sq-score-value">
-                    <strong>{props.score}</strong>/100 <strong>{grade(props.score!)}</strong>
-                </span>
-            </button>
-            <Show when={open()}>
-                <p class="sq-score-help">{scoreHelp}</p>
-            </Show>
-        </Show>
-    )
-}
-
-// Icons are only for controls. Weather is always told in words. One drawing style: 24px, 2px strokes, round
-// joins, in the ink of whatever they sit on.
-function SearchIcon() {
-    return (
-        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="10.5" cy="10.5" r="6.5" />
-            <path d="M15.5 15.5 21 21" />
-        </svg>
-    )
-}
-
-// The same star saves a place in the swatch and stands for My Spots in the dock.
-function StarIcon(props: { filled?: boolean }) {
-    return (
-        <svg class={props.filled ? "sq-icon sq-icon-filled" : "sq-icon"} viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 3l2.35 6.26 6.69.3-5.24 4.18 1.78 6.45L12 16.5l-5.58 3.69 1.78-6.45-5.24-4.18 6.69-.3z" />
-        </svg>
-    )
-}
-
-function MapIcon() {
-    return (
-        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2zM9 4v14M15 6v14" />
-        </svg>
-    )
-}
-
-let horizonCount = 0
-
-// The theme switch is a horizon. In light mode the sun is up. Switching sets the sun and raises a crescent moon,
-// with two stars coming out; switching back is a sunrise. It shows the current theme, like a light switch.
-function ThemeToggle(props: { app: DesignProps; class?: string }) {
-    const id = `sq-horizon-${++horizonCount}`
-    const dark = () => props.app.theme === "dark"
-    return (
-        <button
-            type="button"
-            class={`sq-theme ${props.class ?? ""}`}
-            aria-label="Dark mode"
-            aria-pressed={dark() ? "true" : "false"}
-            onClick={() => props.app.setTheme(dark() ? "light" : "dark")}
-        >
-            <svg class={dark() ? "sq-horizon sq-horizon-dark" : "sq-horizon"} viewBox="0 0 28 28" aria-hidden="true">
-                <defs>
-                    <clipPath id={`${id}-sky`}>
-                        <rect width="28" height="19" />
-                    </clipPath>
-                    <mask id={`${id}-cut`}>
-                        <rect width="28" height="28" fill="#fff" />
-                        <circle cx="17.5" cy="10.5" r="4.6" fill="#000" />
-                    </mask>
-                </defs>
-                <g clip-path={`url(#${id}-sky)`}>
-                    <g class="sq-horizon-sun">
-                        <circle cx="14" cy="14.5" r="4.5" />
-                        <path d="M14 6.5V8M8.34 8.84l1.06 1.06M19.66 8.84l-1.06 1.06M6 14.5h1.5M20.5 14.5H22" />
-                    </g>
-                    <g class="sq-horizon-moon">
-                        <circle cx="14" cy="12.5" r="5.5" mask={`url(#${id}-cut)`} />
-                    </g>
-                </g>
-                <path class="sq-horizon-line" d="M3.5 20h21" />
-                <g class="sq-horizon-stars">
-                    <circle cx="6.5" cy="6.5" r="1.1" />
-                    <circle cx="22.5" cy="5" r="1" />
-                </g>
-            </svg>
-        </button>
-    )
-}
-
-// On a wide screen the controls sit in this top bar. On a phone the dock takes them, and this bar is hidden.
+// The shared top bar and dock, wired to the lab's own navigation.
 function Masthead(props: Ctx) {
     return (
-        <header class="sq-ground sq-mast">
-            <a class="sq-brand" {...props.app.link({ name: "home" })}>
-                Condies
-            </a>
-            <nav class="sq-nav" aria-label="Main">
-                <button type="button" onClick={() => props.open({ kind: "search" })}>
-                    Search
-                </button>
-                <a {...props.app.link({ name: "spots" })}>Spots</a>
-                <button type="button" aria-label="Open the map">
-                    Map
-                </button>
-                <ThemeToggle app={props.app} />
-            </nav>
-        </header>
+        <DesignMasthead
+            theme={props.app.theme}
+            onToggleTheme={() => props.app.setTheme(otherTheme(props.app))}
+            home={props.app.link({ name: "home" })}
+            spots={props.app.link({ name: "spots" })}
+            onSearch={() => props.open({ kind: "search" })}
+            onMap={() => {}}
+        />
     )
 }
 
-// The phone's controls, within thumb reach: clear frosted glass with the page's own colors glowing through, and
-// the current tab as a chip in the color of the temperature right now, so a little of the present follows you
-// to every screen. It floats, so it's round, unlike the printed, square things on the page.
 function Dock(props: Ctx) {
-    const paint = () => paintTemp(props.app.forecast.current.temperature, props.app.theme)
-    const current = (name: string) => (props.app.screen.name === name ? "page" : undefined)
+    const screen = () => props.app.screen.name
     return (
-        <div class="sq-dock" style={{ "--sq-now-chip": paint().bg, "--sq-now-ink": paint().ink }}>
-            <nav class="sq-dock-nav sq-glass" aria-label="Main">
-                <a class="sq-dock-item" aria-current={current("home")} {...props.app.link({ name: "home" })}>
-                    <Cat />
-                    <span>Now</span>
-                </a>
-                <button type="button" class="sq-dock-item" onClick={() => props.open({ kind: "search" })}>
-                    <SearchIcon />
-                    <span>Search</span>
-                </button>
-                <a class="sq-dock-item" aria-current={current("spots")} {...props.app.link({ name: "spots" })}>
-                    <StarIcon filled={props.app.screen.name === "spots"} />
-                    <span>Spots</span>
-                </a>
-                <button type="button" class="sq-dock-item" aria-label="Open the map">
-                    <MapIcon />
-                    <span>Map</span>
-                </button>
-            </nav>
-            <ThemeToggle app={props.app} class="sq-glass sq-dock-theme" />
-        </div>
-    )
-}
-
-type Tone = "extreme" | "severe" | "avalanche" | "quiet"
-
-// One component for every warning, set like a printed notice rather than a banner: framed plates inside the
-// margins. Extreme has the heaviest frame and the largest type, Severe a lighter frame, avalanche danger
-// carries its standard color as a chip, and Moderate and Minor are plain rows. All say how serious in words.
-// A framed plate reads as a button on its own; a plain row gets an arrow so it does too.
-function AlertRow(props: { tone: Tone; title: string; note: string; chip?: Paint; onOpen: () => void }) {
-    return (
-        <button type="button" class="sq-alert" data-tone={props.tone} onClick={() => props.onOpen()}>
-            <span class="sq-alert-title">
-                <Show when={props.chip}>
-                    {(chip) => <i class="sq-avy-chip" style={{ background: chip().bg }} aria-hidden="true" />}
-                </Show>
-                {props.title}
-            </span>
-            <span class="sq-alert-note">
-                {props.note}
-                <Show when={props.tone === "quiet"}>
-                    <span aria-hidden="true">→</span>
-                </Show>
-            </span>
-        </button>
+        <DesignDock
+            theme={props.app.theme}
+            onToggleTheme={() => props.app.setTheme(otherTheme(props.app))}
+            home={props.app.link({ name: "home" })}
+            spots={props.app.link({ name: "spots" })}
+            onSearch={() => props.open({ kind: "search" })}
+            onMap={() => {}}
+            current={screen() === "home" ? "home" : screen() === "spots" ? "spots" : undefined}
+            now={paintTemp(props.app.forecast.current.temperature, props.app.theme)}
+        />
     )
 }
 
@@ -253,12 +101,12 @@ function AvalancheRow(props: Ctx & { avalanche: Avalanche }) {
 }
 
 // Danger of 3 or higher is a go or no-go fact, so it joins the warnings at the top.
-const risenAvalanche = (f: LabForecast) => ((f.avalanche?.rating?.level ?? 0) >= 3 ? f.avalanche : undefined)
+const risenAvalanche = (f: ForecastView) => ((f.avalanche?.rating?.level ?? 0) >= 3 ? f.avalanche : undefined)
 
 function Alerts(props: Ctx) {
     const f = () => props.app.forecast
     const sorted = () => [...f().alerts].sort((a, b) => severityRank[a.severity] - severityRank[b.severity])
-    const row = (alert: LabAlert) => (
+    const row = (alert: AlertView) => (
         <AlertRow
             tone={alert.severity === "Extreme" ? "extreme" : isLoud(alert) ? "severe" : "quiet"}
             title={alert.event}
@@ -383,35 +231,6 @@ function Best(props: Ctx) {
                 </section>
             )}
         </Show>
-    )
-}
-
-// Low on the left, high on the right, on one scale shared by the whole week, so warm days sit to the right.
-// The bar is made of the ramp's own 5° steps, so its color comes from the data. A day missing one end shows a
-// short mark at the end it has.
-function RangeBar(props: { low?: number; high?: number; min: number; max: number; theme: DesignProps["theme"] }) {
-    const span = () => props.max - props.min || 1
-    const at = (t: number) => `${((t - props.min) / span()) * 100}%`
-    const segments = () => {
-        const low = props.low ?? props.high!
-        const high = props.high ?? props.low!
-        return low < high ? rampSteps(low, high, props.theme) : []
-    }
-    const only = () => (props.low === undefined || props.high === undefined ? (props.high ?? props.low) : undefined)
-    return (
-        <span class="sq-range" aria-hidden="true">
-            <For each={segments()}>
-                {(s) => (
-                    <i style={{ left: at(s.from), width: `calc(${at(s.to)} - ${at(s.from)})`, background: s.bg }} />
-                )}
-            </For>
-            <Show when={only() !== undefined}>
-                <i
-                    class="sq-range-tick"
-                    style={{ left: at(only()!), background: paintTemp(only()!, props.theme).bg }}
-                />
-            </Show>
-        </span>
     )
 }
 
@@ -1108,30 +927,7 @@ function SpotsScreen(props: Ctx) {
     )
 }
 
-function SheetFrame(props: ParentProps<{ label: string; onClose: () => void; paint?: Paint; title?: string }>) {
-    let dialog!: HTMLDialogElement
-    const mount = (el: HTMLDialogElement) => {
-        dialog = el
-        queueMicrotask(() => {
-            if (el.isConnected && !el.open) {
-                el.showModal()
-            }
-        })
-    }
-    return (
-        <dialog ref={mount} class="sq-sheet" aria-label={props.label} onClose={props.onClose}>
-            <div class="sq-sheet-bar" style={props.paint ? paintVars(props.paint) : undefined}>
-                <span class="sq-strong">{props.title}</span>
-                <button type="button" class="sq-close" onClick={() => dialog.close()}>
-                    Close
-                </button>
-            </div>
-            {props.children}
-        </dialog>
-    )
-}
-
-function AlertSheet(props: { alert: LabAlert; onClose: () => void }) {
+function AlertSheet(props: { alert: AlertView; onClose: () => void }) {
     // The detail reads like the notice it opened from: framed, heavier for Extreme, plain for the quieter ones.
     const tone = () => (props.alert.severity === "Extreme" ? "extreme" : isLoud(props.alert) ? "severe" : "quiet")
     return (
@@ -1270,7 +1066,7 @@ function Ready(props: { app: DesignProps }) {
             <Dock {...ctx} />
             <Switch>
                 <Match when={sheet()?.kind === "alert" && sheet()}>
-                    {(s) => <AlertSheet alert={(s() as { alert: LabAlert }).alert} onClose={close} />}
+                    {(s) => <AlertSheet alert={(s() as { alert: AlertView }).alert} onClose={close} />}
                 </Match>
                 <Match when={sheet()?.kind === "avalanche" && sheet()}>
                     {(s) => <AvalancheSheet avalanche={(s() as { avalanche: Avalanche }).avalanche} onClose={close} />}

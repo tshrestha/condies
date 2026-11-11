@@ -12,16 +12,24 @@ choose a scenario or Live NWS. Delete this file when the port is done.
   ported, not against class names, so the tests stop depending on any particular styling.
 - Keep the lab running until the last phase. It's the visual reference and holds the scenarios.
 
-## Where things go
+## Where things go (in place since phase 1)
 
-- `src/design/`: `ramp.ts`, `words.ts` and their tests, `tokens.css` (the `.sq-root` tokens, resets and type
-  from `quiet.css`), `icons.tsx` (search, star, map, cat, horizon), and the shared pieces: `Score`, `AlertRow`,
-  `RangeBar`, `Sheet` (a `<dialog>`), `Dock`, `Masthead`, `ThemeToggle`. `DESIGN.md` moves here at the end.
-- `src/lib/forecastView.ts`: the view model from `src/lab/data.ts` (`buildForecast`, `toLabAlert`,
-  `rankSpots`), renamed `ForecastView` and `AlertView`. Screens build it from what `getForecastData` already
-  returns. The avalanche and snow-depth queries move here from `MountainConditions.tsx`.
-- Sun times: the `SunRiseSet.tsx` query also returns decimal hours (`sunriseHour`, `sunsetHour`), which the
-  Daylight bar needs.
+- `src/design/`, shared by the lab and the app:
+    - `tokens.css`: tokens, resets, surfaces, type, focus and gutters.
+    - `components.css`: the top bar, icons, horizon, dock, alert notices, score, range bar and sheets.
+    - `ramp.ts` and `words.ts`, with their tests.
+    - `icons.tsx`, `ThemeToggle.tsx`, `nav.tsx` (`Masthead`, `Dock`) and `parts.tsx` (`Score`, `AlertRow`,
+      `RangeBar`, `Sheet`).
+    - These components take plain props (theme, links, callbacks), so the lab and the app can each wire their
+      own navigation.
+    - `DESIGN.md` moves here at the end.
+- `src/lib/forecastView.ts`: `ForecastView`, `AlertView`, `SpotView`, `buildForecast`, `toAlertView` and
+  `rankSpots`. Screens build the view from what `getForecastData` already returns.
+- `src/lib/mountain.ts` (avalanche zones and snow depth) and `src/lib/sun.ts` (sun times, now with
+  `sunriseHour` and `sunsetHour` for the Daylight bar). The current `MountainConditions.tsx` and `SunRiseSet.tsx`
+  already use them through `query()`.
+- Screen layouts (Now, next hours, week, snow, daylight, Day, Spots, loading, error) are still in
+  `src/lab/quiet/quiet.css` and `index.tsx`. They move into the app with their screens in phases 3–5.
 
 ## Component map
 
@@ -47,9 +55,14 @@ chip.
 
 ## Phases
 
-1. **Foundation.** Create `src/design/` and `src/lib/forecastView.ts`, point the lab at them, and move the
-   unit tests. Import `tokens.css` alongside Bootstrap; everything is scoped under `.sq-root`, so nothing
-   changes on screen yet.
+1. **Foundation. Done.**
+    - Shared design module and data layer in place.
+    - Lab rewired to them.
+    - Tokens and components load beside Bootstrap.
+    - Verified:
+        - the app's pixels are unchanged on five screens
+        - the lab's 100 screenshots are byte-identical
+        - all tests pass
 2. **Shell and theme.**
     - App shell, dock, masthead, horizon toggle, offline notice and error state.
     - The pre-paint theme script.

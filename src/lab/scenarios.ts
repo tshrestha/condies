@@ -2,7 +2,8 @@ import type { AvalancheStatus } from "../lib/avalanche.ts"
 import { groupIntoDays } from "../lib/daily.ts"
 import type { Grid } from "../lib/grid.ts"
 import type { Period } from "../lib/nws.ts"
-import { buildForecast, type LabAlert, type LabForecast, type LabSnowDepth, type LabSpot, toLabAlert } from "./data.ts"
+import { type AlertView, buildForecast, type ForecastView, type SpotView, toAlertView } from "../lib/forecastView.ts"
+import type { SnowDepth } from "../lib/mountain.ts"
 
 const HOUR = 3_600_000
 const HOURS = 156
@@ -40,14 +41,14 @@ interface ScenarioConfig {
     fogHours?: number[]
     haze?: boolean
     rawAlerts: {
-        severity: LabAlert["severity"]
+        severity: AlertView["severity"]
         event: string
         headline: string
         description: string
         instruction: string
     }[]
     avalanche?: AvalancheStatus
-    snowDepth?: Omit<LabSnowDepth, "measuredAt">
+    snowDepth?: Omit<SnowDepth, "measuredAt">
     spots: { name: string; lat: number; lon: number; warmer: number; stormier: number; windier?: number }[]
     search: string[]
 }
@@ -603,7 +604,7 @@ export const scenarios = scenarioConfigs.map(({ id, label }) => ({ id, label }))
 export function loadScenario(
     id: string,
     startHour: number,
-): { forecast: LabForecast; spots: LabSpot[]; searchSamples: string[] } {
+): { forecast: ForecastView; spots: SpotView[]; searchSamples: string[] } {
     const config = scenarioConfigs.find((s) => s.id === id) ?? scenarioConfigs[0]
     const { now, grid, hours, periods } = buildScenario(config, startHour)
 
@@ -636,7 +637,7 @@ export function loadScenario(
         periods,
         hours,
         grid,
-        alerts: config.rawAlerts.map(toLabAlert),
+        alerts: config.rawAlerts.map(toAlertView),
         sun: {
             ...config.sun,
             sunriseHour: parseHour(config.sun.sunrise),
