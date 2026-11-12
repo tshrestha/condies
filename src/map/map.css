@@ -1,6 +1,6 @@
 /* The map: full screen under the top bar, with the dock floating over it on phones. The only color on it is
-   data: a quiet base map, NOAA radar and the saved spots' paint chips. MapLibre's stylesheet loads after this
-   one, with the map, so overrides of its classes start from .sq-root .sq-map. The spec is DESIGN.md. */
+   data: a quiet base map, NOAA radar and the saved spots' paint chips. MapLibre's stylesheet loads with the map,
+   before or after this one, so overrides of its classes start from .sq-root .sq-map. The spec is DESIGN.md. */
 
 /* The map takes whatever height the top bar leaves. The dock is fixed, so it takes none and floats over it. */
 .sq-root:has(> .sq-map) {
@@ -17,7 +17,8 @@
     min-height: 0;
 }
 
-.sq-map-canvas {
+/* MapLibre makes this a .maplibregl-map, which it positions itself. */
+.sq-root .sq-map .sq-map-canvas {
     position: absolute;
     inset: 0;
 }
