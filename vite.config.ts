@@ -1,6 +1,16 @@
 import solidPlugin from "@solidjs/vite-plugin"
 import { defineConfig } from "vite"
 
+// The server reads its settings from process.env (see netlify.toml). Locally they come from .env, which isn't
+// committed. Netlify sets them itself and has no .env.
+try {
+    process.loadEnvFile()
+} catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+        throw error
+    }
+}
+
 export default defineConfig({
     plugins: [
         // Start mode, client-rendered: the build prerenders src/Document.tsx into a static index.html around

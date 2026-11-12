@@ -9,7 +9,10 @@ const timeoutMs = 2_000
 const cacheTTLSeconds = 200 * 60 * 60
 
 function newClient() {
-    const address = process.env.db_address ?? ""
+    const address = process.env.db_address
+    if (!address) {
+        throw new Error("db_address is not set")
+    }
     const colon = address.lastIndexOf(":")
     return createClient({
         username: process.env.db_username,

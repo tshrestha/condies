@@ -49,7 +49,8 @@ function isCoordinate(value: unknown, limit: number) {
 async function limitRate() {
     const address = getRequestEvent()?.request.headers.get("x-nf-client-connection-ip")
     const client = clientKey(address)
-    if (!client) {
+    // Netlify sets the header on every request. Locally there's none, and every call shares one window.
+    if (!client && !import.meta.env.DEV) {
         console.warn("geocoding call has no usable client address")
     }
 
