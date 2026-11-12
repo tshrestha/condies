@@ -43,7 +43,7 @@ export function Masthead(props: NavProps) {
                 <a aria-current={ariaCurrent(props.current === "map")} aria-label="Open the map" {...props.map}>
                     Map
                 </a>
-                <ThemeToggle theme={props.theme} onToggle={props.onToggleTheme} />
+                <ThemeToggle id="mast" theme={props.theme} onToggle={props.onToggleTheme} />
             </nav>
         </header>
     )
@@ -79,7 +79,7 @@ export function Dock(props: NavProps & { now?: Paint }) {
                     <span>Map</span>
                 </a>
             </nav>
-            <ThemeToggle theme={props.theme} onToggle={props.onToggleTheme} class="sq-glass sq-dock-theme" />
+            <ThemeToggle id="dock" theme={props.theme} onToggle={props.onToggleTheme} class="sq-glass sq-dock-theme" />
         </div>
     )
 }

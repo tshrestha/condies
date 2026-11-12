@@ -2,13 +2,12 @@ import type { Theme } from "./ramp.ts"
 
 export type { Theme }
 
-let horizonCount = 0
-
 // The theme switch is a horizon. In light mode the sun is up. Switching sets the sun and raises a crescent moon,
 // with two stars coming out; switching back is a sunrise. It shows the current theme, like a light switch.
-export default function ThemeToggle(props: { theme: Theme; onToggle: () => void; class?: string }) {
-    // Every copy on the page needs its own clip and mask ids.
-    const id = `sq-horizon-${++horizonCount}`
+// Every copy on the page needs its own id for its clip and mask. It comes from where the copy sits, so the server and
+// the browser agree on it.
+export default function ThemeToggle(props: { id: string; theme: Theme; onToggle: () => void; class?: string }) {
+    const id = `sq-horizon-${props.id}`
     const dark = () => props.theme === "dark"
     return (
         <button
