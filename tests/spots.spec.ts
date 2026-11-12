@@ -8,13 +8,13 @@ const empty = (page: Page) => page.getByText("Tap the star on any forecast to ad
 
 test("a forecast can be starred and unstarred", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/forecast/40.5,-105.5")
+    await page.goto("/forecast/40.5,-105.5")
 
     await expect(star(page)).toHaveAttribute("aria-pressed", "false")
     await star(page).click()
     await expect(star(page)).toHaveAttribute("aria-pressed", "true")
 
-    await page.goto("#/spots")
+    await page.goto("/spots")
     await expect(spotLinks(page)).toHaveText([/^Place 40\.5/])
 
     await spotLinks(page).click()
@@ -22,13 +22,13 @@ test("a forecast can be starred and unstarred", async ({ page }) => {
     await star(page).click()
     await expect(star(page)).toHaveAttribute("aria-pressed", "false")
 
-    await page.goto("#/spots")
+    await page.goto("/spots")
     await expect(empty(page)).toBeVisible()
 })
 
 test("a star survives a reload", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/forecast/40.5,-105.5")
+    await page.goto("/forecast/40.5,-105.5")
     await star(page).click()
 
     await page.reload()
@@ -52,24 +52,25 @@ test("a starred place keeps the name it was searched by", async ({ page }) => {
     )
     await page.addInitScript(() => localStorage.setItem("condiesSpots", "[]"))
     await mockApis(page)
-    await page.goto("#/forecast/39.6425,-105.8719")
+    await page.goto("/forecast/39.6425,-105.8719")
     await star(page).click()
 
-    await page.goto("#/spots")
+    // A page load would run the init scripts again and empty the spots, so this goes through the dock.
+    await page.getByRole("link", { name: "Spots", exact: true }).click()
     await expect(spotLinks(page)).toHaveText([/^Arapahoe Basin/])
 })
 
 test("searching for a place doesn't add it once spots are in use", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("condiesSpots", "[]"))
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     await page.getByRole("button", { name: "Search" }).click()
     await page.getByRole("combobox", { name: "Where to?" }).fill("Boulder")
     await page.getByRole("option").first().click()
-    await expect(page).toHaveURL(/#\/forecast\//)
+    await expect(page).toHaveURL(/\/forecast\//)
 
-    await page.goto("#/spots")
+    await page.goto("/spots")
     await expect(empty(page)).toBeVisible()
 })
 
@@ -91,7 +92,7 @@ test("a spot whose forecast fails keeps its row and says so", async ({ page }) =
             }
         },
     })
-    await page.goto("#/spots")
+    await page.goto("/spots")
 
     await expect(spotLinks(page)).toHaveText([/^Denver/, /^Nowhere/])
     await expect(page.getByRole("listitem").last()).toContainText("Couldn’t load its forecast")
@@ -99,9 +100,9 @@ test("a spot whose forecast fails keeps its row and says so", async ({ page }) =
 
 test("starred places appear on the map", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/forecast/39.76,-105.02")
+    await page.goto("/forecast/39.76,-105.02")
     await star(page).click()
 
-    await page.goto("#/map")
+    await page.goto("/map")
     await expect(page.getByRole("button", { name: /^Place 39\.76, (high|low) \d+°$/ })).toBeVisible()
 })

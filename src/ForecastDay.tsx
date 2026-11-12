@@ -29,7 +29,7 @@ function ForecastDay(props: { point: string; date: string }) {
             lon,
             date: props.date,
             query: fromHome ? "?from=home" : "",
-            back: fromHome ? "#/" : `#/forecast/${lat},${lon}`,
+            back: fromHome ? "/" : `/forecast/${lat},${lon}`,
         }
     })
 
@@ -55,7 +55,7 @@ function ForecastDay(props: { point: string; date: string }) {
                 <DayView
                     forecast={view()}
                     theme={theme()}
-                    dayLink={(day) => ({ href: `#/forecast/${lat},${lon}/day/${day}${query}` })}
+                    dayLink={(day) => ({ href: `/forecast/${lat},${lon}/day/${day}${query}` })}
                     now={{ href: back }}
                     day={view().days[index()]}
                     index={index()}

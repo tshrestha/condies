@@ -64,7 +64,7 @@ function Ready(props: { forecast: ForecastView; lat: string; lon: string; notice
             return theme()
         },
         dayLink: (date) => ({
-            href: `#/forecast/${lat},${lon}/day/${date}${fromHome ? "?from=home" : ""}`,
+            href: `/forecast/${lat},${lon}/day/${date}${fromHome ? "?from=home" : ""}`,
         }),
         openAlert: (alert) => setOpen({ kind: "alert", alert }),
         openAvalanche: (avalanche) => setOpen({ kind: "avalanche", avalanche }),

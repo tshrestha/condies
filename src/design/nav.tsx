@@ -2,7 +2,7 @@ import { Cat, MapIcon, SearchIcon, StarIcon } from "./icons.tsx"
 import type { Paint } from "./ramp.ts"
 import ThemeToggle, { type Theme } from "./ThemeToggle.tsx"
 
-// Spread onto an <a>: a plain hash link, with an optional click handler.
+// Spread onto an <a>: a plain link, with an optional click handler.
 export interface LinkProps {
     href: string
     onClick?: (e: MouseEvent) => void
@@ -21,10 +21,9 @@ export interface NavProps {
     current?: Tab
 }
 
-// A link's aria-current: "page" when it goes to the screen you're on, "false" when it doesn't. Every link the Now
-// screen can show sets one, because the router marks the links that leave it out: it checks each link's URL
-// against the location, but reads a hash link as the document's own path, "/", so on the Now screen every link
-// would be the current page. It leaves an aria-current the app set alone. (@solidjs/router 2.0.0-next.44)
+// A link's aria-current: "page" when it goes to the screen you're on, "false" when it doesn't. The nav links set it
+// themselves because the router marks every link whose URL is the location, and on Now that includes the brand link,
+// not just the tab. It leaves an aria-current the app set alone. (@solidjs/router 2.0.0-next.44)
 export const ariaCurrent = (current: boolean) => (current ? "page" : "false")
 
 // On a wide screen the controls sit in this top bar. On a phone the dock takes them, and this bar is hidden.

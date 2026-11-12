@@ -14,6 +14,13 @@ export const searchReply = (features: object[]) => ({
     body: JSON.stringify({ features }),
 })
 
+// Changes the page's URL without loading the page, as going back or forward does.
+export const changeURL = (page: Page, path: string) =>
+    page.evaluate((to) => {
+        history.pushState(null, "", to)
+        dispatchEvent(new PopStateEvent("popstate"))
+    }, path)
+
 export const dateAt = (days: number) => new Date(Date.now() - OFFSET + days * 86_400_000).toISOString().slice(0, 10)
 export const timeAt = (hours: number) =>
     `${new Date(Date.now() - OFFSET + hours * 3_600_000).toISOString().slice(0, 19)}-07:00`

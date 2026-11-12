@@ -1,12 +1,12 @@
 import { expect, type Locator, type Page, test } from "@playwright/test"
 
-import { mockApis } from "./fixtures.ts"
+import { dateAt, mockApis } from "./fixtures.ts"
 
 test.describe("theme", () => {
     test("follows a dark system setting when nothing is saved", async ({ page }) => {
         await page.emulateMedia({ colorScheme: "dark" })
         await mockApis(page)
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
         await expect(page.getByRole("button", { name: "Dark mode" })).toHaveAttribute("aria-pressed", "true")
@@ -16,14 +16,14 @@ test.describe("theme", () => {
         await page.emulateMedia({ colorScheme: "dark" })
         await page.addInitScript(() => localStorage.setItem("condiesTheme", '"light"'))
         await mockApis(page)
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
     })
 
     test("changes with the system until the user chooses", async ({ page }) => {
         await mockApis(page)
-        await page.goto("#/")
+        await page.goto("/")
         await expect(page.locator("html")).toHaveAttribute("data-theme", "light")
 
         await page.emulateMedia({ colorScheme: "dark" })
@@ -40,7 +40,7 @@ test.describe("theme", () => {
     test("is applied before any app code runs", async ({ page }) => {
         await page.emulateMedia({ colorScheme: "dark" })
         await page.route("**/assets/*.js", (route) => route.abort())
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
         // The browser's bars and the page behind everything are already the dark ground.
@@ -70,7 +70,7 @@ test.describe("on an iPhone", () => {
     test("Home and the Day screen start below it", async ({ page }) => {
         await mockApis(page)
         await emulateIPhoneInsets(page)
-        await page.goto("#/")
+        await page.goto("/")
         expect(await top(page.getByRole("region", { name: "Right now" }))).toBeGreaterThanOrEqual(statusBar + 8)
 
         await page.getByRole("region", { name: "This week" }).getByRole("link").nth(1).click()
@@ -80,7 +80,7 @@ test.describe("on an iPhone", () => {
     test("a sheet's bar starts below it", async ({ page }) => {
         await mockApis(page)
         await emulateIPhoneInsets(page)
-        await page.goto("#/")
+        await page.goto("/")
         await page.getByRole("button", { name: "Search" }).click()
         expect(await top(page.getByRole("button", { name: "Close" }))).toBeGreaterThanOrEqual(statusBar)
     })
@@ -88,7 +88,7 @@ test.describe("on an iPhone", () => {
     test("the dock sits just above the home indicator, and the page ends above the dock", async ({ page }) => {
         await mockApis(page)
         await emulateIPhoneInsets(page)
-        await page.goto("#/")
+        await page.goto("/")
         const dock = (await page.locator(".sq-dock").boundingBox())!
         const viewport = page.viewportSize()!
         expect(viewport.height - (dock.y + dock.height)).toBe(homeIndicator - 12)
@@ -104,7 +104,7 @@ test.describe("on an iPhone", () => {
     test("the map runs under the status bar, with its own controls below it", async ({ page }) => {
         await mockApis(page)
         await emulateIPhoneInsets(page)
-        await page.goto("#/map")
+        await page.goto("/map")
         await expect(page.locator(".maplibregl-canvas")).toBeVisible()
         expect(await top(page.locator("#map"))).toBe(0)
         expect(await top(page.getByRole("button", { name: "Radar" }))).toBeGreaterThanOrEqual(statusBar)
@@ -112,7 +112,7 @@ test.describe("on an iPhone", () => {
 })
 
 // The tab for the screen you're on is the one link marked as the current page: not the other tabs, and not the
-// links on the page. The router marks links by their URL and gets hash links wrong (see ariaCurrent in nav.tsx).
+// links on the page. The router marks every link to the location, so the nav marks its own (see ariaCurrent in nav.tsx).
 test.describe("the current page", () => {
     const marked = (page: Page) => page.locator('a[aria-current="page"]:visible')
     const settled = (page: Page) =>
@@ -120,7 +120,7 @@ test.describe("the current page", () => {
 
     test("is marked in the dock and nowhere else", async ({ page }) => {
         await mockApis(page)
-        await page.goto("#/")
+        await page.goto("/")
         await settled(page)
         await expect(marked(page)).toHaveText(["Now"])
 
@@ -138,7 +138,7 @@ test.describe("the current page", () => {
     test("is marked in the top bar on a wide screen and nowhere else", async ({ page }) => {
         await page.setViewportSize({ width: 1200, height: 900 })
         await mockApis(page)
-        await page.goto("#/")
+        await page.goto("/")
         await settled(page)
         await expect(marked(page)).toHaveCount(0)
 
@@ -155,7 +155,7 @@ test.describe("the current page", () => {
 })
 
 test("the app can be installed", async ({ page, request }) => {
-    await page.goto("#/")
+    await page.goto("/")
     const href = await page.locator('link[rel="manifest"]').getAttribute("href")
     expect(href).toBe("/manifest.webmanifest")
 
@@ -168,6 +168,26 @@ test("the app can be installed", async ({ page, request }) => {
         expect(response.ok(), icon.src).toBe(true)
         expect(response.headers()["content-type"]).toContain("image/png")
     }
+})
+
+test.describe("a link from when pages lived in the URL's hash", () => {
+    test("opens the page it names", async ({ page }) => {
+        await mockApis(page)
+        await page.goto(`/#/forecast/39.1000,-106.1000/day/${dateAt(1)}?from=home`)
+
+        await expect(page).toHaveURL(`/forecast/39.1000,-106.1000/day/${dateAt(1)}?from=home`)
+        await expect(page.getByRole("heading", { level: 1, name: "Tomorrow", exact: true })).toBeVisible()
+        // The query came along too: opened from Home, the day goes back to Home.
+        await expect(page.getByRole("link", { name: "Place 39.1", exact: true })).toHaveAttribute("href", "/")
+    })
+
+    test("isn't followed off the site", async ({ page }) => {
+        await mockApis(page)
+        await page.goto("/#//example.com/forecast/1,1")
+
+        await expect(page.getByRole("heading", { level: 1, name: /^Right meow in / })).toBeVisible()
+        expect(new URL(page.url()).origin).toBe("http://localhost:4173")
+    })
 })
 
 test.describe("offline", () => {
@@ -185,7 +205,7 @@ test.describe("offline", () => {
                 }
             },
         })
-        await page.goto("#/")
+        await page.goto("/")
         await expect(heading(page)).toHaveText("Right meow in Place 39.7644, CO")
 
         // The first visit installs the worker, so this load is the one it can save for later.
@@ -205,7 +225,7 @@ test.describe("offline", () => {
 
     // Loads twice so the worker has saved the forecast, as it would have for a returning visitor.
     async function loadUntilSaved(page: Page, city: string) {
-        await page.goto("#/")
+        await page.goto("/")
         await expect(heading(page)).toHaveText(`Right meow in ${city}, CO`)
         await page.evaluate(() => navigator.serviceWorker.ready)
         await expect.poll(() => page.evaluate(() => !!navigator.serviceWorker.controller)).toBe(true)
@@ -252,5 +272,16 @@ test.describe("offline", () => {
 
         await expect(heading(page)).toHaveText("Right meow in Place 39.7644, CO", { timeout: 15_000 })
         await expect(page.getByRole("region", { name: "This week" }).getByRole("link").first()).toBeVisible()
+    })
+
+    test("opens a page it has never shown with no signal", async ({ page, context }) => {
+        await mockApis(page)
+        await loadUntilSaved(page, "Place 39.7644")
+
+        await context.setOffline(true)
+        await page.goto("/spots")
+
+        await expect(page.getByRole("heading", { name: "My Spots" })).toBeVisible()
+        await expect(page.getByText(/You.re offline/)).toBeVisible()
     })
 })

@@ -67,12 +67,12 @@ async function violations(page: Page) {
 const screens: { name: string; path: string; ready: (page: Page) => Promise<void> }[] = [
     {
         name: "Home",
-        path: "#/",
+        path: "/",
         ready: (page) => expect(page.getByRole("region", { name: "Daylight" })).toBeVisible(),
     },
     {
         name: "an alert",
-        path: "#/",
+        path: "/",
         ready: async (page) => {
             await page.getByRole("button", { name: /Winter Storm Warning/ }).click()
             await expect(page.getByRole("dialog")).toBeVisible()
@@ -80,7 +80,7 @@ const screens: { name: string; path: string; ready: (page: Page) => Promise<void
     },
     {
         name: "avalanche danger",
-        path: "#/",
+        path: "/",
         ready: async (page) => {
             await page.getByRole("button", { name: /avalanche danger/ }).click()
             await expect(page.getByRole("dialog", { name: "Avalanche danger" })).toBeVisible()
@@ -88,7 +88,7 @@ const screens: { name: string; path: string; ready: (page: Page) => Promise<void
     },
     {
         name: "search",
-        path: "#/",
+        path: "/",
         ready: async (page) => {
             await page.getByRole("button", { name: "Search" }).click()
             await page.getByRole("combobox", { name: "Where to?" }).fill("boul")
@@ -98,7 +98,7 @@ const screens: { name: string; path: string; ready: (page: Page) => Promise<void
     {
         name: "a day, with its score explained and the snow chart",
         // The day the fixture's snow falls on, whatever the time now.
-        path: `#/forecast/39.7644,-105.0196/day/${dateAt(snowHours / 24)}`,
+        path: `/forecast/39.7644,-105.0196/day/${dateAt(snowHours / 24)}`,
         ready: async (page) => {
             await page.getByRole("button", { name: /^Condies score/ }).click()
             await page.getByRole("button", { name: "Snow", exact: true }).click()
@@ -106,17 +106,17 @@ const screens: { name: string; path: string; ready: (page: Page) => Promise<void
     },
     {
         name: "a day with no forecast",
-        path: "#/forecast/39.7644,-105.0196/day/2020-01-01",
+        path: "/forecast/39.7644,-105.0196/day/2020-01-01",
         ready: (page) => expect(page.getByRole("heading", { name: /no forecast for this day/ })).toBeVisible(),
     },
     {
         name: "My Spots",
-        path: "#/spots",
+        path: "/spots",
         ready: (page) => expect(page.getByRole("listitem")).toHaveCount(2),
     },
     {
         name: "the map, with a spot open",
-        path: "#/map",
+        path: "/map",
         ready: async (page) => {
             await page.getByRole("button", { name: /^Denver, / }).click()
             await expect(page.locator(".maplibregl-popup")).toBeVisible()
@@ -149,7 +149,7 @@ for (const theme of ["light", "dark"]) {
 test("the wide layout has no accessibility violations", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 })
     await mockApis(page, { alerts: stormAlerts })
-    await page.goto("#/")
+    await page.goto("/")
     await expect(page.getByRole("region", { name: "Right now" })).toBeVisible()
     expect(await violations(page)).toEqual([])
 })

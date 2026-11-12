@@ -14,7 +14,7 @@ const tomorrowMorning = () => (Date.parse(`${dateAt(1)}T12:00:00-07:00`) - Date.
 
 test("rows and the Snow section show real snow totals", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 4.5 }]) })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(rows(page).nth(1)).toContainText("4.5″ snow")
     const snow = page.getByRole("region", { name: "Snow" })
@@ -30,7 +30,7 @@ test("POW DAY comes from measured snow, not the forecast wording", async ({ page
         probabilityOfPrecipitation: { value: 90 },
     }
     await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 8 }]) })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(rows(page).nth(1)).toHaveText(/^Tomorrow, .*\. POW DAY/)
 })
@@ -39,7 +39,7 @@ test("the day page says whether it's snow or rain at this elevation", async ({ p
     await mockApis(page, {
         grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 3 }], { elevation: 3000, snowLevel: 2400 }),
     })
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
 
     const line = snowLine(page)
     await expect(line.getByText("All snow at this elevation", { exact: true })).toBeVisible()
@@ -49,7 +49,7 @@ test("the day page says whether it's snow or rain at this elevation", async ({ p
 
 test("a low spot under a high snow level reads as rain", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([], { elevation: 1000, snowLevel: 2500 }) })
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
 
     await expect(snowLine(page).getByText("Rain at this elevation", { exact: true })).toBeVisible()
     await expect(details(page).getByText(/^\d+% chance of rain$/)).toBeVisible()
@@ -57,7 +57,7 @@ test("a low spot under a high snow level reads as rain", async ({ page }) => {
 
 test("each day gets a Condies score and best window", async ({ page }) => {
     await mockApis(page, { grid: gridFixture([]) })
-    await page.goto("#/")
+    await page.goto("/")
 
     // Home scores only the best day. Every day's own screen has its score.
     await expect(score(page)).toBeVisible()
@@ -70,7 +70,7 @@ test("each day gets a Condies score and best window", async ({ page }) => {
 
 test("missing grid data leaves the rest of the forecast intact", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(days(page)).toHaveCount(7)
     await expect(score(page)).toHaveCount(0)
@@ -90,10 +90,10 @@ test("My Spots ranks saved places and filters by day", async ({ page }) => {
     const windy = gridFixture([])
     windy.windGust = { values: [{ validTime: windy.windGust.values[0].validTime, value: 120 }] }
     await mockApis(page, { grid: (lat) => (lat === 40.5884 ? windy : calm) })
-    await page.goto("#/")
+    await page.goto("/")
     await page.getByRole("link", { name: "Spots" }).click()
 
-    await expect(page).toHaveURL(/#\/spots$/)
+    await expect(page).toHaveURL(/\/spots$/)
     const rows = page.getByRole("listitem")
     await expect(rows).toHaveCount(2)
     await expect(rows.getByRole("link")).toHaveText([/^Vail/, /^Alta/])
@@ -106,12 +106,12 @@ test("My Spots ranks saved places and filters by day", async ({ page }) => {
     await expect(days.nth(2)).toHaveAttribute("aria-pressed", "true")
     await expect(days.first()).toHaveAttribute("aria-pressed", "false")
     await rows.first().getByRole("link").click()
-    await expect(page).toHaveURL(/#\/forecast\//)
+    await expect(page).toHaveURL(/\/forecast\//)
 })
 
 test("My Spots explains itself when nothing is saved", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/spots")
+    await page.goto("/spots")
     await expect(page.getByRole("heading", { name: "My Spots" })).toBeVisible()
     await expect(page.getByText("Tap the star on any forecast to add it here.")).toBeVisible()
 })

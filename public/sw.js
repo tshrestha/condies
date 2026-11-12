@@ -30,14 +30,17 @@ async function trim(cache) {
     await Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_FORECAST_RESPONSES)).map((key) => cache.delete(key)))
 }
 
-async function networkFirst(event, cacheName, timeoutMs) {
+// Saves the response under key, which defaults to the request.
+async function networkFirst(event, cacheName, timeoutMs, key = event.request) {
     const { request } = event
     const cache = await caches.open(cacheName)
-    const cached = await cache.match(request, { ignoreVary: true })
+    const cached = await cache.match(key, { ignoreVary: true })
 
     const network = fetch(request).then(async (response) => {
-        if (response.ok) {
-            await cache.put(request, response.clone())
+        // Under another key, only a page is saved, not a file someone opened on its own, like the manifest.
+        const saves = key === request || response.headers.get("content-type")?.startsWith("text/html")
+        if (response.ok && saves) {
+            await cache.put(key, response.clone())
             await trim(cache)
         }
         return response
@@ -81,10 +84,14 @@ self.addEventListener("fetch", (event) => {
         const timeout = url.pathname.startsWith("/points/") ? 0 : DATA_TIMEOUT_MS
         event.respondWith(networkFirst(event, DATA_CACHE, timeout))
     } else if (url.origin === self.location.origin) {
-        event.respondWith(
-            url.pathname.includes("/assets/")
-                ? cacheFirst(request)
-                : networkFirst(event, SHELL_CACHE, SHELL_TIMEOUT_MS),
-        )
+        if (url.pathname.includes("/assets/")) {
+            event.respondWith(cacheFirst(request))
+        } else if (request.mode === "navigate") {
+            // Every page is the same app shell, so the one saved copy opens any of them with no signal, even a page
+            // never opened before.
+            event.respondWith(networkFirst(event, SHELL_CACHE, SHELL_TIMEOUT_MS, self.registration.scope))
+        } else {
+            event.respondWith(networkFirst(event, SHELL_CACHE, SHELL_TIMEOUT_MS))
+        }
     }
 })

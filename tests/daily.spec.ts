@@ -26,7 +26,7 @@ const axis = (page: Page) => chart(page).getByRole("list").last().getByRole("lis
 
 test("groups the forecast into one row per day", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(days(page)).toHaveCount(7)
     // The day's high and the night's low, in one row.
@@ -40,7 +40,7 @@ test("groups the forecast into one row per day", async ({ page }) => {
 
 test("an evening load starts with Tonight and has no high", async ({ page }) => {
     await mockApis(page, { daily: week().slice(1) })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(rows(page).first()).toHaveText(`Tonight, ${short(dateAt(0))}, low 20°. Clear`)
 })
@@ -50,7 +50,7 @@ test("a period that already ended is dropped", async ({ page }) => {
     daily[0] = { ...daily[0], endTime: timeAt(-2) }
     daily[1] = { ...daily[1], endTime: timeAt(-1) }
     await mockApis(page, { daily })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(days(page)).toHaveCount(6)
     await expect(rows(page).first()).toContainText("high 43°")
@@ -74,7 +74,7 @@ test("POW DAY and PRIMO days are marked", async ({ page }) => {
         hourly: hourly(80, { windSpeed: calm }),
         grid: gridFixture([{ hoursFromNow: tomorrowNoon(), inches: 12 }]),
     })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(rows(page).nth(1)).toHaveText(/^Tomorrow, .*\. POW DAY, 12″$/)
     // The morning after the storm, fresh snow under clear calm skies scores 100.
@@ -84,7 +84,7 @@ test("POW DAY and PRIMO days are marked", async ({ page }) => {
 
 test("a row opens that day with its detail and hours", async ({ page }) => {
     await mockApis(page, { location: here })
-    await page.goto("#/")
+    await page.goto("/")
     await days(page).nth(1).click()
 
     await expect(page).toHaveURL(new RegExp(`/day/${dateAt(1)}\\?from=home`))
@@ -104,7 +104,7 @@ test("a row opens that day with its detail and hours", async ({ page }) => {
 test("today's chart starts at the current hour", async ({ page }) => {
     const hours = hourly()
     await mockApis(page, { hourly: hours })
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(0)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(0)}`)
 
     const now = new Date(hours[0].startTime)
         .toLocaleTimeString("en-US", { hour: "numeric", timeZone: "America/Denver" })
@@ -116,7 +116,7 @@ test("today's chart starts at the current hour", async ({ page }) => {
 
 test("previous and next links move between days", async ({ page }) => {
     await mockApis(page)
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
     await expect(page.getByText("High 43°", { exact: true })).toBeVisible()
 
     await pager(page)
@@ -133,48 +133,48 @@ test("previous and next links move between days", async ({ page }) => {
 
 test("back returns to Home when opened from Home", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     // Any day goes back by its place's name.
     await days(page).nth(1).click()
     await expect(dayHeading(page, "Tomorrow")).toBeVisible()
     await page.getByRole("link", { name: "Place 39.7644", exact: true }).click()
-    await expect(page).toHaveURL(/#\/$/)
+    await expect(page).toHaveURL("/")
 
     // The first day also goes back by Now.
     await days(page).first().click()
     await expect(dayHeading(page, "Today")).toBeVisible()
     await pager(page).getByRole("link", { name: "Now 30°", exact: true }).click()
-    await expect(page).toHaveURL(/#\/$/)
+    await expect(page).toHaveURL("/")
 })
 
 test("back returns to the forecast page from a deep link", async ({ page }) => {
     await mockApis(page)
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
     await expect(dayHeading(page, "Tomorrow")).toBeVisible()
     await page.getByRole("link", { name: "Place 39.1", exact: true }).click()
-    await expect(page).toHaveURL(/#\/forecast\/39\.1000,-106\.1000$/)
+    await expect(page).toHaveURL(/\/forecast\/39\.1000,-106\.1000$/)
 
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(0)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(0)}`)
     await expect(dayHeading(page, "Today")).toBeVisible()
     await pager(page).getByRole("link", { name: "Now 30°", exact: true }).click()
-    await expect(page).toHaveURL(/#\/forecast\/39\.1000,-106\.1000$/)
+    await expect(page).toHaveURL(/\/forecast\/39\.1000,-106\.1000$/)
 })
 
 test("an unknown date offers a way back", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/forecast/39.1000,-106.1000/day/2020-01-01")
+    await page.goto("/forecast/39.1000,-106.1000/day/2020-01-01")
 
     const missing = page.getByRole("status").filter({ hasText: "There’s no forecast for this day." })
     await expect(missing).toBeVisible()
     await missing.getByRole("link", { name: "Back to the forecast" }).click()
-    await expect(page).toHaveURL(/#\/forecast\/39\.1000,-106\.1000$/)
+    await expect(page).toHaveURL(/\/forecast\/39\.1000,-106\.1000$/)
 })
 
 test("a deep link applies the saved theme", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("condiesTheme", '"dark"'))
     await mockApis(page)
-    await page.goto(`#/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
+    await page.goto(`/forecast/39.1000,-106.1000/day/${dateAt(1)}`)
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
 })
 
@@ -187,7 +187,7 @@ for (const width of [320, 390]) {
             windSpeed: { minValue: 19, maxValue: 56, unitCode: "wmoUnit:km_h-1" },
         }))
         await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: tomorrowNoon(), inches: 14 }]) })
-        await page.goto("#/")
+        await page.goto("/")
         await expect(days(page)).toHaveCount(7)
         await expect(page.getByRole("region", { name: "Daylight" })).toBeVisible()
 
@@ -238,7 +238,7 @@ test("an overnight period doesn't replace the day's own low", async ({ page }) =
     const daily = week().slice(2)
     daily.unshift(period("Overnight", dateAt(1), false, 11, { startTime: `${dateAt(1)}T01:00:00-07:00` }))
     await mockApis(page, { daily })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(rows(page).first()).toContainText("low 22°")
 })

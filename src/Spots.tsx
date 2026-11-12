@@ -13,7 +13,7 @@ export async function loadSpot({ lat, lon, name }: Spot) {
         return {
             lat,
             lon,
-            href: `#/forecast/${lat},${lon}`,
+            href: `/forecast/${lat},${lon}`,
             name,
             days: groupIntoDays(data.forecast?.properties.periods ?? [], {
                 grid: data.grid,
@@ -38,7 +38,7 @@ export default function Spots() {
         <Loading fallback={<SpotsPlaceholder count={saved.length} />}>
             <SpotsView
                 spots={saved.length ? spots() : []}
-                spotLink={(spot) => ({ href: `#/forecast/${spot.lat},${spot.lon}` })}
+                spotLink={(spot) => ({ href: `/forecast/${spot.lat},${spot.lon}` })}
             />
         </Loading>
     )

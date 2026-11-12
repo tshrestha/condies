@@ -21,7 +21,7 @@ test("place names in the popup are plain text", async ({ page }) => {
             }
         },
     })
-    await page.goto("#/map")
+    await page.goto("/map")
 
     const canvas = page.locator("#map .maplibregl-canvas")
     await expect(canvas).toBeVisible()
@@ -37,7 +37,7 @@ test("place names in the popup are plain text", async ({ page }) => {
 test("radar loads and can be turned off", async ({ page }) => {
     await mockApis(page)
     const radarTile = page.waitForRequest(/conus_bref_qcd/)
-    await page.goto("#/map")
+    await page.goto("/map")
 
     await expect(page.locator("#map .maplibregl-canvas")).toBeVisible()
     await radarTile
@@ -61,7 +61,7 @@ test("saved spots appear as pins that open their forecast", async ({ page }) => 
         ),
     )
     await mockApis(page, { grid: gridFixture([]) })
-    await page.goto("#/map")
+    await page.goto("/map")
 
     // The pin prints the spot's temperature and opens its row, which links to its forecast.
     const pin = page.getByRole("button", { name: /^Here, (high|low) \d+°$/ })
@@ -70,7 +70,7 @@ test("saved spots appear as pins that open their forecast", async ({ page }) => 
     const popup = page.locator(".maplibregl-popup-content")
     await expect(popup.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
     await popup.getByRole("link", { name: /^Here/ }).click()
-    await expect(page).toHaveURL(/#\/forecast\/39\.76,-105\.02$/)
+    await expect(page).toHaveURL(/\/forecast\/39\.76,-105\.02$/)
 })
 
 test("the base map follows the theme, and radar comes back after it changes", async ({ page }) => {
@@ -78,7 +78,7 @@ test("the base map follows the theme, and radar comes back after it changes", as
     await mockApis(page)
     const light = page.waitForRequest(/openfreemap\.org\/styles\/positron/)
     const firstRadar = page.waitForRequest(/conus_bref_qcd/)
-    await page.goto("#/map")
+    await page.goto("/map")
     await light
     await firstRadar
 

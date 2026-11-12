@@ -32,9 +32,9 @@ export default function Shell(props: ParentProps) {
             return theme()
         },
         onToggleTheme: toggleTheme,
-        home: { href: "#/" },
-        spots: { href: "#/spots" },
-        map: { href: "#/map" },
+        home: { href: "/" },
+        spots: { href: "/spots" },
+        map: { href: "/map" },
         onSearch: () => setSearching(true),
         get current() {
             const path = location.pathname

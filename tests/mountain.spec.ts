@@ -45,7 +45,7 @@ test.describe("avalanche danger", () => {
 
     test("shows the rating for the zone", async ({ page }) => {
         await mockApis(page, { avalanche: [zone({})] })
-        await page.goto("#/")
+        await page.goto("/")
 
         // Considerable or worse is a go or no-go fact, so it joins the alerts.
         const rating = page.getByRole("region", { name: "Alerts" }).getByRole("button")
@@ -60,7 +60,7 @@ test.describe("avalanche danger", () => {
 
     test("a low rating stays out of the alerts", async ({ page }) => {
         await mockApis(page, { avalanche: [zone({ danger_level: 2, travel_advice: "Heightened conditions." })] })
-        await page.goto("#/")
+        await page.goto("/")
 
         await page.getByRole("button", { name: "Moderate avalanche danger 2 of 5" }).click()
         await expect(avalancheDialog(page)).toContainText("Level 2 of 5.")
@@ -69,7 +69,7 @@ test.describe("avalanche danger", () => {
 
     test("calls out a warning", async ({ page }) => {
         await mockApis(page, { avalanche: [zone({ warning: { product: "warning" } })] })
-        await page.goto("#/")
+        await page.goto("/")
 
         await page.getByRole("button", { name: /avalanche danger/ }).click()
         await expect(avalancheDialog(page)).toContainText("Avalanche warning in effect.")
@@ -77,7 +77,7 @@ test.describe("avalanche danger", () => {
 
     test("never treats a missing rating as safe", async ({ page }) => {
         await mockApis(page, { avalanche: [zone({ danger_level: -1, end_date: null })] })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(noRating(page)).toContainText("No current avalanche rating")
         await expect(noRating(page)).toContainText(/That doesn.t mean it.s safe/)
@@ -88,7 +88,7 @@ test.describe("avalanche danger", () => {
     test("doesn't show a rating that has run out", async ({ page }) => {
         const end_date = new Date(Date.now() - 3_600_000).toISOString().slice(0, 19)
         await mockApis(page, { avalanche: [zone({ end_date })] })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(noRating(page)).toContainText("No current avalanche rating")
         await expect(page.getByText(/Considerable/)).toHaveCount(0)
@@ -97,7 +97,7 @@ test.describe("avalanche danger", () => {
     test("stays out of the way out of season", async ({ page }) => {
         await mockApis(page, { avalanche: [zone({ off_season: true })] })
         const answered = page.waitForResponse((r) => r.url().includes("api.avalanche.org"))
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(days(page)).toHaveCount(7)
         await answered
@@ -108,7 +108,7 @@ test.describe("avalanche danger", () => {
     test("the forecast still loads when the avalanche service is down", async ({ page }) => {
         await mockApis(page)
         const failed = page.waitForEvent("requestfailed", (r) => r.url().includes("api.avalanche.org"))
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(days(page)).toHaveCount(7)
         await failed
@@ -119,7 +119,7 @@ test.describe("avalanche danger", () => {
 
 test.describe("measured snow", () => {
     // Berthoud Summit, a real SNOTEL station from the bundled list.
-    const nearStation = "#/forecast/39.8,-105.78"
+    const nearStation = "/forecast/39.8,-105.78"
     const triplet = "335:CO:SNTL"
 
     test("shows depth and new snow from the closest station", async ({ page }) => {
@@ -200,7 +200,7 @@ test.describe("measured snow", () => {
 
     test("looks up nothing far from any station", async ({ page }) => {
         const requests = await mockApis(page, { snowDepth: [] })
-        await page.goto("#/forecast/30.3,-97.7")
+        await page.goto("/forecast/30.3,-97.7")
 
         await expect(days(page)).toHaveCount(7)
         expect(requests.some((u) => u.includes("egov.usda.gov"))).toBe(false)
@@ -219,7 +219,7 @@ test.describe("right now", () => {
                 windGust: gust,
             }),
         })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(now(page).getByText("Feels like 23° · Wind 10 mph NW", { exact: true })).toBeVisible()
         await expect(now(page)).not.toContainText(/gust/i)
@@ -235,7 +235,7 @@ test.describe("right now", () => {
         const grid = gridFixture([])
         grid.apparentTemperature = { values: [{ validTime: grid.windChill.values[0].validTime, value: -1 }] }
         await mockApis(page, { grid, hourly: hourly(80, { temperature: 30 }) })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(now(page).getByText("Wind 10 mph NW", { exact: true })).toBeVisible()
         await expect(now(page)).not.toContainText("Feels like")
@@ -243,7 +243,7 @@ test.describe("right now", () => {
 
     test("says calm when there's no wind", async ({ page }) => {
         await mockApis(page, { hourly: hourly(80, { windSpeed: { value: 0, unitCode: "wmoUnit:km_h-1" } }) })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(now(page).getByText("Calm", { exact: true })).toBeVisible()
     })
@@ -252,14 +252,14 @@ test.describe("right now", () => {
 test.describe("week outlook", () => {
     test("names the next storm", async ({ page }) => {
         await mockApis(page, { grid: gridFixture([{ hoursFromNow: 26, inches: 6 }]) })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(nextHours(page).getByText(/^Snow .*6\.0″$/)).toBeVisible()
     })
 
     test("doesn't mention a storm when none is coming", async ({ page }) => {
         await mockApis(page, { grid: gridFixture([]) })
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(days(page)).toHaveCount(7)
         await expect(nextHours(page)).toBeVisible()
@@ -268,7 +268,7 @@ test.describe("week outlook", () => {
 
     test("points at the best day and opens it", async ({ page }) => {
         await mockApis(page, { grid: gridFixture([]) })
-        await page.goto("#/")
+        await page.goto("/")
 
         const best = page.getByRole("region", { name: "Best day" })
         await expect(best.getByRole("button", { name: /^Condies score \d+\/100 \w+$/ })).toBeVisible()
@@ -278,7 +278,7 @@ test.describe("week outlook", () => {
 
     test("doesn't pick a best day without scores", async ({ page }) => {
         await mockApis(page)
-        await page.goto("#/")
+        await page.goto("/")
 
         await expect(days(page)).toHaveCount(7)
         await expect(page.getByText("No standout day this week")).toBeVisible()
@@ -288,7 +288,7 @@ test.describe("week outlook", () => {
 
 test("charts describe themselves to screen readers", async ({ page }) => {
     await mockApis(page)
-    await page.goto(`#/forecast/39.7644,-105.0196/day/${dateAt(0)}`)
+    await page.goto(`/forecast/39.7644,-105.0196/day/${dateAt(0)}`)
 
     // Today's chart is titled by whether its hours run on into tomorrow, which depends on the time of day.
     const hours = page.getByRole("region", { name: /^(Next 12 hours|Hour by hour)$/ })
@@ -301,10 +301,10 @@ test("charts describe themselves to screen readers", async ({ page }) => {
 
 test("icon-only links have names", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
     await expect(page.getByRole("link", { name: "Map" })).toBeVisible()
 
-    await page.goto("#/spots")
+    await page.goto("/spots")
     await expect(page.getByRole("link", { name: "Now" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Dark mode" })).toBeVisible()
 })

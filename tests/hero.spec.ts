@@ -3,7 +3,7 @@ import { expect, type Page, test } from "@playwright/test"
 import { dateAt, gridFixture, hourly, mockApis } from "./fixtures.ts"
 
 // Hourly charts live on the Day screen. Today's is the one Home's next 12 hours open.
-const today = () => `#/forecast/39.7644,-105.0196/day/${dateAt(0)}`
+const today = () => `/forecast/39.7644,-105.0196/day/${dateAt(0)}`
 // Today's chart is titled by whether its hours run on into tomorrow, which depends on the time of day.
 const chart = (page: Page) => page.getByRole("img", { name: /^(Next 12 hours|Hour by hour)\. / })
 const views = (page: Page) => page.getByRole("group", { name: "Hourly view" })
@@ -15,7 +15,7 @@ test("Now shows the temperature, the conditions, the feels-like and the wind", a
         grid: gridFixture([]),
         hourly: hourly(80, { temperature: 30, windSpeed: { value: 16, unitCode: "wmoUnit:km_h-1" } }),
     })
-    await page.goto("#/")
+    await page.goto("/")
 
     const now = page.getByRole("region", { name: "Right now" })
     await expect(now.getByText("30°", { exact: true })).toBeVisible()

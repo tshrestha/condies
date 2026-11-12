@@ -5,7 +5,7 @@ import "./home/home.css"
 import "./day/day.css"
 import "./spots/spots.css"
 
-import { createRouter, hashHistory } from "@solidjs/router"
+import { createRouter } from "@solidjs/router"
 import { Errored, lazy, Loading } from "solid-js"
 
 import { ErrorState, LoadingState } from "./design/states.tsx"
@@ -26,7 +26,6 @@ const Router = createRouter({
         { path: "/forecast/:point/day/:date", component: ForecastDayRoute },
         { path: "/spots", component: Spots },
     ],
-    history: hashHistory(),
 })
 
 // Start mode renders this into the document's body.
@@ -37,7 +36,7 @@ function App() {
                 {(props) => (
                     <Shell>
                         {/* Without a boundary, one uncaught error stops all reactivity for the rest of the session. */}
-                        <Errored fallback={<ErrorState home={{ href: "#/" }} onRetry={() => location.reload()} />}>
+                        <Errored fallback={<ErrorState home={{ href: "/" }} onRetry={() => location.reload()} />}>
                             <Loading fallback={<LoadingState theme={theme()} />}>{props.children}</Loading>
                         </Errored>
                     </Shell>

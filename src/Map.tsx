@@ -157,7 +157,7 @@ export default function Map() {
                 return
             }
             const { lat, lng } = e.lngLat
-            const href = `#/forecast/${lat.toFixed(4)},${lng.toFixed(4)}`
+            const href = `/forecast/${lat.toFixed(4)},${lng.toFixed(4)}`
             reverse(lat.toFixed(6), lng.toFixed(6))
                 .catch(() => undefined)
                 .then((result) => {

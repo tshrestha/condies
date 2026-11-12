@@ -1,6 +1,15 @@
 import { expect, type Page, test } from "@playwright/test"
 
-import { dateAt, hourly, mockApis, pointRequests, searchQuery, searchReply, stormAlerts } from "./fixtures.ts"
+import {
+    changeURL,
+    dateAt,
+    hourly,
+    mockApis,
+    pointRequests,
+    searchQuery,
+    searchReply,
+    stormAlerts,
+} from "./fixtures.ts"
 
 const heading = (page: Page) => page.getByRole("heading", { level: 1, name: /^Right meow in / })
 const place = (city: string) => `Right meow in ${city}, CO`
@@ -8,7 +17,7 @@ const nextHours = (page: Page) => page.getByRole("region", { name: "Next 12 hour
 const days = (page: Page) => page.getByRole("region", { name: "This week" }).getByRole("link")
 const here = { latitude: 40.1234, longitude: -105.5678 }
 // Hourly charts live on the Day screen. Today's is the one Home's next 12 hours open.
-const today = () => `#/forecast/39.7644,-105.0196/day/${dateAt(0)}`
+const today = () => `/forecast/39.7644,-105.0196/day/${dateAt(0)}`
 // Today's chart is titled by whether its hours run on into tomorrow, which depends on the time of day.
 const chart = (page: Page) => page.getByRole("img", { name: /^(Next 12 hours|Hour by hour)\. / })
 const views = (page: Page) => page.getByRole("group", { name: "Hourly view" })
@@ -21,7 +30,7 @@ async function openSearch(page: Page) {
 
 test("shows the forecast for the user's location", async ({ page }) => {
     await mockApis(page, { location: here })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(heading(page)).toHaveText(place("Place 40.1234"))
     await expect(nextHours(page).getByRole("link", { name: /^Now \d+°, .*\. Open hour by hour\.$/ })).toBeVisible()
@@ -39,7 +48,7 @@ test("shows placeholders and search while the forecast loads", async ({ page }) 
             }
         },
     })
-    await page.goto("#/")
+    await page.goto("/")
 
     const waiting = page.getByRole("status").filter({ hasText: "Getting the forecast." })
     await expect(page.getByRole("button", { name: "Search" })).toBeVisible()
@@ -52,7 +61,7 @@ test("shows placeholders and search while the forecast loads", async ({ page }) 
 
 test("uses Denver when location is denied", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
     await expect(heading(page)).toHaveText(place("Place 39.7644"))
 })
 
@@ -61,7 +70,7 @@ test("doesn't fetch Denver for a returning visitor who hasn't moved", async ({ p
         localStorage.setItem("condiesLastLocation", JSON.stringify({ lat: "40.1234", lon: "-105.5678" })),
     )
     const requests = await mockApis(page, { location: here })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(heading(page)).toHaveText(place("Place 40.1234"))
     expect(pointRequests(requests)).toEqual(["40.1234,-105.5678"])
@@ -77,7 +86,7 @@ test("says so and shows Denver when the real location has no forecast", async ({
             }
         },
     })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(
         page.getByRole("status").filter({ hasText: /Couldn.t load the forecast for your location/ }),
@@ -94,7 +103,7 @@ test("a sunrise outage only hides that section", async ({ page }) => {
             }
         },
     })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(nextHours(page)).toBeVisible()
     await expect(days(page)).toHaveCount(7)
@@ -113,7 +122,7 @@ test("a failed daily forecast keeps the next 12 hours", async ({ page }) => {
             }
         },
     })
-    await page.goto("#/")
+    await page.goto("/")
 
     await expect(heading(page)).toBeVisible()
     await expect(nextHours(page)).toBeVisible()
@@ -129,7 +138,7 @@ test("an uncovered location shows an error with a way home", async ({ page }) =>
             }
         },
     })
-    await page.goto("#/forecast/48.8500,2.3500")
+    await page.goto("/forecast/48.8500,2.3500")
 
     await expect(page.getByRole("alert")).toContainText(/Couldn.t load this page/)
     await page.getByRole("link", { name: "Go home" }).click()
@@ -138,7 +147,7 @@ test("an uncovered location shows an error with a way home", async ({ page }) =>
 
 test("each alert opens its own details and closes cleanly", async ({ page }) => {
     await mockApis(page, { alerts: [...stormAlerts].reverse() })
-    await page.goto("#/")
+    await page.goto("/")
 
     const alerts = page.getByRole("region", { name: "Alerts" }).getByRole("button")
     // Most severe first, each saying how serious it is.
@@ -163,11 +172,11 @@ test("each alert opens its own details and closes cleanly", async ({ page }) => 
 
 test("leaving a page with an alert open doesn't lock scrolling", async ({ page }) => {
     await mockApis(page, { alerts: stormAlerts })
-    await page.goto("#/")
+    await page.goto("/")
 
     await page.getByRole("button", { name: /^Winter Storm Warning/ }).click()
     await expect(page.getByRole("dialog", { name: "Winter Storm Warning" })).toBeVisible()
-    await page.evaluate(() => (location.hash = "#/forecast/38.5000,-105.5000"))
+    await changeURL(page, "/forecast/38.5000,-105.5000")
 
     await expect(heading(page)).toHaveText(place("Place 38.5"))
     await expect(page.getByRole("dialog")).toHaveCount(0)
@@ -225,7 +234,7 @@ test("chart fill starts at the left edge", async ({ page }) => {
 
 test("the theme toggles and is remembered", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     await page.getByRole("button", { name: "Dark mode" }).click()
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark")
@@ -236,7 +245,7 @@ test("the theme toggles and is remembered", async ({ page }) => {
 
 test("search works from the keyboard", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
     const input = await openSearch(page)
 
     await input.fill("boul")
@@ -247,13 +256,13 @@ test("search works from the keyboard", async ({ page }) => {
     await expect(page.getByRole("option", { selected: true })).toHaveText("boul two")
     await input.press("ArrowDown")
     await input.press("Enter")
-    await expect(page).toHaveURL(/#\/forecast\/40\.015,-105\.27/)
+    await expect(page).toHaveURL(/\/forecast\/40\.015,-105\.27/)
     await expect(heading(page)).toHaveText(place("Place 40.015"))
 })
 
 test("search text reaches the server as typed", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     const searched = page.waitForRequest((r) => searchQuery(r) === "Texas A&M #5")
     await (await openSearch(page)).fill("Texas A&M #5")
@@ -280,7 +289,7 @@ test("a slow older search can't replace newer results", async ({ page }) => {
             }
         },
     })
-    await page.goto("#/")
+    await page.goto("/")
     const input = await openSearch(page)
 
     await input.fill("denv")
@@ -294,7 +303,7 @@ test("a slow older search can't replace newer results", async ({ page }) => {
 test("a poisoned search cache entry is ignored", async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem("boul", "undefined"))
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
 
     await (await openSearch(page)).fill("boul")
     await expect(page.getByRole("option")).toHaveCount(2)
@@ -309,16 +318,16 @@ test("the app works with storage blocked", async ({ page }) => {
         }),
     )
     await mockApis(page)
-    await page.goto("#/")
+    await page.goto("/")
     await expect(heading(page)).toHaveText(place("Place 39.7644"))
     await expect(days(page)).toHaveCount(7)
 })
 
 test("changing the coordinates in the URL loads the new place", async ({ page }) => {
     await mockApis(page)
-    await page.goto("#/forecast/39.1000,-106.1000")
+    await page.goto("/forecast/39.1000,-106.1000")
     await expect(heading(page)).toHaveText(place("Place 39.1"))
 
-    await page.evaluate(() => (location.hash = "#/forecast/38.5000,-105.5000"))
+    await changeURL(page, "/forecast/38.5000,-105.5000")
     await expect(heading(page)).toHaveText(place("Place 38.5"))
 })
