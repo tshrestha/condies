@@ -1,11 +1,15 @@
-# Netlify serves the prerendered app from dist/client. @netlify/vite-plugin (vite.config.ts) deploys the server build
-# as a Netlify Function on /*, behind the static files. It answers the app's server functions, and any page path, like
-# /forecast/40,-105, with the same app shell. Netlify runs functions before redirects, so a rewrite to index.html here
-# would never apply. Search needs these in the site's environment variables, scoped to Functions: mapbox_access_token,
-# and db_address (host:port), db_username and db_password for the Redis that caches results and counts requests.
+# Netlify serves the prerendered app from dist/client. netlify/functions/server.mjs answers the app's server functions
+# on /_server. Search needs these in the site's environment variables, scoped to Functions: mapbox_access_token, and
+# db_address (host:port), db_username and db_password for the Redis that caches results and counts requests.
 [build]
 command = "npm run build"
 publish = "dist/client"
 
 [build.environment]
 NODE_VERSION = "24"
+
+# The app routes its own paths, like /forecast/40,-105, so any path that isn't a file gets the app.
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200
