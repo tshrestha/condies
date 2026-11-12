@@ -1,8 +1,10 @@
-# Netlify builds the app and serves it from the site root. Routes are in the URL's hash, so no redirects are
-# needed. Search needs VITE_GEOCODE_URL and VITE_NAWA_TOKEN set in the site's environment variables.
+# Netlify serves the prerendered app from dist/client. Routes are in the URL's hash, so no redirects are needed.
+# @netlify/vite-plugin (vite.config.ts) deploys the server build as a Netlify Function that answers the app's server
+# functions. Search needs these in the site's environment variables, scoped to Functions: mapbox_access_token, and
+# db_address (host:port), db_username and db_password for the Redis that caches results and counts requests.
 [build]
 command = "npm run build"
-publish = "dist"
+publish = "dist/client"
 
 [build.environment]
 NODE_VERSION = "24"

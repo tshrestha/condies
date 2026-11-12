@@ -1,6 +1,6 @@
 import { expect, type Page, test } from "@playwright/test"
 
-import { dateAt, hourly, mockApis, pointRequests, stormAlerts } from "./fixtures.ts"
+import { dateAt, hourly, mockApis, pointRequests, searchQuery, searchReply, stormAlerts } from "./fixtures.ts"
 
 const heading = (page: Page) => page.getByRole("heading", { level: 1, name: /^Right meow in / })
 const place = (city: string) => `Right meow in ${city}, CO`
@@ -251,35 +251,31 @@ test("search works from the keyboard", async ({ page }) => {
     await expect(heading(page)).toHaveText(place("Place 40.015"))
 })
 
-test("search text is URL-encoded", async ({ page }) => {
-    const requests = await mockApis(page)
+test("search text reaches the server as typed", async ({ page }) => {
+    await mockApis(page)
     await page.goto("#/")
 
+    const searched = page.waitForRequest((r) => searchQuery(r) === "Texas A&M #5")
     await (await openSearch(page)).fill("Texas A&M #5")
-    await expect(page.getByRole("option").first()).toBeVisible()
-    expect(new URL(requests.find((u) => u.includes("forward"))!).searchParams.get("q")).toBe("Texas A&M #5")
+    await searched
+    await expect(page.getByRole("option").first()).toHaveText("Texas A&M #5 one")
 })
 
 test("a slow older search can't replace newer results", async ({ page }) => {
     let answered = false
     await mockApis(page, {
-        override: async (url, route) => {
-            if (url.searchParams.get("q") === "denv") {
+        override: async (_, route) => {
+            if (searchQuery(route.request()) === "denv") {
                 await new Promise((resolve) => setTimeout(resolve, 900))
                 answered = true
-                await route.fulfill({
-                    status: 200,
-                    contentType: "application/json",
-                    headers: { "access-control-allow-origin": "*" },
-                    body: JSON.stringify({
-                        features: [
-                            {
-                                id: "x",
-                                properties: { full_address: "STALE", coordinates: { latitude: 1, longitude: 1 } },
-                            },
-                        ],
-                    }),
-                })
+                await route.fulfill(
+                    searchReply([
+                        {
+                            id: "x",
+                            properties: { full_address: "STALE", coordinates: { latitude: 1, longitude: 1 } },
+                        },
+                    ]),
+                )
                 return true
             }
         },
@@ -288,7 +284,7 @@ test("a slow older search can't replace newer results", async ({ page }) => {
     const input = await openSearch(page)
 
     await input.fill("denv")
-    await page.waitForRequest((r) => r.url().includes("q=denv"))
+    await page.waitForRequest((r) => searchQuery(r) === "denv")
     await input.fill("denver")
     await expect(page.getByRole("option")).toHaveText(["denver one", "denver two"])
     await expect.poll(() => answered).toBe(true)

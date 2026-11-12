@@ -1,3 +1,10 @@
+import "@fontsource-variable/chivo/wght.css"
+import "./design/tokens.css"
+import "./design/components.css"
+import "./home/home.css"
+import "./day/day.css"
+import "./spots/spots.css"
+
 import { createRouter, hashHistory } from "@solidjs/router"
 import { Errored, lazy, Loading } from "solid-js"
 
@@ -22,18 +29,21 @@ const Router = createRouter({
     history: hashHistory(),
 })
 
+// Start mode renders this into the document's body.
 function App() {
     return (
-        <Router>
-            {(props) => (
-                <Shell>
-                    {/* Without a boundary, one uncaught error stops all reactivity for the rest of the session. */}
-                    <Errored fallback={<ErrorState home={{ href: "#/" }} onRetry={() => location.reload()} />}>
-                        <Loading fallback={<LoadingState theme={theme()} />}>{props.children}</Loading>
-                    </Errored>
-                </Shell>
-            )}
-        </Router>
+        <main>
+            <Router>
+                {(props) => (
+                    <Shell>
+                        {/* Without a boundary, one uncaught error stops all reactivity for the rest of the session. */}
+                        <Errored fallback={<ErrorState home={{ href: "#/" }} onRetry={() => location.reload()} />}>
+                            <Loading fallback={<LoadingState theme={theme()} />}>{props.children}</Loading>
+                        </Errored>
+                    </Shell>
+                )}
+            </Router>
+        </main>
     )
 }
 

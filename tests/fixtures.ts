@@ -1,6 +1,18 @@
-import type { Page, Route } from "@playwright/test"
+import type { Page, Request as PageRequest, Route } from "@playwright/test"
 
 const OFFSET = 7 * 3_600_000
+
+// Search calls the forwardGeocode server function, a POST to /_server/…. A call with one string argument sends the
+// string as its body, and the app reads a reply marked with format 8 as JSON. Returns null for any other request.
+export const searchQuery = (request: PageRequest) =>
+    request.method() === "POST" && new URL(request.url()).pathname.startsWith("/_server/") ? request.postData() : null
+
+export const searchReply = (features: object[]) => ({
+    status: 200,
+    contentType: "application/json",
+    headers: { "x-server-function-format": "8" },
+    body: JSON.stringify({ features }),
+})
 
 export const dateAt = (days: number) => new Date(Date.now() - OFFSET + days * 86_400_000).toISOString().slice(0, 10)
 export const timeAt = (hours: number) =>
@@ -139,10 +151,10 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
             return
         }
 
-        if (url.pathname.includes("/geocoding/forward")) {
-            const q = url.searchParams.get("q")
-            return json({
-                features: [
+        const q = searchQuery(request)
+        if (q !== null) {
+            return route.fulfill(
+                searchReply([
                     {
                         id: "a",
                         properties: { full_address: `${q} one`, coordinates: { latitude: 40.015, longitude: -105.27 } },
@@ -151,8 +163,8 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
                         id: "b",
                         properties: { full_address: `${q} two`, coordinates: { latitude: 35.97, longitude: -114.83 } },
                     },
-                ],
-            })
+                ]),
+            )
         }
         if (url.hostname === "localhost") {
             return route.continue()

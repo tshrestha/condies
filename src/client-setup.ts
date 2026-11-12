@@ -1,15 +1,4 @@
-import "@fontsource-variable/chivo/wght.css"
-import "./design/tokens.css"
-import "./design/components.css"
-import "./home/home.css"
-import "./day/day.css"
-import "./spots/spots.css"
-
-import { render } from "@solidjs/web"
-
-import App from "./App.tsx"
-
-render(() => <App />, document.getElementById("root")!)
+// Runs in the browser before the app renders. Start mode's generated entry loads it.
 
 if (import.meta.env.PROD && "serviceWorker" in navigator) {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(console.error)

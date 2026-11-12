@@ -18,9 +18,11 @@
         "@solidjs/router": "2.0.0-next.44",
         "@solidjs/web": "2.0.0-rc.21",
         "maplibre-gl": "^5.17.0",
+        "redis": "^6.3.1",
         "solid-js": "2.0.0-rc.21"
     },
     "devDependencies": {
+        "@netlify/vite-plugin": "^3.0.1",
         "@playwright/test": "^1.65.0",
         "@solidjs/vite-plugin": "3.0.0-next.57",
         "@types/geojson": "^7946.0.16",

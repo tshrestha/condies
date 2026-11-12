@@ -1,8 +1,9 @@
 import type { FeatureCollection } from "geojson"
+
+import { forwardGeocode } from "../server/geocoding.ts"
 import { getItem, setItem } from "./cache.ts"
 
 const baseURL = "https://nominatim.openstreetmap.org"
-const geocodeURL = `${import.meta.env.VITE_GEOCODE_URL}/.netlify/functions/geocoding/forward`
 
 export type GeocodingResult = Record<
     string,
@@ -10,17 +11,12 @@ export type GeocodingResult = Record<
 >
 
 export async function geocodeSearch(query: string): Promise<Partial<FeatureCollection>> {
-    const response = await fetch(`${geocodeURL}?q=${encodeURIComponent(query)}`, {
-        method: "GET",
-        headers: {
-            "X-Nawa-Token": import.meta.env.VITE_NAWA_TOKEN,
-        },
-    })
-    if (!response.ok) {
-        console.error("geocode search failed")
+    try {
+        return await forwardGeocode(query)
+    } catch (error) {
+        console.error("geocode search failed", error)
         return {}
     }
-    return await response.json()
 }
 
 export async function reverse(lat: string, lon: string): Promise<GeocodingResult> {
