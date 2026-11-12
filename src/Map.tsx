@@ -3,7 +3,8 @@ import "./map/map.css"
 
 import { query } from "@solidjs/router"
 import { render } from "@solidjs/web"
-import maplibregl from "maplibre-gl"
+import * as maplibregl from "maplibre-gl"
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
 import { createEffect, createMemo, createSignal } from "solid-js"
 
 import { RadarIcon } from "./design/icons.tsx"
@@ -17,6 +18,9 @@ import { getLocation } from "./lib/util.ts"
 import { SpotRow } from "./spots/sections.tsx"
 import { loadSpot } from "./Spots.tsx"
 import { theme } from "./theme.ts"
+
+// MapLibre can't find its worker inside a bundle, so Vite builds it and passes on where it ended up.
+maplibregl.setWorkerUrl(workerUrl)
 
 const radarLayer = "radar"
 // NOAA's current radar mosaic. It covers the contiguous US, like the rest of the app's NWS data.
