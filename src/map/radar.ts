@@ -7,11 +7,45 @@ const layer = "https://opengeo.ncep.noaa.gov/geoserver/conus/conus_bref_qcd/ows?
 // The layer's own capabilities: about 8 KB, listing every scan of the last two hours.
 export const scanListURL = `${layer}&REQUEST=GetCapabilities`
 
-// One scan's tiles. Without a time, NOAA sends its latest. A past scan never changes, so NOAA lets it be cached for
-// hours and every viewer shares the same URLs.
+// NOAA paints each of its 1 km cells one flat color, so scaled up, rain looks like blocks. The map asks for tiles
+// through its own protocol instead, and smooths each one before drawing it (radarTiles.ts): NOAA's image with a
+// border taken from the neighboring area, so the smoothing meets the next tile's colors at the seam, not nothing.
+export const radarProtocol = "condies-radar"
+export const tilePixels = 256
+export const tileBorder = 4
+export const tileScale = 2
+
+// One scan's tiles, for MapLibre to fill in. Without a time, NOAA's latest.
 export const radarTiles = (time?: string) =>
-    `${layer}&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&LAYERS=conus_bref_qcd&CRS=EPSG:3857`
-    + `&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}${time ? `&TIME=${time}` : ""}`
+    `${radarProtocol}://tile?bbox={bbox-epsg-3857}${time ? `&time=${encodeURIComponent(time)}` : ""}`
+
+// What NOAA is asked for, for one tile: the tile's box widened by the border, at the same scale.
+export function noaaTileURL(tileURL: string, border = tileBorder) {
+    const url = new URL(tileURL)
+    const [minX, minY, maxX, maxY] = url.searchParams.get("bbox")!.split(",").map(Number)
+    const pad = ((maxX - minX) / tilePixels) * border
+    const size = tilePixels + 2 * border
+    const time = url.searchParams.get("time")
+    return (
+        `${layer}&REQUEST=GetMap&FORMAT=image/png&TRANSPARENT=true&LAYERS=conus_bref_qcd&CRS=EPSG:3857`
+        + `&WIDTH=${size}&HEIGHT=${size}&BBOX=${[minX - pad, minY - pad, maxX + pad, maxY + pad].join(",")}`
+        + (time ? `&TIME=${time}` : "")
+    )
+}
+
+// Rain at 85%, in NOAA's own colors, with roads faintly under it.
+export const radarOpacity = 0.85
+
+// A frame's paint. Frames cut: MapLibre would otherwise ease every opacity change over 300 ms, so at about 7
+// frames a second three or four frames would be fading over each other at once, and the radar would flicker.
+// Tiles don't fade in either.
+export const framePaint = (shown: boolean) =>
+    ({
+        "raster-opacity": shown ? radarOpacity : 0,
+        "raster-opacity-transition": { duration: 0, delay: 0 },
+        "raster-fade-duration": 0,
+        "raster-resampling": "linear",
+    }) as const
 
 export interface Scan {
     // As NOAA wrote it, so tile URLs match what every other viewer requests.

@@ -165,6 +165,28 @@ test("play loads the last hour, then loops through every frame of it", async ({ 
     expect(radarTimes(requests).every((t) => lastHour(times).includes(t))).toBe(true)
 })
 
+test("the loop plays over dry ground, where NOAA's tiles are clear", async ({ page }) => {
+    await openMap(page, { scans: twoHours, radar: "clear" })
+    await watchTape(page)
+    await page.getByRole("button", { name: "Play" }).click()
+    await expect.poll(() => seenOnTape(page), { timeout: 15_000 }).toBe(31)
+    await expect(page.locator('.sq-tape-segment[data-state="failed"]')).toHaveCount(0)
+})
+
+test("zooming out while playing loads the new view, then the loop picks up again", async ({ page }) => {
+    await openMap(page, { scans: twoHours, radar: "clear" })
+    const tape = page.getByRole("slider", { name: "Radar time" })
+    await page.getByRole("button", { name: "Play" }).click()
+    await expect.poll(async () => tape.getAttribute("aria-valuenow"), { timeout: 10_000 }).not.toBe("30")
+    for (let i = 0; i < 4; i++) {
+        await page.getByRole("button", { name: "Zoom out" }).click()
+        await page.waitForTimeout(400)
+    }
+    await watchTape(page)
+    await expect.poll(() => seenOnTape(page), { timeout: 20_000 }).toBeGreaterThan(20)
+    await expect(page.getByRole("button", { name: "Pause" })).toBeVisible()
+})
+
 test("panning holds the latest scan, then the loop picks up again", async ({ page }) => {
     await openMap(page, { scans: twoHours })
     const tape = page.getByRole("slider", { name: "Radar time" })

@@ -125,6 +125,8 @@ interface MockOptions {
     override?: (url: URL, route: Route) => boolean | void | Promise<boolean | void>
     // NOAA's radar scans, read each time the map asks for them. Two hours, 2 minutes apart, by default.
     scans?: "fail" | (() => string[])
+    // Radar tiles: a pixel of rain, by default, or clear, as over dry ground.
+    radar?: "rain" | "clear"
 }
 
 // Radar scan times, oldest first, 2 minutes apart, the latest `minutesAgo` before now, as NOAA writes them.
@@ -260,7 +262,9 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
                 contentType: "image/png",
                 headers: cors,
                 body: Buffer.from(
-                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+                    options.radar === "clear"
+                        ? "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII="
+                        : "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
                     "base64",
                 ),
             })

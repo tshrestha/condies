@@ -1,17 +1,27 @@
 import type * as maplibregl from "maplibre-gl"
 
-import { frameAt, loopWindow, parseScanTimes, radarTiles, type Scan, scanListURL } from "./radar.ts"
+import {
+    frameAt,
+    framePaint,
+    loopWindow,
+    parseScanTimes,
+    radarOpacity,
+    radarTiles,
+    type Scan,
+    scanListURL,
+} from "./radar.ts"
+import { registerRadarTiles } from "./radarTiles.ts"
 
 // The radar on the map: NOAA's latest scan, kept live, and the last hour as a loop.
 //
 // Each frame is its own raster source and layer. A layer at opacity 0 still loads its tiles but isn't drawn, so
-// every frame is ready and changing frames is a cut with nothing to reload. Frames are fetched only up to zoom 8,
-// NOAA's own resolution of about 1 km; past that, MapLibre scales them up rather than asking for more.
+// every frame is ready and changing frames is a cut with nothing to reload. Frames are fetched only up to zoom 7,
+// about NOAA's own resolution of 1 km, so each tile pixel is one of NOAA's cells; past that, MapLibre scales them
+// up smoothly rather than asking for more.
 //
 // This runs on plain state rather than signals, since playback ticks every animation frame. It reports to the
 // page through onState.
 
-const opacity = 0.65
 const prefix = "radar-"
 // The key of NOAA's latest scan when its list of scans can't be read, and so has no time.
 const untimed = ""
@@ -68,6 +78,7 @@ export class RadarFrames {
     constructor(map: maplibregl.Map, onState: (state: RadarState) => void) {
         this.#map = map
         this.#onState = onState
+        registerRadarTiles()
         map.on("style.load", this.#rebuild)
         map.on("sourcedata", this.#onSourceData)
         map.on("idle", this.#sync)
@@ -267,7 +278,7 @@ export class RadarFrames {
             map.setPaintProperty(idOf(this.#shown), "raster-opacity", 0)
         }
         if (map.getLayer(idOf(key))) {
-            map.setPaintProperty(idOf(key), "raster-opacity", opacity)
+            map.setPaintProperty(idOf(key), "raster-opacity", radarOpacity)
         }
         this.#shown = key
     }
@@ -307,7 +318,7 @@ export class RadarFrames {
             type: "raster",
             tiles: [radarTiles(key || undefined)],
             tileSize: 256,
-            maxzoom: 8,
+            maxzoom: 7,
             // The contiguous US, which is all the mosaic covers.
             bounds: [-130, 20, -60, 55],
             attribution: "Radar: NOAA",
@@ -318,19 +329,21 @@ export class RadarFrames {
                 type: "raster",
                 source: id,
                 layout: { visibility: this.#on ? "visible" : "none" },
-                paint: {
-                    "raster-opacity": key === this.#shown ? opacity : 0,
-                    "raster-fade-duration": 0,
-                    "raster-resampling": "linear",
-                },
+                paint: framePaint(key === this.#shown),
             },
             this.#beforeId,
         )
     }
 
-    // Radar goes under the base map's place names.
+    // Radar goes under the labels the base map draws last, over everything else: its place names. Some styles
+    // put a water name or two among the roads, so it's the last run of labels, not the first label.
     #firstLabel() {
-        return this.#map.getStyle().layers.find((layer) => layer.type === "symbol")?.id
+        const layers = this.#map.getStyle().layers
+        let first: string | undefined
+        for (let i = layers.length - 1; i >= 0 && layers[i].type === "symbol"; i--) {
+            first = layers[i].id
+        }
+        return first
     }
 
     // A new base map drops every layer that isn't in it, so the frames go back on, as they were.
@@ -368,8 +381,10 @@ export class RadarFrames {
         this.#moving = true
     }
 
+    // A frame that failed in the last view may load in this one, so each view starts with none failed.
     #onMoveEnd = () => {
         this.#moving = false
+        this.#failed.clear()
         this.#sync()
     }
 

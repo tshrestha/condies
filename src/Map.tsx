@@ -27,6 +27,18 @@ maplibregl.setWorkerUrl(workerUrl)
 // A quiet base map, so the only color on it is data.
 const baseStyle = (t: Theme) => `https://tiles.openfreemap.org/styles/${t === "dark" ? "dark" : "positron"}`
 
+// The dark style's place names are a dim gray, which disappears over radar. They're lifted to a light gray on a
+// firmer halo. The light style's are black on white already.
+function liftDarkLabels(map: maplibregl.Map) {
+    for (const layer of map.getStyle().layers) {
+        if (layer.type === "symbol" && layer.id.startsWith("place_")) {
+            map.setPaintProperty(layer.id, "text-color", "#c8c8c8")
+            map.setPaintProperty(layer.id, "text-halo-color", "rgba(0, 0, 0, 0.85)")
+            map.setPaintProperty(layer.id, "text-halo-width", 1.5)
+        }
+    }
+}
+
 type LoadedSpot = NonNullable<Awaited<ReturnType<typeof loadSpot>>>
 
 // A saved spot is a square paint chip in the color of its high today, or its low once only tonight is left,
@@ -149,6 +161,8 @@ export default function Map() {
                 })
         }
         map.on("click", handleClick)
+        const onStyleLoad = () => style.endsWith("/dark") && liftDarkLabels(map)
+        map.on("style.load", onStyleLoad)
         // MapLibre opens the compact attribution when its text arrives and closes it on the first drag. It starts
         // closed here, as the ⓘ, so it never covers the radar switch.
         map.once("load", () => {
@@ -189,6 +203,7 @@ export default function Map() {
             radar?.destroy()
             radar = undefined
             map.off("click", handleClick)
+            map.off("style.load", onStyleLoad)
             map.remove()
             mapRef = undefined
         }

@@ -3,10 +3,12 @@ import { expect, test } from "vitest"
 import {
     clockTime,
     frameAt,
+    framePaint,
     holdMs,
     loopLength,
     loopWindow,
     msPerScanMinute,
+    noaaTileURL,
     parseScanTimes,
     readout,
     radarTiles,
@@ -134,8 +136,35 @@ test("a scan that seems to be from the future is just now", () => {
     expect(spokenReadout(ahead, false, now, "America/Denver")).toBe("2:30 PM, just now")
 })
 
-test("tile URLs ask for a scan by its time, or the latest without one", () => {
-    expect(radarTiles("2026-11-14T20:28:09.000Z")).toMatch(/&TIME=2026-11-14T20:28:09\.000Z$/)
-    expect(radarTiles()).not.toContain("TIME=")
-    expect(radarTiles()).toContain("BBOX={bbox-epsg-3857}")
+test("tiles go through the app's own protocol, by scan time, or for the latest without one", () => {
+    expect(radarTiles("2026-11-14T20:28:09.000Z")).toBe(
+        "condies-radar://tile?bbox={bbox-epsg-3857}&time=2026-11-14T20%3A28%3A09.000Z",
+    )
+    expect(radarTiles()).toBe("condies-radar://tile?bbox={bbox-epsg-3857}")
+})
+
+test("NOAA is asked for the tile with a 4 pixel border from its neighbors, at the same scale", () => {
+    // A zoom 7 tile is about 313 km across, so 256 pixels are about 1223 m each.
+    const span = 40075016.68557849 / 128
+    const tile = `condies-radar://tile?bbox=-11897270.578,4696291.017,${-11897270.578 + span},${4696291.017 + span}`
+    const url = new URL(noaaTileURL(`${tile}&time=2026-11-14T20%3A28%3A09.000Z`))
+    expect(url.searchParams.get("WIDTH")).toBe("264")
+    expect(url.searchParams.get("HEIGHT")).toBe("264")
+    expect(url.searchParams.get("TIME")).toBe("2026-11-14T20:28:09.000Z")
+    const [minX, minY, maxX, maxY] = url.searchParams.get("BBOX")!.split(",").map(Number)
+    const perPixel = span / 256
+    expect(minX).toBeCloseTo(-11897270.578 - 4 * perPixel, 3)
+    expect(maxY).toBeCloseTo(4696291.017 + span + 4 * perPixel, 3)
+    expect((maxX - minX) / 264).toBeCloseTo(perPixel, 6)
+    expect((maxY - minY) / 264).toBeCloseTo(perPixel, 6)
+    expect(new URL(noaaTileURL(tile)).searchParams.has("TIME")).toBe(false)
+    // Without the border, exactly the tile.
+    expect(new URL(noaaTileURL(tile, 0)).searchParams.get("WIDTH")).toBe("256")
+})
+
+test("frames cut, with no easing between them and no tiles fading in", () => {
+    expect(framePaint(true)["raster-opacity"]).toBe(0.85)
+    expect(framePaint(false)["raster-opacity"]).toBe(0)
+    expect(framePaint(true)["raster-opacity-transition"]).toEqual({ duration: 0, delay: 0 })
+    expect(framePaint(true)["raster-fade-duration"]).toBe(0)
 })

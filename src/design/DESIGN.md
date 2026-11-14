@@ -160,10 +160,13 @@ temperatures' size. No score, no line.
 
 - Full screen under the top bar. A quiet base map so the only color is data: OpenFreeMap's `positron` style
   by day and its `dark` style at night, switching with the theme. NOAA radar (MRMS reflectivity) on by default,
-  and back on, as it was, after the base map changes. It sits beneath the base map's place names, so town names
-  stay readable under heavy rain.
-- Radar detail: NOAA's mosaic is about 1 km, so tiles stop at zoom 8 and the map scales them up, smoothly
-  (linear), past that. Same detail as asking for more, with far fewer requests and no blocky pixels.
+  and back on, as it was, after the base map changes. It's at 85%, so rain reads in NOAA's own colors with roads faintly
+  under it, and it sits beneath the base map's place names. The dark style's names are lifted from dim gray to
+  light gray on a firmer halo, so they stay readable over rain.
+- Radar detail: NOAA's mosaic is about 1 km, painted one flat color per cell, so tiles stop at zoom 7, one
+  tile pixel per cell, and the map asks for nothing finer. Each tile is smoothed before it's drawn, in a worker:
+  enlarged twice over and lightly blurred, with a border from its neighbors so no seams show, then every pixel
+  put back to the nearest color NOAA used. Rain has rounded shapes with sharp edges, neither blocks nor haze.
 - The map opens on NOAA's latest scan, still, and keeps it live: the list of scans is reread every 2 minutes,
   and a newer scan replaces the latest once it has loaded. Nothing plays until asked, so a visit to tap a spot
   costs no more than the one scan.
