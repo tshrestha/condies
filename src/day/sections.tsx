@@ -1,9 +1,10 @@
 import { createMemo, For, Loading, Show } from "solid-js"
 
+import { WeatherIcon } from "../design/icons.tsx"
 import type { LinkProps } from "../design/nav.tsx"
 import { Score } from "../design/parts.tsx"
 import { paintDay, paintVars, type Theme } from "../design/ramp.ts"
-import { dayName, degrees, highlightWord, sentence, shortDate, snowLine } from "../design/words.ts"
+import { condition, dayName, degrees, highlightWord, sentence, shortDate, snowLine } from "../design/words.ts"
 import { type DaySummary, formatSnow, formatWindRange, hasSnow } from "../lib/daily.ts"
 import type { ForecastView } from "../lib/forecastView.ts"
 import type { Period } from "../lib/nws.ts"
@@ -70,6 +71,7 @@ export function DayView(props: DayCtx & { day: DaySummary; index: number }) {
     const name = () => dayName(props.day, props.index)
     const period = () => props.day.day ?? props.day.night
     const marker = () => highlightWord(props.day)
+    const sky = () => condition(period()?.shortForecast ?? "", period()?.isDaytime)
     const insight = () => snowLine(props.day)
     const hours = createMemo(() => {
         const own = f().hours.filter((h) => dateOf(h) === props.day.date)
@@ -107,7 +109,11 @@ export function DayView(props: DayCtx & { day: DaySummary; index: number }) {
                                 </span>
                             </Show>
                         </p>
-                        <p>{sentence(period()?.shortForecast ?? "")}</p>
+                        {/* Home's picture for this day, beside the forecast's own words for it. */}
+                        <p class="sq-dayhero-cond">
+                            <Show when={sky().icon}>{(kind) => <WeatherIcon kind={kind()} />}</Show>
+                            <span>{sentence(period()?.shortForecast ?? "")}</span>
+                        </p>
                         <Show when={marker()}>
                             <p class="sq-num sq-marker">{marker()}</p>
                         </Show>

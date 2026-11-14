@@ -1,11 +1,11 @@
 import { createMemo, createSignal, flush, For, Loading, onSettled, Show } from "solid-js"
 
-import { Cat, StarIcon } from "../design/icons.tsx"
+import { Cat, StarIcon, WeatherIcon } from "../design/icons.tsx"
 import type { LinkProps } from "../design/nav.tsx"
 import { AlertRow, RangeBar, Score } from "../design/parts.tsx"
 import { avalancheScale, paintTemp, paintVars, type Theme } from "../design/ramp.ts"
 import {
-    conditionWord,
+    condition,
     dayName,
     degrees,
     feelsLike,
@@ -17,7 +17,7 @@ import {
     shortDate,
     windLine,
 } from "../design/words.ts"
-import { type DaySummary, formatSnow, hasSnow } from "../lib/daily.ts"
+import { type DaySummary, formatSnow, getDayLabel, hasSnow } from "../lib/daily.ts"
 import type { AlertView, ForecastView } from "../lib/forecastView.ts"
 import { formatAge } from "../lib/util.ts"
 import { FactsPlaceholder } from "./Placeholder.tsx"
@@ -110,6 +110,7 @@ export function Now(props: HomeCtx & NowProps & { fit?: number; numeral: (el: HT
     const paint = () => paintTemp(f().current.temperature, props.theme)
     const text = () => degrees(f().current.temperature)
     const fit = () => numeralFit(text())
+    const sky = () => condition(f().current.shortForecast, f().current.isDaytime)
     const place = () => [f().place.city, f().place.state].filter(Boolean).join(", ")
     const details = () =>
         [
@@ -147,7 +148,10 @@ export function Now(props: HomeCtx & NowProps & { fit?: number; numeral: (el: HT
             >
                 {text()}
             </p>
-            <p class="sq-cond">{conditionWord(f().current.shortForecast)}</p>
+            <p class="sq-cond">
+                <Show when={sky().icon}>{(kind) => <WeatherIcon kind={kind()} />}</Show>
+                {sky().word}
+            </p>
             <p class="sq-now-line">{details()}</p>
             <Show when={props.updated}>
                 <div class="sq-age">
@@ -169,31 +173,37 @@ export function Now(props: HomeCtx & NowProps & { fit?: number; numeral: (el: HT
 export function NextHours(props: HomeCtx) {
     const f = () => props.forecast
     const next = createMemo(() => nextHours(f()))
+    // Each block as it's shown: the hour, the temperature, the picture's word, then what's printed beside it.
     const summary = () =>
         next()
-            .blocks.map((b) => `${b.label} ${degrees(b.temperature)}, ${b.precip}`)
+            .blocks.map((b) => [`${b.label} ${degrees(b.temperature)}`, b.word, b.shown].filter(Boolean).join(", "))
             .join("; ")
     return (
         <section class="sq-ground sq-next" aria-label="Next 12 hours">
             <p class="sq-caption sq-strong">{next().caption}</p>
             <Show when={next().later}>{(storm) => <p class="sq-caption sq-later">{storm()}</p>}</Show>
-            <a
-                class="sq-blocks-link"
-                aria-current="false"
-                aria-label={`${summary()}. Open hour by hour.`}
-                {...props.dayLink(f().days[0]?.date ?? "")}
-            >
+            <a class="sq-blocks-link" aria-current="false" {...props.dayLink(f().days[0]?.date ?? "")}>
+                {/* The link's name is this sentence, which says the pictures in words. It has everything the
+                    blocks print, in the order they print it. */}
+                <span class="sq-sr">{summary()}. Open hour by hour.</span>
                 <ol class="sq-blocks" aria-hidden="true">
                     <For each={next().blocks}>
                         {(block) => (
                             <li class="sq-block">
-                                {/* Spaces between the parts and the blocks, so the link's text reads "Now 30° Dry 3 AM",
-                                    as its name does. Flex layout doesn't render them. */}
                                 <span class="sq-block-head">
-                                    <span class="sq-small">{block.label}</span>{" "}
+                                    <span class="sq-small">{block.label}</span>
                                     <span class="sq-num">{degrees(block.temperature)}</span>
-                                </span>{" "}
-                                <span>{block.precip}</span>{" "}
+                                </span>
+                                <span class="sq-block-wx">
+                                    <Show when={block.icon} fallback={block.word}>
+                                        {(kind) => (
+                                            <>
+                                                <WeatherIcon kind={kind()} />
+                                                {block.shown}
+                                            </>
+                                        )}
+                                    </Show>
+                                </span>
                             </li>
                         )}
                     </For>
@@ -224,21 +234,50 @@ export function Best(props: HomeCtx) {
 function DayRow(
     props: HomeCtx & { day: DaySummary; index: number; min: number; max: number; anchor?: (el: HTMLElement) => void },
 ) {
-    const name = () => dayName(props.day, props.index)
+    // Three letters on screen, as in "Sat", and the whole name for screen readers. Today is said in full.
+    const short = () => getDayLabel(props.day, props.index, "short")
+    const long = () => getDayLabel(props.day, props.index, "long")
     const period = () => props.day.day ?? props.day.night
     const marker = () => highlightWord(props.day)
-    const condition = () => marker() ?? conditionWord(period()?.shortForecast ?? "")
-    // "Light snow · 6.4″ snow" says snow twice, so the amount drops the word when the condition has it.
+    const sky = () => condition(period()?.shortForecast ?? "", period()?.isDaytime)
+    // "Light snow, 6.4″ snow" says snow twice, so the amount drops the word when the condition has it.
     const snow = () =>
-        hasSnow(props.day) ? `${formatSnow(props.day.snow!)}${/snow|pow/i.test(condition()) ? "" : " snow"}` : undefined
+        hasSnow(props.day)
+            ? `${formatSnow(props.day.snow!)}${marker() === "POW DAY" || /snow/i.test(sky().word) ? "" : " snow"}`
+            : undefined
+    // A "Chance of snow" picture can't say chance, so its percentage does.
+    const chance = () => (sky().chance ? `${period()!.probabilityOfPrecipitation.value}%` : undefined)
+    // The note printed small under the day: a marker, then the snow amount or the chance. A condition with no
+    // picture is printed first, in its own words.
+    const printed = () =>
+        [
+            { text: sky().icon ? "" : sky().word },
+            { text: marker() ?? "", strong: true },
+            { text: snow() ?? chance() ?? "" },
+        ].filter((part) => part.text)
     // The day's name is the link, stretched over the whole row, so voice control can say what it sees. The rest
     // of the row reads after it as a sentence, with the words a screen reader needs and the screen doesn't.
     return (
         <li class="sq-day">
             <a class="sq-day-name sq-strong" aria-current="false" {...props.dayLink(props.day.date)}>
-                {name()}
-                <span class="sq-sr">, {shortDate(props.day.date)}</span>
+                <Show
+                    when={short() !== long()}
+                    fallback={
+                        <>
+                            {short()}
+                            <span class="sq-sr">, {shortDate(props.day.date)}</span>
+                        </>
+                    }
+                >
+                    <span aria-hidden="true">{short()}</span>
+                    <span class="sq-sr">
+                        {long()}, {shortDate(props.day.date)}
+                    </span>
+                </Show>
             </a>
+            <span class="sq-day-wx">
+                <Show when={sky().icon}>{(kind) => <WeatherIcon kind={kind()} />}</Show>
+            </span>
             <span class="sq-day-low">
                 <Show when={props.day.low !== undefined}>
                     <span class="sq-sr">, low </span>
@@ -253,9 +292,18 @@ function DayRow(
                 </Show>
             </span>
             <span class="sq-day-cond">
-                <span class="sq-sr">. </span>
-                <span class={marker() ? "sq-strong" : undefined}>{condition()}</span>
-                <Show when={snow()}>, {snow()}</Show>
+                <span class="sq-sr">
+                    . {sky().icon ? sky().word : ""}
+                    {sky().icon && printed().length ? ", " : ""}
+                </span>
+                <For each={printed()}>
+                    {(part, i) => (
+                        <>
+                            {i() ? ", " : ""}
+                            <span class={part.strong ? "sq-strong" : undefined}>{part.text}</span>
+                        </>
+                    )}
+                </For>
             </span>
         </li>
     )
@@ -274,7 +322,7 @@ export function Week(props: HomeCtx & { anchor: (el: HTMLElement) => void }) {
         <Show when={f().days.length}>
             <section class="sq-ground sq-week" aria-label="This week">
                 <div class="sq-week-head" aria-hidden="true">
-                    <span class="sq-strong">This week</span>
+                    <span class="sq-week-title sq-strong">This week</span>
                     <span class="sq-day-low sq-small">Low</span>
                     <span />
                     <span class="sq-day-high sq-small">High</span>

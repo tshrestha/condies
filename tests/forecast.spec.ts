@@ -34,6 +34,11 @@ test("shows the forecast for the user's location", async ({ page }) => {
 
     await expect(heading(page)).toHaveText(place("Place 40.1234"))
     await expect(nextHours(page).getByRole("link", { name: /^Now \d+°, .*\. Open hour by hour\.$/ })).toBeVisible()
+    // Each block is a picture, and the link says them in words.
+    await expect(nextHours(page).locator("svg.sq-wx")).toHaveCount(3)
+    await expect(nextHours(page).getByRole("link")).toHaveAccessibleName(
+        /^Now 30°, Cloudy; \d+ [AP]M 34°, Cloudy; \d+ [AP]M 38°, Snow, 21%\. Open hour by hour\.$/,
+    )
     await expect(page.getByRole("region", { name: "Daylight" })).toContainText("Sunrise 6:45 AM, sunset 4:55 PM.")
     await expect(days(page)).toHaveCount(7)
 })

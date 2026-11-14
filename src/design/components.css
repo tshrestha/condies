@@ -1,4 +1,4 @@
-/* Strata Quiet's shared pieces: the top bar, control icons, the horizon theme switch, the dock, alert notices,
+/* Strata Quiet's shared pieces: the top bar, control and weather icons, the horizon theme switch, the dock, alert notices,
    the Condies score, the range bar and sheets. Load after tokens.css. */
 
 /* Masthead */
@@ -47,6 +47,53 @@
 
 .sq-icon-filled {
     fill: currentColor;
+}
+
+/* Weather icons: the same grid and strokes, a little larger, and in color (the tokens are in tokens.css). A
+   cloud's fill covers the sun or moon behind it. A ray may reach the edge of the box. */
+
+.sq-wx {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    overflow: visible;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sq-wx-sun,
+.sq-wx-bolt {
+    fill: var(--wx-sun);
+    stroke: var(--wx-sun-edge);
+}
+
+.sq-wx-rays {
+    stroke: var(--wx-sun-edge);
+}
+
+.sq-wx-moon {
+    fill: var(--wx-moon);
+    stroke: var(--wx-moon-edge);
+}
+
+.sq-wx-cloud {
+    fill: var(--wx-cloud);
+    stroke: var(--wx-cloud-edge);
+}
+
+.sq-wx-rain {
+    stroke: var(--wx-rain);
+}
+
+.sq-wx-snow {
+    fill: var(--wx-snow);
+    stroke: var(--wx-snow);
+}
+
+.sq-wx-mist {
+    stroke: var(--wx-mist);
 }
 
 /* The theme switch: a horizon. The sun sets below the line as the moon rises, and two stars come out. */
@@ -361,7 +408,7 @@
 
 .sq-range {
     position: relative;
-    grid-column: 3;
+    grid-column: 4;
     align-self: center;
     height: 12px;
 }

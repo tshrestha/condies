@@ -30,57 +30,88 @@ export const shortDate = (date: string, withWeekday = false) =>
         timeZone: "UTC",
     })
 
+// The picture that stands for a condition. WeatherIcon in icons.tsx draws them.
+export type Weather =
+    | "sun"
+    | "moon"
+    | "partly-day"
+    | "partly-night"
+    | "cloud"
+    | "rain-light"
+    | "rain"
+    | "rain-heavy"
+    | "snow-light"
+    | "snow"
+    | "snow-heavy"
+    | "storms"
+    | "fog"
+    | "haze"
+    | "wind"
+
 interface Condition {
     test: RegExp
     word: string
     chance?: string
     rank: number
+    icon: Weather
 }
 
 // The worst part of a forecast like "Chance Snow Showers then Light Snow" names the day.
 const conditions: Condition[] = [
-    { test: /thunder|t-?storm/, word: "Storms", chance: "Chance of storms", rank: 9 },
-    { test: /heavy snow|blizzard/, word: "Heavy snow", rank: 8 },
-    { test: /heavy rain/, word: "Heavy rain", rank: 8 },
-    { test: /snow|sleet|wintry|freezing/, word: "Snow", chance: "Chance of snow", rank: 7 },
-    { test: /rain|shower|drizzle/, word: "Rain", chance: "Chance of rain", rank: 6 },
-    { test: /fog|mist/, word: "Fog", rank: 3 },
-    { test: /smoke/, word: "Smoke", rank: 3 },
-    { test: /haze|dust/, word: "Haze", rank: 2 },
-    { test: /partly sunny/, word: "Partly sunny", rank: 1 },
-    { test: /partly cloudy/, word: "Partly cloudy", rank: 1 },
-    { test: /cloudy|overcast/, word: "Cloudy", rank: 2 },
-    { test: /sunny/, word: "Sunny", rank: 0 },
-    { test: /clear/, word: "Clear", rank: 0 },
-    { test: /wind|breez|blustery/, word: "Windy", rank: 1 },
+    { test: /thunder|t-?storm/, word: "Storms", chance: "Chance of storms", rank: 9, icon: "storms" },
+    { test: /heavy snow|blizzard/, word: "Heavy snow", rank: 8, icon: "snow-heavy" },
+    { test: /heavy rain/, word: "Heavy rain", rank: 8, icon: "rain-heavy" },
+    { test: /snow|sleet|wintry|freezing/, word: "Snow", chance: "Chance of snow", rank: 7, icon: "snow" },
+    { test: /rain|shower|drizzle/, word: "Rain", chance: "Chance of rain", rank: 6, icon: "rain" },
+    { test: /fog|mist/, word: "Fog", rank: 3, icon: "fog" },
+    { test: /smoke/, word: "Smoke", rank: 3, icon: "haze" },
+    { test: /haze|dust/, word: "Haze", rank: 2, icon: "haze" },
+    { test: /partly sunny/, word: "Partly sunny", rank: 1, icon: "partly-day" },
+    { test: /partly cloudy/, word: "Partly cloudy", rank: 1, icon: "partly-day" },
+    { test: /cloudy|overcast/, word: "Cloudy", rank: 2, icon: "cloud" },
+    { test: /sunny/, word: "Sunny", rank: 0, icon: "sun" },
+    { test: /clear/, word: "Clear", rank: 0, icon: "sun" },
+    { test: /wind|breez|blustery/, word: "Windy", rank: 1, icon: "wind" },
 ]
 
-function readPart(part: string) {
+// A condition as its word and its picture. A forecast the list doesn't know, such as "Frost", has no picture
+// and is shown in its own words. `chance` marks a "Chance of" condition, which is shown with its percentage.
+export interface ConditionView {
+    word: string
+    icon?: Weather
+    chance: boolean
+}
+
+function readPart(part: string): ConditionView & { rank: number } {
     const text = part.toLowerCase()
     const found = conditions.find((c) => c.test.test(text))
     if (!found) {
-        return { word: sentence(part.trim()), rank: -1 }
+        return { word: sentence(part.trim()), rank: -1, chance: false }
     }
     if (found.chance && /chance/.test(text)) {
-        return { word: found.chance, rank: found.rank - 3 }
+        return { word: found.chance, rank: found.rank - 3, icon: found.icon, chance: true }
     }
     if (text.trim().startsWith("light ") && found.word === "Snow") {
-        return { word: "Light snow", rank: found.rank - 1 }
+        return { word: "Light snow", rank: found.rank - 1, icon: "snow-light", chance: false }
     }
     if (text.trim().startsWith("light ") && found.word === "Rain") {
-        return { word: "Light rain", rank: found.rank - 1 }
+        return { word: "Light rain", rank: found.rank - 1, icon: "rain-light", chance: false }
     }
-    return { word: found.word, rank: found.rank }
+    return { word: found.word, rank: found.rank, icon: found.icon, chance: false }
 }
 
-export function conditionWord(forecast: string) {
+const nightIcons: Partial<Record<Weather, Weather>> = { sun: "moon", "partly-day": "partly-night" }
+
+// After dark the sun in a picture is the moon.
+export function condition(forecast: string, isDaytime = true): ConditionView {
     if (!forecast) {
-        return ""
+        return { word: "", chance: false }
     }
-    return forecast
+    const { word, icon, chance } = forecast
         .split(/\bthen\b/i)
         .map(readPart)
-        .reduce((worst, part) => (part.rank > worst.rank ? part : worst)).word
+        .reduce((worst, part) => (part.rank > worst.rank ? part : worst))
+    return { word, icon: isDaytime ? icon : (icon && nightIcons[icon]) || icon, chance }
 }
 
 // PRIMO means one thing: a perfect Condies score, the same word the score's grade uses. A day never says PRIMO
@@ -106,9 +137,22 @@ const formatRain = (inches: number) => (inches < 0.1 ? "under 0.1″" : `${inche
 export interface Block {
     label: string
     temperature: number
-    precip: string
+    // The span's picture: what falls in it, or the sky at its first hour when it's dry.
+    icon?: Weather
+    // The picture in a word: "Snow", "Rain", "Storms", or the sky, as in "Cloudy". Without a picture, "Dry".
+    word: string
+    // What is printed beside the picture: the snow amount or a chance under 60%, or nothing.
+    shown: string
     // The snow this block prints, rounded the way it prints, so the caption's total is the blocks' sum.
     snow: number
+}
+
+// The sky in an hour that stays dry. A forecast that names rain or snow too unlikely to count is a cloud.
+function sky(p: Period): ConditionView {
+    const found = condition(p.shortForecast, p.isDaytime)
+    return found.icon && /^(rain|snow|storms)/.test(found.icon)
+        ? { word: "Cloudy", icon: "cloud", chance: false }
+        : found
 }
 
 const isWet = (p: Period) => (p.snowInches ?? 0) >= 0.02 || p.probabilityOfPrecipitation.value >= 50
@@ -127,18 +171,28 @@ export function nextHours(f: ForecastView) {
             )
             const chance = wettest.probabilityOfPrecipitation.value
             const kind = kindOf(wettest)
-            let precip = "Dry"
+            // The forecast's own picture when it agrees with what is falling, so heavy and light snow show.
+            const named = condition(wettest.shortForecast).icon
+            const falling = (what: typeof kind) => ({
+                icon: named?.startsWith(what) ? named : what,
+                word: sentence(what),
+            })
+            const dry = sky(span[0])
+            let picture: Pick<Block, "icon" | "word"> = dry.icon ? dry : { word: "Dry" }
+            let shown = ""
             if (snow >= 0.1) {
-                precip = `${snow.toFixed(1)}″ snow`
-            } else if (chance >= 60) {
-                precip = sentence(kind)
+                picture = falling("snow")
+                shown = `${snow.toFixed(1)}″`
             } else if (chance >= 20) {
-                precip = `${chance}% ${kind}`
+                picture = falling(kind)
+                shown = chance >= 60 ? "" : `${chance}%`
             }
             return {
                 label: k === 0 ? "Now" : span[0].hourString,
                 temperature: span[0].temperature,
-                precip,
+                icon: picture.icon,
+                word: picture.word,
+                shown,
                 snow: snow >= 0.1 ? snow : 0,
             }
         })

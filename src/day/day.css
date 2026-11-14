@@ -59,6 +59,17 @@
     margin: 14px 0 10px;
 }
 
+/* The day's picture sits on the first line of the forecast's words, which can wrap. */
+.sq-dayhero-cond {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.sq-dayhero-cond .sq-wx {
+    margin-top: -2px;
+}
+
 .sq-marker {
     margin-top: 10px;
 }

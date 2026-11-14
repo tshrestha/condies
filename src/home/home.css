@@ -68,10 +68,21 @@
     text-box: trim-both cap alphabetic;
 }
 
+/* The condition now: its picture at the size of its word. */
 .sq-cond {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     font-size: var(--sq-l);
     line-height: 1.05;
     letter-spacing: -0.015em;
+}
+
+/* A little taller than its line, so it reaches into the space around the line instead of adding to it. */
+.sq-cond .sq-wx {
+    width: 36px;
+    height: 36px;
+    margin-block: -2px;
 }
 
 .sq-now-line {
@@ -146,6 +157,15 @@
     white-space: nowrap;
 }
 
+/* A picture, then the amount or the chance when there is one. */
+.sq-block-wx {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    white-space: nowrap;
+}
+
 .sq-block:first-child {
     padding-left: var(--sq-gut);
 }
@@ -165,12 +185,13 @@
     column-gap: 8px;
 }
 
-/* The week: on the ground, one range bar per day on a scale shared by the whole week. The rows share their
-   columns through subgrid so every bar starts and ends on the same scale. */
+/* The week: on the ground, one line per day: its name, its picture, its low, a range bar on a scale shared by
+   the whole week, and its high. The rows share their columns through subgrid, so the pictures line up and
+   every bar starts and ends on the same scale. Nothing on the line wraps, and every day is the same height. */
 
 .sq-week {
     display: grid;
-    grid-template-columns: max-content max-content minmax(0, 1fr) max-content;
+    grid-template-columns: max-content max-content max-content minmax(0, 1fr) max-content;
     column-gap: 12px;
     padding: 6px var(--sq-gut) 6px;
 }
@@ -189,14 +210,21 @@
     padding-bottom: 0;
 }
 
+/* "This week" sits over the names and the pictures. */
+.sq-week-title {
+    grid-column: 1 / 3;
+}
+
+/* Every day takes the same room: its line, then one small line for a note, whether or not it has one. */
 .sq-day {
     position: relative;
     align-items: baseline;
-    padding: 10px 0 11px;
+    padding: 8px 0 4px;
 }
 
 .sq-day-name {
     grid-column: 1;
+    white-space: nowrap;
 }
 
 /* The day's name is the row's link, stretched over all of it, above the range bar. Its focus ring is the row's. */
@@ -216,14 +244,31 @@
     outline-offset: -3px;
 }
 
-.sq-day-low {
+/* The picture's column keeps its width on a day with no picture, so the lows stay in line. The picture is
+   centered on the name's lowercase letters, on the row's shared baseline, and reaches into the row's padding
+   instead of making the row taller. */
+.sq-day-wx {
     grid-column: 2;
+    width: 28px;
+    line-height: 0;
+}
+
+.sq-day-wx .sq-wx {
+    display: inline-block;
+    margin-block: -6px;
+    vertical-align: middle;
+}
+
+.sq-day-low {
+    grid-column: 3;
     text-align: right;
+    white-space: nowrap;
 }
 
 .sq-day-high {
-    grid-column: 4;
+    grid-column: 5;
     text-align: right;
+    white-space: nowrap;
 }
 
 .sq-day .sq-day-high {
@@ -233,8 +278,21 @@
     letter-spacing: -0.015em;
 }
 
+/* A night with no high still holds the high's line, so its name sits where every other day's does. */
+.sq-days .sq-day-high::before {
+    content: "\200b";
+}
+
+/* The note under a day: a marker, a snow amount or a chance, in small print on one line. The line is there on
+   every day, so the days stay evenly spaced; on most it holds only the words for screen readers. */
 .sq-day-cond {
-    grid-column: 1 / 4;
+    grid-column: 1 / 5;
+    height: 16px;
+    overflow: hidden;
+    font-size: var(--sq-s);
+    line-height: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .sq-week > .sq-caption {
@@ -333,6 +391,13 @@
     display: block;
     height: 0.72em;
     margin-block: calc((1lh - 0.72em) / 2);
+    background: var(--sq-track);
+}
+
+.sq-ph-icon {
+    display: block;
+    width: 28px;
+    height: 28px;
     background: var(--sq-track);
 }
 

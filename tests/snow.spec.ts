@@ -32,7 +32,8 @@ test("POW DAY comes from measured snow, not the forecast wording", async ({ page
     await mockApis(page, { daily, grid: gridFixture([{ hoursFromNow: tomorrowMorning(), inches: 8 }]) })
     await page.goto("/")
 
-    await expect(rows(page).nth(1)).toHaveText(/^Tomorrow, .*\. POW DAY/)
+    // Tomorrow's row: its name in three letters and in full, then the date.
+    await expect(rows(page).nth(1)).toHaveText(/^\w{3}\w+day, .*\. Sunny, POW DAY/)
 })
 
 test("the day page says whether it's snow or rain at this elevation", async ({ page }) => {

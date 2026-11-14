@@ -49,7 +49,9 @@ export function HomePlaceholder() {
                                         <span class="sq-num">
                                             <Bar width="64%" />
                                         </span>
-                                        <Bar width="80%" />
+                                        <span class="sq-block-wx">
+                                            <i class="sq-ph-icon" />
+                                        </span>
                                     </li>
                                 )}
                             </For>
@@ -68,7 +70,10 @@ export function HomePlaceholder() {
                             {() => (
                                 <li class="sq-day">
                                     <span class="sq-day-name">
-                                        <Bar width="3.2em" />
+                                        <Bar width="2em" />
+                                    </span>
+                                    <span class="sq-day-wx">
+                                        <i class="sq-ph-icon" />
                                     </span>
                                     <span class="sq-day-low">
                                         <Bar width="1.8em" />
@@ -77,9 +82,7 @@ export function HomePlaceholder() {
                                     <span class="sq-day-high">
                                         <Bar width="1.8em" />
                                     </span>
-                                    <span class="sq-day-cond">
-                                        <Bar width="9em" />
-                                    </span>
+                                    <span class="sq-day-cond" />
                                 </li>
                             )}
                         </For>

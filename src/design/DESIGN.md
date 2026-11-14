@@ -11,18 +11,22 @@ white type on saturated blue, no banners, no condensed numerals.
 ## Principles
 
 1. **Color means temperature, and only where it's the point.** Home has the Now swatch and the week's range
-   bars. The Day screen has its swatch and its temperature chart. Nothing else is colored.
+   bars. The Day screen has its swatch and its temperature chart. The one other use of color is the weather
+   icons, which have a small palette of their own.
 2. **Chips, not backgrounds.** Color sits inside the margins as a swatch with dark ink, never edge to edge.
 3. **Sentences sit on the ground.** A caption says what is happening; the numbers follow it.
 4. **One block, one job, three lines.** A fourth line means the detail belongs on the Day screen or in a sheet.
 5. **The first screen answers six questions**: temperature now, what's happening, rain or snow in the next 12
    hours, best day, any warning, tomorrow's high.
-6. **No ornament.** No texture, gradient, shadow, card or legend. Weather is always told in words.
+6. **No ornament.** No texture, gradient, shadow, card or legend. The forecast's conditions are pictures (see
+   Weather icons); every number and everything else is in words.
 7. **Printed things are square; things you touch float and are round.** The swatch, notices and bars are square.
    Only the dock is round, with continuous (squircle) corners where the browser supports `corner-shape`, a
    plain capsule elsewhere, and a disc for the theme switch. Inner corners are concentric with the bar's.
-8. **Icons are for controls only.** Search, star, map, the horizon theme switch and the cat for Now. One style:
-   24px, 2px strokes, round joins, in the ink of what they sit on. Filled means on (a saved star, the current tab).
+8. **Two families of icon on one grid.** Both are drawn on 24px with 2px strokes and round joins. Control
+   icons (search, star, map, the horizon theme switch and the cat for Now) are 24px, in the ink of what they
+   sit on, and filled means on (a saved star, the current tab). Weather icons stand for the forecast's
+   conditions; they are 28px and in color.
 
 ## Controls
 
@@ -69,6 +73,30 @@ Chivo for everything, tabular figures, two weights (400, 700). No condensed face
 makes the first screen. A regular-width numeral read as a printed number in testing; League Gothic read as a
 scoreboard.
 
+## Weather icons (`WeatherIcon`, `condition`)
+
+Changed by the owner on 2026-11-13: the forecast shows a condition as a picture instead of a word, and the
+pictures are in color and a little larger than control icons, because ink outlines at 24px were hard to tell
+apart. Until then weather was always told in words.
+
+- Fifteen pictures: sun, moon, sun or moon behind a cloud, cloud, rain, snow, storms, fog, haze (also smoke
+  and dust) and wind. Rain and snow each come light, plain and heavy: more marks under the cloud means more of
+  it. After dark the sun in a picture is the moon.
+- Color (`--wx-*` in `tokens.css`): each part is a bright fill inside a darker edge of its own hue. Amber sun
+  and lightning, indigo moon, gray cloud, blue rain, ice-blue snow (near white at night), gray mist and wind.
+  Every edge, and the rain, snow and mist, is at least 3:1 against the ground in both themes, so the edge
+  carries the shape and the fill carries the color. A cloud's fill covers the sun or moon behind it.
+- On a temperature swatch (`.sq-chip`) the same drawings are in the swatch's ink, not in color: the swatch's
+  color is the temperature, and a colored picture can't hold its contrast across all 28 of them.
+- Size: 28px in the week and the next 12 hours, 36px beside Now's condition, 28px on the Day screen.
+- `condition(forecast, isDaytime)` picks the picture and its word from the worst part of the forecast. The
+  word is always in the markup with the picture, for screen readers only (`sq-sr`), unless it's printed.
+- A picture can't say "chance", so a "Chance of" condition prints its percentage.
+- A forecast with no picture, such as "Frost", is printed in its own words. Never guess a picture.
+- Where they are: the week's rows and the next-12-hours blocks (picture instead of the word), Now (picture
+  beside its word, which also teaches the pictures) and the Day screen's swatch (picture beside the
+  forecast's own sentence).
+
 ## Alerts (`Alerts`, `AlertRow`)
 
 Printed notices inside the margins, strongest first, directly under the masthead. Each is a button that opens
@@ -82,13 +110,24 @@ its sheet and prints its severity in words.
 
 ## The week (`Week`, `DayRow`, `RangeBar`)
 
-On the ground. A head row reads "This week · Low · High" once. Each row: day name (bold), low (regular), range
-bar, high (32px bold), and under them one condition word or a marker, and the snow amount if any. Markers
-(`highlightWord`): POW DAY when the day is a pow day, otherwise PRIMO only when the day's score is a perfect 100. The old sunny-and-mild rule (`isPrimo`) no longer shows a marker, so a day never says PRIMO beside a
-lesser grade. All
-rows share one scale for the week, so warm days sit right and cold days left. The bar is the ramp's own 5°
-steps as hard segments from low to high, on a thin track. A day missing its low shows a short tick at its high,
-and its low column stays empty. Columns align through CSS subgrid.
+On the ground. A head row reads "This week · Low · High" once. Each day is one line: its name (bold), its
+picture, low (regular), range bar, high (32px bold). The name is "Today" or "Tonight" for the first day and
+three letters after it ("Sat"), which keeps the name column narrow enough for the picture to share the line;
+screen readers get the whole name and the date. Nothing on the line wraps, from 320px up, with a low below
+zero and a high over 100 (`tests/daily.spec.ts` measures it, and that the rows are all one height).
+
+Every day is the same height, so the week is evenly spaced. Under each day's line there is room for one
+small line (14px), a note, which most days leave empty: a marker, then the snow amount, or the chance for a
+"Chance of" condition ("40%"), or the words of a forecast that has no picture. A night with no high still
+holds the high's line.
+
+Markers (`highlightWord`): POW DAY when the day is a pow day, otherwise PRIMO only when the day's score is a
+perfect 100. The old sunny-and-mild rule (`isPrimo`) no longer shows a marker, so a day never says PRIMO
+beside a lesser grade.
+
+All rows share one scale for the week, so warm days sit right and cold days left. The bar is the ramp's own 5°
+steps as hard segments from low to high, on a thin track. A day missing its low shows a short tick at its
+high, and its low column stays empty. Columns align through CSS subgrid, so the pictures sit in one column.
 
 ## The Condies score (`Score`)
 
@@ -101,7 +140,9 @@ temperatures' size. No score, no line.
 ## Other blocks
 
 - Next 12 hours: a caption ("Snow until 1 AM, 17.5″") and three 4-hour blocks from the same hours, so the
-  numbers agree. A storm that runs past them gets its own line with its own span.
+  numbers agree. Under each block's hour and temperature is a picture: what falls in it, with the snow amount
+  ("1.2″") or a chance under 60% ("40%") beside it, or the sky at that hour when it's dry. A storm that runs
+  past them gets its own line with its own span.
 - Best day: "Best day Saturday 1 PM–5 PM", then the score line.
 - Snow (`Snow`): a bold heading like "This week", then up to three facts on the next-12-hours columns, in time
   order: "Last 24 hours", "On the ground", "Next 7 days". One small line names the measuring station. Numbers
@@ -110,7 +151,7 @@ temperatures' size. No score, no line.
   the right, and today's light as a bar on a 24-hour track between them. The part already gone is dim, the
   part left is ink. Under it: "Sunrise", how much light is left ("3 hr 12 min left"), "Sunset".
 - Day screen: a pager of neighboring days ("← Now" before the first), then the swatch with "High 26°" and
-  "Low 10°" in words, best window and score, facts, the snow line, the hourly chart (temperature columns in
+  "Low 10°" in words and the day's picture beside the forecast's sentence, best window and score, facts, the snow line, the hourly chart (temperature columns in
   ramp colors, other views in ink), the forecast text on the ground. The place name in the swatch links back to
   that place's Now from any day.
 - My Spots: rows on the ground ranked by score: name, day and window, snow, then the score line.
@@ -187,9 +228,15 @@ and avalanche text is the agency's own, with no jokes near it. Separators before
 - Accessible names contain each control's visible text, in order, for voice control. Where parts sit side by
   side in grid or flex, there are spaces between them in the markup so the text reads that way;
   `tests/a11y.spec.ts` checks this on every screen.
+- The next-12-hours link is named by a sentence for screen readers only, which says each block's picture in
+  words between the numbers it prints ("Now 30°, Snow, 1.2″; …"). An `aria-label` can't do that: axe requires
+  the printed text to be one unbroken run inside a label.
 
 ## Extending
 
 - New datum: give it color only if its temperature is the point of that screen. Otherwise it's type.
-- New color: don't. If something needs a key, redesign it.
+- New weather icon: add it to `Weather` in `words.ts` and draw it in `icons.tsx` on the same 24px grid from
+  the existing `--wx-*` colors. Keep its word beside it for screen readers.
+- New color: don't. If something needs a key, redesign it. The weather icons' palette is the one exception,
+  and it stays on the icons.
 - Prefix classes with `sq-`. Resets live in `:where(.sq-root)` so they never outrank swatch colors.

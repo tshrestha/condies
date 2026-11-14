@@ -39,6 +39,18 @@ body {
     --sq-xl: 88px;
     --sq-text: "Chivo Variable", "Helvetica Neue", Helvetica, Arial, sans-serif;
 
+    /* Weather icons: a bright fill inside a darker edge of its own hue. Each edge, and the rain, snow and mist,
+       is at least 3:1 against the ground. */
+    --wx-sun: #ffc629;
+    --wx-sun-edge: #c96f00;
+    --wx-moon: #c7cbfa;
+    --wx-moon-edge: #5c64cc;
+    --wx-cloud: #e9edf2;
+    --wx-cloud-edge: #7a8492;
+    --wx-rain: #2f7ddb;
+    --wx-snow: #2590cb;
+    --wx-mist: #7a8492;
+
     /* iOS draws its status bar over the top of the page and blurs what's under it, so everything starts below
        the bar, with a little room for the blur's soft edge. Without an inset, as on desktops and most Android
        phones, both terms are 0. */
@@ -62,6 +74,15 @@ body {
     --sq-ink: #f0f0f0;
     --sq-track: #333;
     --sq-dim: #6b6b6b;
+    --wx-sun: #ffd34d;
+    --wx-sun-edge: #f5a800;
+    --wx-moon: #d5d9ff;
+    --wx-moon-edge: #aeb5ff;
+    --wx-cloud: #4a515c;
+    --wx-cloud-edge: #b4bcc8;
+    --wx-rain: #5faeff;
+    --wx-snow: #f2f8ff;
+    --wx-mist: #b4bcc8;
     color-scheme: dark;
 }
 
@@ -126,6 +147,19 @@ body {
 .sq-chip {
     background: var(--b);
     color: var(--k);
+}
+
+/* A chip's color is the temperature, so a weather icon on one is drawn in the chip's ink. */
+.sq-chip {
+    --wx-sun: currentColor;
+    --wx-sun-edge: currentColor;
+    --wx-moon: currentColor;
+    --wx-moon-edge: currentColor;
+    --wx-cloud: var(--b);
+    --wx-cloud-edge: currentColor;
+    --wx-rain: currentColor;
+    --wx-snow: currentColor;
+    --wx-mist: currentColor;
 }
 
 /* Type: four sizes, two weights. */

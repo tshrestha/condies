@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest"
 import type { DaySummary } from "../lib/daily.ts"
 import type { ForecastView } from "../lib/forecastView.ts"
 import type { Period } from "../lib/nws.ts"
-import { degrees, grade, highlightWord, nextHours } from "./words.ts"
+import { condition, degrees, grade, highlightWord, nextHours } from "./words.ts"
 
 describe("Condies score grades", () => {
     test.each([
@@ -42,6 +42,44 @@ test("temperatures use a real minus sign", () => {
     expect(degrees(undefined)).toBe("–")
 })
 
+describe("a condition's word and picture", () => {
+    test.each([
+        ["Mostly Sunny", "Sunny", "sun"],
+        ["Partly Sunny", "Partly sunny", "partly-day"],
+        ["Mostly Cloudy", "Cloudy", "cloud"],
+        ["Light Snow", "Light snow", "snow-light"],
+        ["Heavy Snow", "Heavy snow", "snow-heavy"],
+        ["Rain Showers Likely", "Rain", "rain"],
+        ["Showers And Thunderstorms", "Storms", "storms"],
+        ["Patchy Fog", "Fog", "fog"],
+        ["Areas Of Smoke", "Smoke", "haze"],
+        ["Breezy", "Windy", "wind"],
+    ] as const)("%s is %s", (forecast, word, icon) => {
+        expect(condition(forecast)).toEqual({ word, icon, chance: false })
+    })
+
+    test("the worst part of the forecast names it", () => {
+        expect(condition("Chance Snow Showers then Light Snow").icon).toBe("snow-light")
+        expect(condition("Patchy Fog then Sunny").icon).toBe("fog")
+    })
+
+    test("a chance says so, for its percentage to be shown", () => {
+        expect(condition("Chance Rain Showers")).toEqual({ word: "Chance of rain", icon: "rain", chance: true })
+    })
+
+    test("after dark the sun is the moon", () => {
+        expect(condition("Mostly Clear", false).icon).toBe("moon")
+        expect(condition("Partly Cloudy", false).icon).toBe("partly-night")
+        expect(condition("Mostly Cloudy", false).icon).toBe("cloud")
+        expect(condition("Clear").icon).toBe("sun")
+    })
+
+    test("a forecast it doesn't know has no picture and keeps its words", () => {
+        expect(condition("Frost")).toEqual({ word: "Frost", chance: false })
+        expect(condition("")).toEqual({ word: "", chance: false })
+    })
+})
+
 describe("next 12 hours", () => {
     const start = Date.parse("2026-11-10T14:00:00-07:00")
     const label = (i: number) => {
@@ -77,7 +115,40 @@ describe("next 12 hours", () => {
     test("a dry stretch says so", () => {
         const next = nextHours(forecast(hours(() => ({}))))
         expect(next.caption).toBe("Dry for the next 12 hours")
-        expect(next.blocks.map((b) => b.precip)).toEqual(["Dry", "Dry", "Dry"])
+        // A dry block shows the sky at its first hour.
+        expect(next.blocks.map((b) => [b.icon, b.word, b.shown])).toEqual(Array(3).fill(["cloud", "Cloudy", ""]))
+    })
+
+    test("a block's picture is what falls in it, with the amount or the chance beside it", () => {
+        const mixed = hours((i) =>
+            i < 4
+                ? {
+                      snowInches: 0.5,
+                      shortForecast: "Heavy Snow",
+                      probabilityOfPrecipitation: { unitCode: "", value: 90 },
+                  }
+                : i < 8
+                  ? { shortForecast: "Chance Rain Showers", probabilityOfPrecipitation: { unitCode: "", value: 40 } }
+                  : { shortForecast: "Slight Chance Snow Showers", isDaytime: false },
+        )
+        expect(nextHours(forecast(mixed)).blocks.map((b) => [b.icon, b.word, b.shown])).toEqual([
+            ["snow-heavy", "Snow", "2.0″"],
+            ["rain", "Rain", "40%"],
+            // Too unlikely to count, so the block is dry and its sky is a cloud.
+            ["cloud", "Cloudy", ""],
+        ])
+    })
+
+    test("rain or snow at 60% or more is likely enough to drop its chance", () => {
+        const wet = hours(() => ({ probabilityOfPrecipitation: { unitCode: "", value: 80 } }))
+        expect(nextHours(forecast(wet)).blocks.map((b) => [b.icon, b.word, b.shown])).toEqual(
+            Array(3).fill(["rain", "Rain", ""]),
+        )
+    })
+
+    test("a dry block whose forecast has no picture says Dry", () => {
+        const next = nextHours(forecast(hours(() => ({ shortForecast: "Frost" }))))
+        expect(next.blocks.map((b) => [b.icon, b.word])).toEqual(Array(3).fill([undefined, "Dry"]))
     })
 
     test("rain without amounts gives its chance and its span", () => {
