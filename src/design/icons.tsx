@@ -51,6 +51,23 @@ export function RadarIcon() {
     )
 }
 
+// Play and pause, for the radar loop. Outlines, like the other controls.
+export function PlayIcon() {
+    return (
+        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 5.5v13l10-6.5z" />
+        </svg>
+    )
+}
+
+export function PauseIcon() {
+    return (
+        <svg class="sq-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8.5 5.5v13M15.5 5.5v13" />
+        </svg>
+    )
+}
+
 // Weather, in color: each part is a bright fill inside a darker edge of its own hue, so the edge reads on the
 // ground in either theme. On a temperature swatch the same drawings are in ink, since the swatch's color is the
 // temperature. The colors are tokens in tokens.css. More marks under a cloud means more of it: two for light,

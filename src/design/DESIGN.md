@@ -159,9 +159,25 @@ temperatures' size. No score, no line.
 ## Map
 
 - Full screen under the top bar. A quiet base map so the only color is data: OpenFreeMap's `positron` style
-  by day and its `dark` style at night, switching with the theme. NOAA radar on by default, as today, and back
-  on after the base map changes.
-- Radar switch: a round glass chip at the top right with the radar icon and "Radar". On, it's ink.
+  by day and its `dark` style at night, switching with the theme. NOAA radar (MRMS reflectivity) on by default,
+  and back on, as it was, after the base map changes. It sits beneath the base map's place names, so town names
+  stay readable under heavy rain.
+- Radar detail: NOAA's mosaic is about 1 km, so tiles stop at zoom 8 and the map scales them up, smoothly
+  (linear), past that. Same detail as asking for more, with far fewer requests and no blocky pixels.
+- The map opens on NOAA's latest scan, still, and keeps it live: the list of scans is reread every 2 minutes,
+  and a newer scan replaces the latest once it has loaded. Nothing plays until asked, so a visit to tap a spot
+  costs no more than the one scan.
+- Radar switch: a round glass chip at the top right with the radar icon and "Radar". On, it's ink. Off, the
+  loop control hides and no radar is fetched.
+- Radar loop: glass under the switch, with a play/pause disc and a tape of hard ink segments, one per scan from
+  the last hour (about 30, 2 minutes apart). A bare segment hasn't loaded, a faint one has, the solid one is on
+  screen, and a gap is a scan NOAA couldn't send. Under the tape, the scan's time and age: "1:48 PM, 40 min
+  ago", or "2:26 PM, latest". Play loads the hour, the tape filling as it does, then loops it in about 4
+  seconds, paced by the scans' own times so weather moves evenly, and holds the latest for 1.5 seconds. Frames
+  cut; nothing fades. A frame shows only once it has loaded, and while the map moves the latest holds. Tapping
+  or dragging the tape pauses on a frame. It's a slider: arrow keys step a scan, Home and End jump to the ends,
+  and it reads "1:48 PM, 40 minutes ago". A hidden tab stops the loop and the checks, and checks at once on its
+  return. Without NOAA's list of scans, the untimed latest still shows and Play waits for a later check.
 - Saved spots: square paint chips (printed, so square) in the color of the spot's high today, or its low once
   only tonight is left, printing that temperature in its ink ("26°"). Each is a 44px button. Tapping one opens a
   square popup on the ground, 260px wide so it always fits beside the pin, with the spot's row from My Spots:

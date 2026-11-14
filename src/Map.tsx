@@ -5,7 +5,7 @@ import { query } from "@solidjs/router"
 import { render } from "@solidjs/web"
 import * as maplibregl from "maplibre-gl"
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url"
-import { createEffect, createMemo, createSignal } from "solid-js"
+import { createEffect, createMemo, createSignal, Show } from "solid-js"
 
 import { RadarIcon } from "./design/icons.tsx"
 import { paintTemp, type Theme } from "./design/ramp.ts"
@@ -15,18 +15,14 @@ import { type GeocodingResult, reverse } from "./lib/geocoding.ts"
 import { denver } from "./lib/nws.ts"
 import { getSpots } from "./lib/spots.ts"
 import { getLocation } from "./lib/util.ts"
+import { RadarFrames, type RadarState } from "./map/radarFrames.ts"
+import { RadarTape } from "./map/RadarTape.tsx"
 import { SpotRow } from "./spots/sections.tsx"
 import { loadSpot } from "./Spots.tsx"
 import { theme } from "./theme.ts"
 
 // MapLibre can't find its worker inside a bundle, so Vite builds it and passes on where it ended up.
 maplibregl.setWorkerUrl(workerUrl)
-
-const radarLayer = "radar"
-// NOAA's current radar mosaic. It covers the contiguous US, like the rest of the app's NWS data.
-const radarTiles =
-    "https://opengeo.ncep.noaa.gov/geoserver/conus/conus_bref_qcd/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
-    + "&FORMAT=image/png&TRANSPARENT=true&LAYERS=conus_bref_qcd&CRS=EPSG:3857&WIDTH=256&HEIGHT=256&BBOX={bbox-epsg-3857}"
 
 // A quiet base map, so the only color on it is data.
 const baseStyle = (t: Theme) => `https://tiles.openfreemap.org/styles/${t === "dark" ? "dark" : "positron"}`
@@ -98,31 +94,14 @@ const getData = query(async () => {
 export default function Map() {
     let mapContainerRef!: HTMLDivElement
     let mapRef: maplibregl.Map | undefined
+    // NOAA radar, which covers the contiguous US, like the rest of the app's NWS data.
+    let radar: RadarFrames | undefined
     let style = ""
     const paints: ((to: Theme) => void)[] = []
 
     const latlon = createMemo(() => getData())
     const [radarOn, setRadarOn] = createSignal(true)
-
-    // Changing the base style drops every layer that isn't in it, so radar goes back on after each one.
-    const addRadar = () => {
-        if (!mapRef || mapRef.getSource(radarLayer)) {
-            return
-        }
-        mapRef.addSource(radarLayer, {
-            type: "raster",
-            tiles: [radarTiles],
-            tileSize: 256,
-            attribution: "Radar: NOAA",
-        })
-        mapRef.addLayer({
-            id: radarLayer,
-            type: "raster",
-            source: radarLayer,
-            layout: { visibility: radarOn() ? "visible" : "none" },
-            paint: { "raster-opacity": 0.65 },
-        })
-    }
+    const [radarState, setRadarState] = createSignal<RadarState>()
 
     createEffect(latlon, (coords) => {
         if (!mapContainerRef.isConnected || !coords) {
@@ -137,6 +116,8 @@ export default function Map() {
             attributionControl: false,
         })
         mapRef = map
+        radar = new RadarFrames(map, setRadarState)
+        radar.setOn(radarOn())
 
         map.addControl(new maplibregl.AttributionControl({ compact: true }), "top-left")
         map.addControl(new maplibregl.NavigationControl({ showCompass: true }), "bottom-right")
@@ -168,7 +149,6 @@ export default function Map() {
                 })
         }
         map.on("click", handleClick)
-        map.on("style.load", addRadar)
         // MapLibre opens the compact attribution when its text arrives and closes it on the first drag. It starts
         // closed here, as the ⓘ, so it never covers the radar switch.
         map.once("load", () => {
@@ -206,6 +186,8 @@ export default function Map() {
             removed = true
             disposers.forEach((dispose) => dispose())
             paints.length = 0
+            radar?.destroy()
+            radar = undefined
             map.off("click", handleClick)
             map.remove()
             mapRef = undefined
@@ -220,11 +202,7 @@ export default function Map() {
         }
     })
 
-    createEffect(radarOn, (on) => {
-        if (mapRef?.getLayer(radarLayer)) {
-            mapRef.setLayoutProperty(radarLayer, "visibility", on ? "visible" : "none")
-        }
-    })
+    createEffect(radarOn, (on) => radar?.setOn(on))
 
     return (
         <div class="sq-map">
@@ -238,6 +216,16 @@ export default function Map() {
                 <RadarIcon />
                 Radar
             </button>
+            <Show when={radarOn() && radarState()}>
+                {(state) => (
+                    <RadarTape
+                        state={state()}
+                        onPlay={() => radar?.play()}
+                        onPause={() => radar?.pause()}
+                        onSeek={(index) => radar?.seek(index)}
+                    />
+                )}
+            </Show>
         </div>
     )
 }

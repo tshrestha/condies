@@ -123,7 +123,27 @@ interface MockOptions {
     snowDepth?: object[]
     generatedAt?: string
     override?: (url: URL, route: Route) => boolean | void | Promise<boolean | void>
+    // NOAA's radar scans, read each time the map asks for them. Two hours, 2 minutes apart, by default.
+    scans?: "fail" | (() => string[])
 }
+
+// Radar scan times, oldest first, 2 minutes apart, the latest `minutesAgo` before now, as NOAA writes them.
+export const scanTimes = (count = 60, minutesAgo = 2) =>
+    Array.from({ length: count }, (_, i) =>
+        new Date(Date.now() - (minutesAgo + (count - 1 - i) * 2) * 60_000).toISOString().replace(/\.\d+Z$/, ".000Z"),
+    )
+
+const capabilities = (times: string[]) => `<?xml version="1.0" encoding="UTF-8"?>
+<WMS_Capabilities version="1.3.0"><Capability><Layer><Name>conus_bref_qcd</Name>
+<Dimension name="time" default="${times.at(-1) ?? ""}" units="ISO8601" nearestValue="1">${times.join(",")}</Dimension>
+</Layer></Capability></WMS_Capabilities>`
+
+// The radar times the map asked for, in order of first request. An untimed request, for NOAA's latest, is "".
+export const radarTimes = (requests: string[]) => [
+    ...new Set(
+        requests.filter((u) => u.includes("REQUEST=GetMap")).map((u) => new URL(u).searchParams.get("TIME") ?? ""),
+    ),
+]
 
 const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*" }
 
@@ -222,6 +242,17 @@ export async function mockApis(page: Page, options: MockOptions = {}) {
         }
         if (url.hostname === "wcc.sc.egov.usda.gov" && options.snowDepth) {
             return json(options.snowDepth)
+        }
+        if (url.hostname === "opengeo.ncep.noaa.gov" && url.searchParams.get("REQUEST") === "GetCapabilities") {
+            if (options.scans === "fail") {
+                return route.fulfill({ status: 503, headers: cors, body: "" })
+            }
+            return route.fulfill({
+                status: 200,
+                contentType: "text/xml",
+                headers: cors,
+                body: capabilities(options.scans?.() ?? scanTimes()),
+            })
         }
         if (url.hostname === "opengeo.ncep.noaa.gov") {
             return route.fulfill({

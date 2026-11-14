@@ -53,6 +53,85 @@
     color: var(--sq-ground);
 }
 
+/* The radar loop: glass under the Radar switch, with a play/pause disc and a tape of hard ink segments, one per
+   frame. A bare segment hasn't loaded, a faint one has, the solid one is on screen, and a gap is a frame NOAA
+   couldn't send. Frames cut; nothing slides or fades. */
+.sq-tape {
+    position: absolute;
+    top: calc(12px + 44px + 8px + env(safe-area-inset-top, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 16px 4px 4px;
+    border-radius: 26px;
+    corner-shape: squircle;
+}
+
+.sq-tape-play {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+}
+
+.sq-tape-play:disabled {
+    opacity: 0.4;
+}
+
+.sq-tape-play .sq-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* The slider is the whole column, so it's a 44px target to touch. */
+.sq-tape-track {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 160px;
+    min-height: 44px;
+    touch-action: none;
+    cursor: pointer;
+}
+
+.sq-tape-track[aria-disabled="true"] {
+    cursor: default;
+}
+
+.sq-tape-segments {
+    display: flex;
+    gap: 2px;
+    height: 14px;
+}
+
+.sq-tape-segment {
+    flex: 1;
+    background: color-mix(in srgb, var(--glass-ink) 14%, transparent);
+}
+
+.sq-tape-segment[data-state="loaded"] {
+    background: color-mix(in srgb, var(--glass-ink) 42%, transparent);
+}
+
+.sq-tape-segment[data-state="failed"] {
+    background: none;
+}
+
+.sq-tape-segment[data-current] {
+    background: var(--glass-ink);
+}
+
+.sq-tape-time {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
 /* Zoom, compass and locate: the same glass, on the right edge. */
 .sq-root .sq-map .maplibregl-ctrl-group.sq-glass {
     overflow: hidden;

@@ -122,6 +122,16 @@ const screens: { name: string; path: string; ready: (page: Page) => Promise<void
             await expect(page.locator(".maplibregl-popup")).toBeVisible()
         },
     },
+    {
+        name: "the map, with radar playing",
+        path: "/map",
+        ready: async (page) => {
+            await page.getByRole("button", { name: "Play" }).click()
+            await expect(page.getByRole("button", { name: "Pause" })).toBeVisible()
+            // Some of the hour loaded, so the tape shows every kind of segment.
+            await expect(page.locator('.sq-tape-segment[data-state="loaded"]').first()).toBeAttached()
+        },
+    },
 ]
 
 for (const theme of ["light", "dark"]) {
